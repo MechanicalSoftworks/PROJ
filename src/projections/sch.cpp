@@ -184,7 +184,7 @@ static PJ *setup(PJ *P) { /* general initialization */
 
 
 PJ *PROJECTION(sch) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -193,24 +193,24 @@ PJ *PROJECTION(sch) {
     Q->h0 = 0.0;
 
     /* Check if peg latitude was defined */
-    if (pj_param(P->ctx, P->params, "tplat_0").i)
-        Q->plat = pj_param(P->ctx, P->params, "rplat_0").f;
+    if (pj_param(P->ctx, P->host->params, "tplat_0").i)
+        Q->plat = pj_param(P->ctx, P->host->params, "rplat_0").f;
     else {
         proj_log_error(P, _("Missing parameter plat_0."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* Check if peg longitude was defined */
-    if (pj_param(P->ctx, P->params, "tplon_0").i)
-        Q->plon = pj_param(P->ctx, P->params, "rplon_0").f;
+    if (pj_param(P->ctx, P->host->params, "tplon_0").i)
+        Q->plon = pj_param(P->ctx, P->host->params, "rplon_0").f;
     else {
         proj_log_error(P, _("Missing parameter plon_0."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* Check if peg heading is defined */
-    if (pj_param(P->ctx, P->params, "tphdg_0").i)
-        Q->phdg = pj_param(P->ctx, P->params, "rphdg_0").f;
+    if (pj_param(P->ctx, P->host->params, "tphdg_0").i)
+        Q->phdg = pj_param(P->ctx, P->host->params, "rphdg_0").f;
     else {
         proj_log_error(P, _("Missing parameter phdg_0."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
@@ -218,8 +218,8 @@ PJ *PROJECTION(sch) {
 
 
     /* Check if average height was defined - If so read it in */
-    if (pj_param(P->ctx, P->params, "th_0").i)
-        Q->h0 = pj_param(P->ctx, P->params, "dh_0").f;
+    if (pj_param(P->ctx, P->host->params, "th_0").i)
+        Q->h0 = pj_param(P->ctx, P->host->params, "dh_0").f;
 
 
     return setup(P);

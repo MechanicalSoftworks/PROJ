@@ -677,7 +677,7 @@ static int crs_dst(const char *args) {
 static PJ_COORD torad_coord (PJ *P, PJ_DIRECTION dir, PJ_COORD a) {
     size_t i, n;
     const char *axis = "enut";
-    paralist *l = pj_param_exists (P->params, "axis");
+    paralist *l = pj_param_exists (P->host->params, "axis");
     if (l && dir==PJ_INV)
         axis = l->param + strlen ("axis=");
     n = strlen (axis);
@@ -691,7 +691,7 @@ static PJ_COORD torad_coord (PJ *P, PJ_DIRECTION dir, PJ_COORD a) {
 static PJ_COORD todeg_coord (PJ *P, PJ_DIRECTION dir, PJ_COORD a) {
     size_t i, n;
     const char *axis = "enut";
-    paralist *l = pj_param_exists (P->params, "axis");
+    paralist *l = pj_param_exists (P->host->params, "axis");
     if (l && dir==PJ_FWD)
         axis = l->param + strlen ("axis=");
     n = strlen (axis);

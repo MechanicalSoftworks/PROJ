@@ -302,7 +302,7 @@ static PJ_LP adams_inverse(PJ_XY xy, PJ *P)
 
 static PJ *setup(PJ *P, projection_type mode) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(
-            calloc (1, sizeof (struct pj_opaque)));
+            svm_calloc (1, sizeof (struct pj_opaque)));
 
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
@@ -317,7 +317,7 @@ static PJ *setup(PJ *P, projection_type mode) {
 
     if( mode == PEIRCE_Q) {
       // Quincuncial projections type options: square, diamond, hemisphere, horizontal (rectangle) or vertical (rectangle)
-      const char* pqtype = pj_param (P->ctx, P->params, "stype").s;
+      const char* pqtype = pj_param (P->ctx, P->host->params, "stype").s;
 
       if (!pqtype) pqtype = "diamond"; /* default if type value not supplied */
 
@@ -335,9 +335,9 @@ static PJ *setup(PJ *P, projection_type mode) {
       }
       else if (strcmp(pqtype, "horizontal") == 0) {
         Q->pqtype = PEIRCE_Q_HORIZONTAL;
-        if (pj_param(P->ctx, P->params, "tscrollx").i) {
+        if (pj_param(P->ctx, P->host->params, "tscrollx").i) {
           double scrollx;
-          scrollx = pj_param(P->ctx, P->params, "dscrollx").f;
+          scrollx = pj_param(P->ctx, P->host->params, "dscrollx").f;
           if (scrollx > 1 || scrollx < -1) {
               proj_log_error(P, _("Invalid value for scrollx: |scrollx| should between -1 and 1"));
               return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
@@ -347,9 +347,9 @@ static PJ *setup(PJ *P, projection_type mode) {
       }
       else if (strcmp(pqtype, "vertical") == 0) {
         Q->pqtype = PEIRCE_Q_VERTICAL;
-        if (pj_param(P->ctx, P->params, "tscrolly").i) {
+        if (pj_param(P->ctx, P->host->params, "tscrolly").i) {
           double scrolly;
-          scrolly = pj_param(P->ctx, P->params, "dscrolly").f;
+          scrolly = pj_param(P->ctx, P->host->params, "dscrolly").f;
           if (scrolly > 1 || scrolly < -1) {
               proj_log_error(P, _("Invalid value for scrolly: |scrolly| should between -1 and 1"));
               return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);

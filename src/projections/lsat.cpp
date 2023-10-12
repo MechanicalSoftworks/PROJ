@@ -158,19 +158,19 @@ static PJ_LP lsat_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse
 PJ *PROJECTION(lsat) {
     int land, path;
     double lam, alf, esc, ess;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    land = pj_param(P->ctx, P->params, "ilsat").i;
+    land = pj_param(P->ctx, P->host->params, "ilsat").i;
     if (land <= 0 || land > 5)
     {
         proj_log_error(P, _("Invalid value for lsat: lsat should be in [1, 5] range"));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    path = pj_param(P->ctx, P->params, "ipath").i;
+    path = pj_param(P->ctx, P->host->params, "ipath").i;
     const int maxPathVal = (land <= 3 ? 251 : 233);
     if (path <= 0 || path > maxPathVal)
     {

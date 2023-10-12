@@ -18,7 +18,7 @@
 pj_authset(double es) {
 	double t, *APA;
 
-	if ((APA = (double *)malloc(APA_SIZE * sizeof(double))) != nullptr) {
+	if ((APA = (double *)svm_malloc(APA_SIZE * sizeof(double))) != nullptr) {
 		APA[0] = es * P00;
 		t = es * es;
 		APA[0] += t * P01;
@@ -29,6 +29,11 @@ pj_authset(double es) {
 		APA[2] = t * P20;
 	}
 	return APA;
+}
+	void
+pj_free_authset(double* apa)
+{
+	svm_free(apa);
 }
 	double
 pj_authlat(double beta, double *APA) {

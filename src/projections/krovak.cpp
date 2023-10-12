@@ -191,7 +191,7 @@ static PJ_LP krovak_e_inverse (PJ_XY xy, PJ *P) {                /* Ellipsoidal,
 
 PJ *PROJECTION(krovak) {
     double u0, n0, g;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -202,21 +202,21 @@ PJ *PROJECTION(krovak) {
     P->e = sqrt(P->es);
 
     /* if latitude of projection center is not set, use 49d30'N */
-    if (!pj_param(P->ctx, P->params, "tlat_0").i)
+    if (!pj_param(P->ctx, P->host->params, "tlat_0").i)
             P->phi0 = 0.863937979737193;
 
     /* if center long is not set use 42d30'E of Ferro - 17d40' for Ferro */
     /* that will correspond to using longitudes relative to greenwich    */
     /* as input and output, instead of lat/long relative to Ferro */
-    if (!pj_param(P->ctx, P->params, "tlon_0").i)
+    if (!pj_param(P->ctx, P->host->params, "tlon_0").i)
             P->lam0 = 0.7417649320975901 - 0.308341501185665;
 
     /* if scale not set default to 0.9999 */
-    if (!pj_param(P->ctx, P->params, "tk").i && !pj_param(P->ctx, P->params, "tk_0").i)
+    if (!pj_param(P->ctx, P->host->params, "tk").i && !pj_param(P->ctx, P->host->params, "tk_0").i)
         P->k0 = 0.9999;
 
     Q->czech = 1;
-    if( !pj_param(P->ctx, P->params, "tczech").i )
+    if( !pj_param(P->ctx, P->host->params, "tczech").i )
         Q->czech = -1;
 
     /* Set up shared parameters between forward and inverse */

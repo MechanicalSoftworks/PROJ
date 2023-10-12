@@ -607,19 +607,19 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
     if (nullptr==P->opaque)
         return pj_default_destructor (P, errlev);
 
-    free (static_cast<struct pj_opaque*>(P->opaque)->apa);
+    pj_free_authset (static_cast<struct pj_opaque*>(P->opaque)->apa);
     return pj_default_destructor (P, errlev);
 }
 
 
 PJ *PROJECTION(healpix) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    double angle = pj_param(P->ctx, P->params,"drot_xy").f;
+    double angle = pj_param(P->ctx, P->host->params,"drot_xy").f;
     Q->rot_xy = PJ_TORAD(angle);
 
     if (P->es != 0.0) {
@@ -641,14 +641,14 @@ PJ *PROJECTION(healpix) {
 
 
 PJ *PROJECTION(rhealpix) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    Q->north_square = pj_param(P->ctx, P->params,"inorth_square").i;
-    Q->south_square = pj_param(P->ctx, P->params,"isouth_square").i;
+    Q->north_square = pj_param(P->ctx, P->host->params,"inorth_square").i;
+    Q->south_square = pj_param(P->ctx, P->host->params,"isouth_square").i;
 
     /* Check for valid north_square and south_square inputs. */
     if (Q->north_square < 0 || Q->north_square > 3)

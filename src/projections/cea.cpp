@@ -66,22 +66,22 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
     if (nullptr==P->opaque)
         return pj_default_destructor (P, errlev);
 
-    free (static_cast<struct pj_opaque*>(P->opaque)->apa);
+    pj_free_authset (static_cast<struct pj_opaque*>(P->opaque)->apa);
     return pj_default_destructor (P, errlev);
 }
 
 
 PJ *PROJECTION(cea) {
     double t = 0.0;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
     P->host->destructor = destructor;
 
 
-    if (pj_param(P->ctx, P->params, "tlat_ts").i) {
-        t = pj_param(P->ctx, P->params, "rlat_ts").f;
+    if (pj_param(P->ctx, P->host->params, "tlat_ts").i) {
+        t = pj_param(P->ctx, P->host->params, "rlat_ts").f;
         P->k0 = cos(t);
         if (P->k0 < 0.)
         {

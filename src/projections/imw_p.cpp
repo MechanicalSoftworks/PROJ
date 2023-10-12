@@ -34,20 +34,20 @@ static int phi12(PJ *P, double *del, double *sig) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     int err = 0;
 
-    if (!pj_param(P->ctx, P->params, "tlat_1").i )
+    if (!pj_param(P->ctx, P->host->params, "tlat_1").i )
     {
         proj_log_error(P, _("Missing parameter: lat_1 should be specified"));
         err = PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE;
     }
-    else if ( !pj_param(P->ctx, P->params, "tlat_2").i)
+    else if ( !pj_param(P->ctx, P->host->params, "tlat_2").i)
     {
         proj_log_error(P, _("Missing parameter: lat_2 should be specified"));
         err = PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE;
     }
     else
     {
-        Q->phi_1 = pj_param(P->ctx, P->params, "rlat_1").f;
-        Q->phi_2 = pj_param(P->ctx, P->params, "rlat_2").f;
+        Q->phi_1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+        Q->phi_2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
         *del = 0.5 * (Q->phi_2 - Q->phi_1);
         *sig = 0.5 * (Q->phi_2 + Q->phi_1);
         err = (fabs(*del) < EPS || fabs(*sig) < EPS) ? PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE : 0;
@@ -172,7 +172,7 @@ static PJ *destructor (PJ *P, int errlev) {
         return pj_default_destructor (P, errlev);
 
     if( static_cast<struct pj_opaque*>(P->opaque)->en )
-        free (static_cast<struct pj_opaque*>(P->opaque)->en);
+        pj_free_en (static_cast<struct pj_opaque*>(P->opaque)->en);
 
     return pj_default_destructor(P, errlev);
 }
@@ -181,7 +181,7 @@ static PJ *destructor (PJ *P, int errlev) {
 PJ *PROJECTION(imw_p) {
     double del, sig, s, t, x1, x2, T2, y1, m1, m2, y2;
     int err;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -195,8 +195,8 @@ PJ *PROJECTION(imw_p) {
         Q->phi_1 = Q->phi_2;
         Q->phi_2 = del;
     }
-    if (pj_param(P->ctx, P->params, "tlon_1").i)
-        Q->lam_1 = pj_param(P->ctx, P->params, "rlon_1").f;
+    if (pj_param(P->ctx, P->host->params, "tlon_1").i)
+        Q->lam_1 = pj_param(P->ctx, P->host->params, "rlon_1").f;
     else { /* use predefined based upon latitude */
         sig = fabs(sig * RAD_TO_DEG);
         if (sig <= 60)      sig = 2.;

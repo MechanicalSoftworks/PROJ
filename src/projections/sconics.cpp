@@ -48,20 +48,20 @@ static int phi12(PJ *P, double *del) {
     double p1, p2;
     int err = 0;
 
-    if (!pj_param(P->ctx, P->params, "tlat_1").i )
+    if (!pj_param(P->ctx, P->host->params, "tlat_1").i )
     {
         proj_log_error(P, _("Missing parameter: lat_1 should be specified"));
         err = PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE;
     }
-    else if ( !pj_param(P->ctx, P->params, "tlat_2").i)
+    else if ( !pj_param(P->ctx, P->host->params, "tlat_2").i)
     {
         proj_log_error(P, _("Missing parameter: lat_2 should be specified"));
         err = PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE;
     }
     else
     {
-        p1 = pj_param(P->ctx, P->params, "rlat_1").f;
-        p2 = pj_param(P->ctx, P->params, "rlat_2").f;
+        p1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+        p2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
         *del = 0.5 * (p2 - p1);
         const double sig = 0.5 * (p2 + p1);
         static_cast<struct pj_opaque*>(P->opaque)->sig = sig;
@@ -130,7 +130,7 @@ static PJ_LP sconics_s_inverse (PJ_XY xy, PJ *P) {  /* Spheroidal, (and ellipsoi
 static PJ *setup(PJ *P, enum Type type) {
     double del, cs;
     int err;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;

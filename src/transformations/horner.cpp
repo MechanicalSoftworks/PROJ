@@ -89,8 +89,8 @@
 PROJ_HEAD(horner, "Horner polynomial evaluation");
 
 /* make horner.h interface with proj's memory management */
-#define horner_dealloc(x) free(x)
-#define horner_calloc(n,x) calloc(n,x)
+#define horner_dealloc(x) svm_free(x)
+#define horner_calloc(n,x) svm_calloc(n,x)
 
 namespace { // anonymous namespace
 struct horner {
@@ -417,12 +417,12 @@ static int parse_coefs (PJ *P, double *coefs, const char *param, int ncoefs) {
     }
 
     sprintf (buf, "t%s", param);
-    if (0==pj_param (P->ctx, P->params, buf).i) {
+    if (0==pj_param (P->ctx, P->host->params, buf).i) {
         free (buf);
         return 0;
     }
     sprintf (buf, "s%s", param);
-    init = pj_param(P->ctx, P->params, buf).s;
+    init = pj_param(P->ctx, P->host->params, buf).s;
     free (buf);
 
     for (i = 0; i < ncoefs; i++) {
@@ -454,8 +454,8 @@ PJ *PROJECTION(horner) {
     P->host->destructor = horner_freeup;
 
     /* Polynomial degree specified? */
-    if (pj_param (P->ctx, P->params, "tdeg").i) { /* degree specified? */
-        degree = pj_param(P->ctx, P->params, "ideg").i;
+    if (pj_param (P->ctx, P->host->params, "tdeg").i) { /* degree specified? */
+        degree = pj_param(P->ctx, P->host->params, "ideg").i;
         if (degree < 0 || degree > 10000) {
             /* What are reasonable minimum and maximums for degree? */
             proj_log_error (P, _("Degree is unreasonable: %d"), degree);
@@ -466,7 +466,7 @@ PJ *PROJECTION(horner) {
         return horner_freeup (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
-    if (pj_param (P->ctx, P->params, "tfwd_c").i || pj_param (P->ctx, P->params, "tinv_c").i) /* complex polynomium? */
+    if (pj_param (P->ctx, P->host->params, "tfwd_c").i || pj_param (P->ctx, P->host->params, "tinv_c").i) /* complex polynomium? */
 		complex_polynomia = 1;
 
     Q = horner_alloc (degree, complex_polynomia);
@@ -476,8 +476,8 @@ PJ *PROJECTION(horner) {
 
     if (complex_polynomia) {
         /* Westings and/or southings? */
-        Q->uneg = pj_param_exists (P->params, "uneg") ? 1 : 0;
-        Q->vneg = pj_param_exists (P->params, "vneg") ? 1 : 0;
+        Q->uneg = pj_param_exists (P->host->params, "uneg") ? 1 : 0;
+        Q->vneg = pj_param_exists (P->host->params, "vneg") ? 1 : 0;
 
         n = 2*degree + 2;
         if (0==parse_coefs (P, Q->fwd_c, "fwd_c", n))

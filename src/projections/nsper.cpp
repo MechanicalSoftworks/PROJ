@@ -153,7 +153,7 @@ static PJ_LP nsper_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 static PJ *setup(PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
-    Q->height = pj_param(P->ctx, P->params, "dh").f;
+    Q->height = pj_param(P->ctx, P->host->params, "dh").f;
 
     if (fabs(fabs(P->phi0) - M_HALFPI) < EPS10)
         Q->mode = P->phi0 < 0. ? S_POLE : N_POLE;
@@ -183,7 +183,7 @@ static PJ *setup(PJ *P) {
 
 
 PJ *PROJECTION(nsper) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -197,13 +197,13 @@ PJ *PROJECTION(nsper) {
 PJ *PROJECTION(tpers) {
     double omega, gamma;
 
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    omega = pj_param(P->ctx, P->params, "rtilt").f;
-    gamma = pj_param(P->ctx, P->params, "razi").f;
+    omega = pj_param(P->ctx, P->host->params, "rtilt").f;
+    gamma = pj_param(P->ctx, P->host->params, "razi").f;
     Q->tilt = 1;
     Q->cg = cos(gamma);
     Q->sg = sin(gamma);

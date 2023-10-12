@@ -262,7 +262,7 @@ PJ *TRANSFORMATION(xyzgridshift,0) {
     /* inherit ellipsoid definition from P to Q->cart */
     pj_inherit_ellipsoid_def (P, Q->cart);
 
-    const char* grid_ref = pj_param (P->ctx, P->params, "sgrid_ref").s;
+    const char* grid_ref = pj_param (P->ctx, P->host->params, "sgrid_ref").s;
     if( grid_ref ) {
         if (strcmp(grid_ref, "input_crs") == 0 ) {
             // default
@@ -277,14 +277,14 @@ PJ *TRANSFORMATION(xyzgridshift,0) {
         }
     }
 
-    if (0==pj_param(P->ctx, P->params, "tgrids").i) {
+    if (0==pj_param(P->ctx, P->host->params, "tgrids").i) {
         proj_log_error(P, _("+grids parameter missing."));
         return destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* multiplier for delta x,y,z */
-    if (pj_param(P->ctx, P->params, "tmultiplier").i) {
-        Q->multiplier = pj_param(P->ctx, P->params, "dmultiplier").f;
+    if (pj_param(P->ctx, P->host->params, "tmultiplier").i) {
+        Q->multiplier = pj_param(P->ctx, P->host->params, "dmultiplier").f;
     }
 
     if( P->ctx->defer_grid_opening ) {

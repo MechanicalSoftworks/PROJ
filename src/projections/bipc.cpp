@@ -168,12 +168,12 @@ static PJ_LP bipc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 
 
 PJ *PROJECTION(bipc) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->noskew = pj_param(P->ctx, P->params, "bns").i;
+    Q->noskew = pj_param(P->ctx, P->host->params, "bns").i;
     P->host->inv = bipc_s_inverse;
     P->host->fwd = bipc_s_forward;
     P->es = 0.;

@@ -76,7 +76,7 @@ static PJ_COORD topocentric_inv(PJ_COORD in, PJ * P)
 /*********************************************************************/
 PJ *CONVERSION(topocentric,1) {
 /*********************************************************************/
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = static_cast<void *>(Q);
@@ -89,12 +89,12 @@ PJ *CONVERSION(topocentric,1) {
     // - If lon_0 is specified, then lat_0 must also be
     // - If any of X_0, Y_0, Z_0 is specified, then any of lon_0,lat_0,h_0 must
     //   not be, and vice versa.
-    const auto hasX0 = pj_param_exists(P->params, "X_0");
-    const auto hasY0 = pj_param_exists(P->params, "Y_0");
-    const auto hasZ0 = pj_param_exists(P->params, "Z_0");
-    const auto hasLon0 = pj_param_exists(P->params, "lon_0");
-    const auto hasLat0 = pj_param_exists(P->params, "lat_0");
-    const auto hash0 = pj_param_exists(P->params, "h_0");
+    const auto hasX0 = pj_param_exists(P->host->params, "X_0");
+    const auto hasY0 = pj_param_exists(P->host->params, "Y_0");
+    const auto hasZ0 = pj_param_exists(P->host->params, "Z_0");
+    const auto hasLon0 = pj_param_exists(P->host->params, "lon_0");
+    const auto hasLat0 = pj_param_exists(P->host->params, "lat_0");
+    const auto hash0 = pj_param_exists(P->host->params, "h_0");
     if( !hasX0 && !hasLon0 )
     {
         proj_log_error(P, _("missing X_0 or lon_0"));
@@ -126,9 +126,9 @@ PJ *CONVERSION(topocentric,1) {
 
     if( hasX0 )
     {
-        Q->X0 = pj_param(P->ctx, P->params, "dX_0").f;
-        Q->Y0 = pj_param(P->ctx, P->params, "dY_0").f;
-        Q->Z0 = pj_param(P->ctx, P->params, "dZ_0").f;
+        Q->X0 = pj_param(P->ctx, P->host->params, "dX_0").f;
+        Q->Y0 = pj_param(P->ctx, P->host->params, "dY_0").f;
+        Q->Z0 = pj_param(P->ctx, P->host->params, "dZ_0").f;
 
         // Compute lam0, phi0 from X0,Y0,Z0
         PJ_XYZ xyz;
@@ -147,7 +147,7 @@ PJ *CONVERSION(topocentric,1) {
         PJ_LPZ lpz;
         lpz.lam = P->lam0;
         lpz.phi = P->phi0;
-        lpz.z = pj_param(P->ctx, P->params, "dh_0").f;
+        lpz.z = pj_param(P->ctx, P->host->params, "dh_0").f;
         const auto xyz = pj_fwd3d(lpz, cart);
         Q->X0 = xyz.x;
         Q->Y0 = xyz.y;

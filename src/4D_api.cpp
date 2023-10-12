@@ -648,14 +648,14 @@ Returns 1 on success, 0 on failure
         return 0;
 
     /* Don't recurse when calling proj_create (which calls us back) */
-    if (pj_param_exists (P->params, "break_cs2cs_recursion"))
+    if (pj_param_exists (P->host->params, "break_cs2cs_recursion"))
         return 1;
 
     /* Swap axes? */
-    p = pj_param_exists (P->params, "axis");
+    p = pj_param_exists (P->host->params, "axis");
 
     const bool disable_grid_presence_check = pj_param_exists (
-        P->params, "disable_grid_presence_check") != nullptr;
+        P->host->params, "disable_grid_presence_check") != nullptr;
 
     /* Don't axisswap if data are already in "enu" order */
     if (p && (0!=strcmp ("enu", p->param))) {
@@ -671,7 +671,7 @@ Returns 1 on success, 0 on failure
     }
 
     /* Geoid grid(s) given? */
-    p = pj_param_exists (P->params, "geoidgrids");
+    p = pj_param_exists (P->host->params, "geoidgrids");
     if (!disable_grid_presence_check && p  &&  strlen (p->param) > strlen ("geoidgrids=")) {
         char *gridnames = p->param + strlen ("geoidgrids=");
         char *def = static_cast<char*>(malloc (100+2*strlen(gridnames)));
@@ -687,7 +687,7 @@ Returns 1 on success, 0 on failure
     }
 
     /* Datum shift grid(s) given? */
-    p = pj_param_exists (P->params, "nadgrids");
+    p = pj_param_exists (P->host->params, "nadgrids");
     if (!disable_grid_presence_check && p  &&  strlen (p->param) > strlen ("nadgrids=")) {
         char *gridnames = p->param + strlen ("nadgrids=");
         char *def = static_cast<char*>(malloc (100+2*strlen(gridnames)));
@@ -703,7 +703,7 @@ Returns 1 on success, 0 on failure
     }
 
     /* We ignore helmert if we have grid shift */
-    p = P->hgridshift ? nullptr : pj_param_exists (P->params, "towgs84");
+    p = P->hgridshift ? nullptr : pj_param_exists (P->host->params, "towgs84");
     while (p) {
         char *def;
         char *s = p->param;
@@ -1944,7 +1944,7 @@ PJ  *proj_create_crs_to_crs_from_pj (PJ_CONTEXT *ctx, const PJ *source_crs, cons
 
     P->host->alternativeCoordinateOperations = std::move(preparedOpList);
     // The returned P is rather dummy
-    P->descr = "Set of coordinate operations";
+    P->host->descr = "Set of coordinate operations";
     P->host->iso_obj = nullptr;
     P->host->fwd = nullptr;
     P->host->inv = nullptr;
@@ -2198,13 +2198,13 @@ PJ_PROJ_INFO proj_pj_info(PJ *P) {
     }
 
     /* projection id */
-    if (pj_param(P->ctx, P->params, "tproj").i)
-        pjinfo.id = pj_param(P->ctx, P->params, "sproj").s;
+    if (pj_param(P->ctx, P->host->params, "tproj").i)
+        pjinfo.id = pj_param(P->ctx, P->host->params, "sproj").s;
 
     if( P->host->iso_obj ) {
         pjinfo.description = P->host->iso_obj->nameStr().c_str();
     } else {
-        pjinfo.description = P->descr;
+        pjinfo.description = P->host->descr;
     }
 
     // accuracy
@@ -2226,8 +2226,8 @@ PJ_PROJ_INFO proj_pj_info(PJ *P) {
     }
 
     /* projection definition */
-    if (P->def_full)
-        def = P->def_full;
+    if (P->host->def_full)
+        def = P->host->def_full;
     else
         def = pj_get_def(P, 0); /* pj_get_def takes a non-const PJ pointer */
     if (nullptr==def)
@@ -2235,7 +2235,7 @@ PJ_PROJ_INFO proj_pj_info(PJ *P) {
     else
         pjinfo.definition = pj_shrink (def);
     /* Make proj_destroy clean this up eventually */
-    P->def_full = def;
+    P->host->def_full = def;
 
     pjinfo.has_inverse = pj_has_inverse(P);
     return pjinfo;

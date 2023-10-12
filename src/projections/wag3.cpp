@@ -35,13 +35,13 @@ static PJ_LP wag3_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 
 PJ *PROJECTION(wag3) {
 	double ts;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     P->opaque = Q;
 
-	ts = pj_param (P->ctx, P->params, "rlat_ts").f;
+	ts = pj_param (P->ctx, P->host->params, "rlat_ts").f;
 	static_cast<struct pj_opaque*>(P->opaque)->C_x = cos (ts) / cos (2.*ts/3.);
 	P->es = 0.;
     P->host->inv = wag3_s_inverse;

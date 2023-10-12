@@ -26,7 +26,7 @@
 double *pj_enfn(double es) {
     double t, *en;
 
-    en = (double *) malloc(EN_SIZE * sizeof (double));
+    en = (double *) svm_malloc(EN_SIZE * sizeof (double));
     if (nullptr==en)
         return nullptr;
 
@@ -37,6 +37,11 @@ double *pj_enfn(double es) {
     en[4] = t * es * C88;
 
     return en;
+}
+
+void pj_free_en(double* en)
+{
+    svm_free(en);
 }
 
 double

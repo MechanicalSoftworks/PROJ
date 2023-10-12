@@ -80,18 +80,18 @@ static PJ_LP lcc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse 
 PJ *PROJECTION(lcc) {
     double cosphi, sinphi;
     int secant;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc(1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc(1, sizeof (struct pj_opaque)));
 
     if (nullptr == Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->phi1 = pj_param(P->ctx, P->params, "rlat_1").f;
-    if (pj_param(P->ctx, P->params, "tlat_2").i)
-        Q->phi2 = pj_param(P->ctx, P->params, "rlat_2").f;
+    Q->phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+    if (pj_param(P->ctx, P->host->params, "tlat_2").i)
+        Q->phi2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
     else {
         Q->phi2 = Q->phi1;
-        if (!pj_param(P->ctx, P->params, "tlat_0").i)
+        if (!pj_param(P->ctx, P->host->params, "tlat_0").i)
             P->phi0 = Q->phi1;
     }
 

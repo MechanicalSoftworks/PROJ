@@ -58,24 +58,24 @@ static PJ_LP oea_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse 
 
 
 PJ *PROJECTION(oea) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    if (((Q->n = pj_param(P->ctx, P->params, "dn").f) <= 0.) )
+    if (((Q->n = pj_param(P->ctx, P->host->params, "dn").f) <= 0.) )
     {
         proj_log_error(P, _("Invalid value for n: it should be > 0"));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    if (((Q->m = pj_param(P->ctx, P->params, "dm").f) <= 0.) )
+    if (((Q->m = pj_param(P->ctx, P->host->params, "dm").f) <= 0.) )
     {
         proj_log_error(P, _("Invalid value for m: it should be > 0"));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    Q->theta = pj_param(P->ctx, P->params, "rtheta").f;
+    Q->theta = pj_param(P->ctx, P->host->params, "rtheta").f;
     Q->sp0 = sin(P->phi0);
     Q->cp0 = cos(P->phi0);
     Q->rn = 1./ Q->n;

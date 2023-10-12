@@ -301,7 +301,7 @@ static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
 
 
 PJ *TRANSFORMATION(molodensky,1) {
-    struct pj_opaque_molodensky *Q = static_cast<struct pj_opaque_molodensky*>(calloc(1, sizeof(struct pj_opaque_molodensky)));
+    struct pj_opaque_molodensky *Q = static_cast<struct pj_opaque_molodensky*>(svm_calloc(1, sizeof(struct pj_opaque_molodensky)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
@@ -317,42 +317,42 @@ PJ *TRANSFORMATION(molodensky,1) {
     P->right  = PJ_IO_UNITS_RADIANS;
 
     /* read args */
-    if (!pj_param(P->ctx, P->params, "tdx").i)
+    if (!pj_param(P->ctx, P->host->params, "tdx").i)
     {
         proj_log_error (P, _("missing dx"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->dx = pj_param(P->ctx, P->params, "ddx").f;
+    Q->dx = pj_param(P->ctx, P->host->params, "ddx").f;
 
-    if (!pj_param(P->ctx, P->params, "tdy").i)
+    if (!pj_param(P->ctx, P->host->params, "tdy").i)
     {
         proj_log_error (P, _("missing dy"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->dy = pj_param(P->ctx, P->params, "ddy").f;
+    Q->dy = pj_param(P->ctx, P->host->params, "ddy").f;
 
-    if (!pj_param(P->ctx, P->params, "tdz").i)
+    if (!pj_param(P->ctx, P->host->params, "tdz").i)
     {
         proj_log_error (P, _("missing dz"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->dz = pj_param(P->ctx, P->params, "ddz").f;
+    Q->dz = pj_param(P->ctx, P->host->params, "ddz").f;
 
-    if (!pj_param(P->ctx, P->params, "tda").i)
+    if (!pj_param(P->ctx, P->host->params, "tda").i)
     {
         proj_log_error (P, _("missing da"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->da = pj_param(P->ctx, P->params, "dda").f;
+    Q->da = pj_param(P->ctx, P->host->params, "dda").f;
 
-    if (!pj_param(P->ctx, P->params, "tdf").i)
+    if (!pj_param(P->ctx, P->host->params, "tdf").i)
     {
         proj_log_error (P, _("missing df"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->df = pj_param(P->ctx, P->params, "ddf").f;
+    Q->df = pj_param(P->ctx, P->host->params, "ddf").f;
 
-    Q->abridged = pj_param(P->ctx, P->params, "tabridged").i;
+    Q->abridged = pj_param(P->ctx, P->host->params, "tabridged").i;
 
     return P;
 }

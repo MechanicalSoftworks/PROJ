@@ -59,6 +59,7 @@
 
 #include <string>
 #include <vector>
+#include <new>
 
 #include "proj.h"
 
@@ -374,6 +375,23 @@ struct PJhost
 {
     /*************************************************************************************
 
+                         G E N E R A L   P A R A M E T E R   S T R U C T
+
+    **************************************************************************************/
+
+    const char *short_name = nullptr; /* From pj_list.h */
+    const char *descr = nullptr;   /* From pj_list.h or individual PJ_*.c file */
+    paralist *params = nullptr;    /* Parameter list */
+    char *def_full = nullptr;      /* Full textual definition (usually 0 - set by proj_pj_info) */
+
+    /* For debugging / logging purposes */
+    char *def_size = nullptr;      /* Shape and size parameters extracted from params */
+    char *def_shape = nullptr;
+    char *def_spherification = nullptr;
+    char *def_ellps = nullptr;
+
+    /*************************************************************************************
+
                           F U N C T I O N    P O I N T E R S
 
     **************************************************************************************
@@ -441,25 +459,15 @@ struct PJconsts {
 
     **************************************************************************************/
 
+    /* !!! THESE ARE BOTH HOST SPECIFIC !!! */
+    struct PJhost* host = nullptr;
     PJ_CONTEXT *ctx = nullptr;
-    const char *short_name = nullptr; /* From pj_list.h */
-    const char *descr = nullptr;   /* From pj_list.h or individual PJ_*.c file */
-    paralist *params = nullptr;    /* Parameter list */
-    char *def_full = nullptr;      /* Full textual definition (usually 0 - set by proj_pj_info) */
-    PJconsts *parent = nullptr;    /* Parent PJ of pipeline steps - nullptr if not a pipeline step */
 
-    /* For debugging / logging purposes */
-    char *def_size = nullptr;      /* Shape and size parameters extracted from params */
-    char *def_shape = nullptr;
-    char *def_spherification = nullptr;
-    char *def_ellps = nullptr;
+    PJconsts *parent = nullptr;    /* Parent PJ of pipeline steps - nullptr if not a pipeline step */
 
     struct geod_geodesic *geod = nullptr;    /* For geodesic computations */
     void *opaque = nullptr;                  /* Projection specific parameters, Defined in PJ_*.c */
     int inverted = 0;                        /* Tell high level API functions to swap inv/fwd */
-
-    /* !!! THIS ISN'T SVM - DON'T USE IT FROM THE OPENCL DEVICE !!! */
-    struct PJhost *host = nullptr;
 
 
     /*************************************************************************************
@@ -776,8 +784,8 @@ C_NAMESPACE PJ *pj_##name (PJ *P) {                          \
     P = pj_new();                                            \
     if (nullptr==P)                                          \
         return nullptr;                                      \
-    P->short_name = #name;                                   \
-    P->descr = des_##name;                                   \
+    P->host->short_name = #name;                                   \
+    P->host->descr = des_##name;                                   \
     P->need_ellps = NEED_ELLPS;                              \
     P->left  = PJ_IO_UNITS_RADIANS;                          \
     P->right = PJ_IO_UNITS_CLASSIC;                          \
@@ -825,6 +833,7 @@ void     *free_params (PJ_CONTEXT *ctx, paralist *start, int errlev);
 
 
 double *pj_enfn(double);
+void    pj_free_en(double* en);
 double  pj_mlfn(double, double, double, const double *);
 double  pj_inv_mlfn(PJ_CONTEXT *, double, double, const double *);
 double  pj_qsfn(double, double, double);
@@ -834,6 +843,7 @@ double  PROJ_DLL pj_phi2(PJ_CONTEXT *, const double, const double);
 double  pj_sinhpsi2tanphi(PJ_CONTEXT *, const double, const double);
 double  pj_qsfn_(double, PJ *);
 double *pj_authset(double);
+void    pj_free_authset(double* apa);
 double  pj_authlat(double, double *);
 
 COMPLEX pj_zpoly1(COMPLEX, const COMPLEX *, int);
@@ -850,6 +860,32 @@ PJ_LP     pj_gauss(PJ_CONTEXT *, PJ_LP, const void *);
 PJ_LP     pj_inv_gauss(PJ_CONTEXT *, PJ_LP, const void *);
 
 struct PJ_DATUMS           PROJ_DLL *pj_get_datums_ref( void );
+
+void* svm_malloc(size_t sz);
+void* svm_calloc(size_t n, size_t sz);
+void svm_free(void* ptr);
+
+template<typename T>
+T* svm_new()
+{
+    auto* p = svm_malloc(sizeof(T));
+    if (p)
+    {
+        new (p) T;
+    }
+    return reinterpret_cast<T*>(p);
+}
+
+template<typename T>
+void svm_delete(T* p)
+{
+    if (p)
+    {
+        p->~T();
+    }
+
+    svm_free(p);
+}
 
 PJ *pj_new(void);
 PJ *pj_default_destructor (PJ *P, int errlev);

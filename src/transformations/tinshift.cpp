@@ -84,7 +84,7 @@ static PJ_COORD tinshift_reverse_4d(PJ_COORD in, PJ *P) {
 
 PJ *TRANSFORMATION(tinshift, 1) {
 
-    const char *filename = pj_param(P->ctx, P->params, "sfile").s;
+    const char *filename = pj_param(P->ctx, P->host->params, "sfile").s;
     if (!filename) {
         proj_log_error(P, _("+file= should be specified."));
         return destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);

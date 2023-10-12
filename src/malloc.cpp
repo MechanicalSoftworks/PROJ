@@ -58,6 +58,49 @@
 
 using namespace NS_PROJ;
 
+//
+// For convenience, we share the entire PJ structure with the GPU.
+//
+#ifdef PROJ_OPENCL
+
+void* svm_malloc(size_t sz)
+{
+    return nullptr;
+}
+
+void* svm_calloc(size_t n, size_t sz)
+{
+    void* p = svm_malloc(n * sz);
+    if (p)
+    {
+        memset(p, 0, n * sz);
+    }
+    return p;
+}
+
+void svm_free(void* ptr)
+{
+}
+
+#else
+
+void* svm_malloc(size_t sz)
+{
+    return malloc(sz);
+}
+
+void* svm_calloc(size_t n, size_t sz)
+{
+    return calloc(n, sz);
+}
+
+void svm_free(void* ptr)
+{
+    free(ptr);
+}
+
+#endif
+
 
 /**********************************************************************/
 char *pj_strdup(const char *str)
@@ -127,7 +170,7 @@ PJconsts::PJconsts() : host(new PJhost) {}
 /*****************************************************************************/
 PJ *pj_new() {
 /*****************************************************************************/
-    return new(std::nothrow) PJ();
+    return svm_new<PJ>();
 }
 
 
@@ -148,12 +191,10 @@ PJ *pj_default_destructor (PJ *P, int errlev) {   /* Destructor */
     if (nullptr==P)
         return nullptr;
 
-    delete P->host;
-
-    free(P->def_size);
-    free(P->def_shape);
-    free(P->def_spherification);
-    free(P->def_ellps);
+    free(P->host->def_size);
+    free(P->host->def_shape);
+    free(P->host->def_spherification);
+    free(P->host->def_ellps);
 
     delete static_cast<ListOfHGrids*>(P->hgrids_legacy);
     delete static_cast<ListOfVGrids*>(P->vgrids_legacy);
@@ -165,12 +206,14 @@ PJ *pj_default_destructor (PJ *P, int errlev) {   /* Destructor */
     /* that */
 
     /* free the interface to Charles Karney's geodesic library */
-    free( P->geod );
+    svm_free( P->geod );
 
     /* free parameter list elements */
-    free_params (pj_get_ctx(P), P->params, errlev);
-    free (P->def_full);
+    free_params (pj_get_ctx(P), P->host->params, errlev);
+    free (P->host->def_full);
 
+    delete P->host;
+    
     /* free the cs2cs emulation elements */
     proj_destroy (P->axisswap);
     proj_destroy (P->helmert);
@@ -179,8 +222,8 @@ PJ *pj_default_destructor (PJ *P, int errlev) {   /* Destructor */
     proj_destroy (P->hgridshift);
     proj_destroy (P->vgridshift);
 
-    free (static_cast<struct pj_opaque*>(P->opaque));
-    delete P;
+    svm_free (static_cast<struct pj_opaque*>(P->opaque));
+    svm_delete(P);
     return nullptr;
 }
 

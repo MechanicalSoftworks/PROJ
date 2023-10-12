@@ -50,8 +50,8 @@ PJ *PROJECTION(merc) {
     double phits=0.0;
     int is_phits;
 
-    if( (is_phits = pj_param(P->ctx, P->params, "tlat_ts").i) ) {
-        phits = fabs(pj_param(P->ctx, P->params, "rlat_ts").f);
+    if( (is_phits = pj_param(P->ctx, P->host->params, "tlat_ts").i) ) {
+        phits = fabs(pj_param(P->ctx, P->host->params, "rlat_ts").f);
         if (phits >= M_HALFPI)
         {
             proj_log_error(P, _("Invalid value for lat_ts: |lat_ts| should be <= 90°"));

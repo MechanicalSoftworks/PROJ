@@ -57,13 +57,13 @@ static PJ_LP hammer_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
 
 PJ *PROJECTION(hammer) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    if (pj_param(P->ctx, P->params, "tW").i) {
-        Q->w = fabs(pj_param(P->ctx, P->params, "dW").f);
+    if (pj_param(P->ctx, P->host->params, "tW").i) {
+        Q->w = fabs(pj_param(P->ctx, P->host->params, "dW").f);
         if (Q->w <= 0.)
         {
             proj_log_error(P, _("Invalid value for W: it should be > 0"));
@@ -71,8 +71,8 @@ PJ *PROJECTION(hammer) {
         }
     } else
         Q->w = .5;
-    if (pj_param(P->ctx, P->params, "tM").i) {
-        Q->m = fabs(pj_param(P->ctx, P->params, "dM").f);
+    if (pj_param(P->ctx, P->host->params, "tM").i) {
+        Q->m = fabs(pj_param(P->ctx, P->host->params, "dM").f);
         if (Q->m <= 0.)
         {
             proj_log_error(P, _("Invalid value for M: it should be > 0"));

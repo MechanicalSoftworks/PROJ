@@ -14,7 +14,7 @@ pr_list(PJ *P, int not_used) {
 	int l, n = 1, flag = 0;
 
 	(void)putchar('#');
-	for (t = P->params; t; t = t->next)
+	for (t = P->host->params; t; t = t->next)
 		if ((!not_used && t->used) || (not_used && !t->used)) {
 			l = (int)strlen(t->param) + 1;
 			if (n + l > LINE_LEN) {
@@ -37,7 +37,7 @@ pj_pr_list(PJ *P) {
 	char const *s;
 
 	(void)putchar('#');
-	for (s = P->descr; *s ; ++s) {
+	for (s = P->host->descr; *s ; ++s) {
 		(void)putchar(*s);
 		if (*s == '\n')
 			(void)putchar('#');
@@ -71,7 +71,7 @@ char *pj_get_def( PJ *P, int options )
         return nullptr;
     definition[0] = '\0';
 
-    for (t = P->params; t; t = t->next)
+    for (t = P->host->params; t; t = t->next)
     {
         /* skip unused parameters ... mostly appended defaults and stuff */
         if (!t->used)

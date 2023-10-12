@@ -71,13 +71,13 @@ static PJ_LP lagrng_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
 PJ *PROJECTION(lagrng) {
     double sin_phi1;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    if( pj_param(P->ctx, P->params, "tW").i )
-        Q->w = pj_param(P->ctx, P->params, "dW").f;
+    if( pj_param(P->ctx, P->host->params, "tW").i )
+        Q->w = pj_param(P->ctx, P->host->params, "dW").f;
     else
         Q->w = 2;
     if (Q->w <= 0)
@@ -88,7 +88,7 @@ PJ *PROJECTION(lagrng) {
     Q->hw = 0.5 * Q->w;
     Q->rw = 1. / Q->w;
     Q->hrw = 0.5 * Q->rw;
-    sin_phi1 = sin(pj_param(P->ctx, P->params, "rlat_1").f);
+    sin_phi1 = sin(pj_param(P->ctx, P->host->params, "rlat_1").f);
     if (fabs(fabs(sin_phi1) - 1.) < TOL)
     {
         proj_log_error(P, _("Invalid value for lat_1: |lat_1| should be < 90°"));

@@ -83,11 +83,11 @@ void pj_vlog( PJ_CONTEXT *ctx, int level, const PJ* P, const char *fmt, va_list 
     if( msg_buf == nullptr )
         return;
 
-    if( P == nullptr || P->short_name == nullptr )
+    if( P == nullptr || P->host->short_name == nullptr )
         vsnprintf( msg_buf, BUF_SIZE, fmt, args );
     else
     {
-        std::string fmt_with_P_short_name(P->short_name);
+        std::string fmt_with_P_short_name(P->host->short_name);
         fmt_with_P_short_name += ": ";
         fmt_with_P_short_name += fmt;
         vsnprintf( msg_buf, BUF_SIZE, fmt_with_P_short_name.c_str(), args );

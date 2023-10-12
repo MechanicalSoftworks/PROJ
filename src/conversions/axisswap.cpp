@@ -169,7 +169,7 @@ static PJ_COORD reverse_4d(PJ_COORD coo, PJ *P) {
 /***********************************************************************/
 PJ *CONVERSION(axisswap,0) {
 /***********************************************************************/
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     char *s;
     unsigned int i, j, n = 0;
 
@@ -179,7 +179,7 @@ PJ *CONVERSION(axisswap,0) {
 
 
     /* +order and +axis are mutually exclusive */
-    if ( !pj_param_exists(P->params, "order") == !pj_param_exists(P->params, "axis") )
+    if ( !pj_param_exists(P->host->params, "order") == !pj_param_exists(P->host->params, "axis") )
     {
         proj_log_error(P, _("order and axis parameters are mutually exclusive."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MUTUALLY_EXCLUSIVE_ARGS);
@@ -192,9 +192,9 @@ PJ *CONVERSION(axisswap,0) {
     }
 
     /* if the "order" parameter is used */
-    if ( pj_param_exists(P->params, "order") ) {
+    if ( pj_param_exists(P->host->params, "order") ) {
         /* read axis order */
-        char *order = pj_param(P->ctx, P->params, "sorder").s;
+        char *order = pj_param(P->ctx, P->host->params, "sorder").s;
 
         /* check that all characters are valid */
         for (i=0; i<strlen(order); i++)
@@ -221,7 +221,7 @@ PJ *CONVERSION(axisswap,0) {
     }
 
     /* if the "axis" parameter is used */
-    if ( pj_param_exists(P->params, "axis") ) {
+    if ( pj_param_exists(P->host->params, "axis") ) {
         /* parse the classic PROJ.4 enu axis specification */
         for (i=0; i < 3; i++) {
             switch(P->axis[i]) {
@@ -289,7 +289,7 @@ PJ *CONVERSION(axisswap,0) {
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    if (pj_param(P->ctx, P->params, "tangularunits").i) {
+    if (pj_param(P->ctx, P->host->params, "tangularunits").i) {
         P->left  = PJ_IO_UNITS_RADIANS;
         P->right = PJ_IO_UNITS_RADIANS;
     } else {

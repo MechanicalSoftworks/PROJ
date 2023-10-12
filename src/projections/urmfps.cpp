@@ -47,19 +47,19 @@ static PJ *setup(PJ *P) {
 
 
 PJ *PROJECTION(urmfps) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     P->opaque = Q;
 
-    if (!pj_param(P->ctx, P->params, "tn").i )
+    if (!pj_param(P->ctx, P->host->params, "tn").i )
     {
         proj_log_error(P, _("Missing parameter n."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
-    Q->n = pj_param(P->ctx, P->params, "dn").f;
+    Q->n = pj_param(P->ctx, P->host->params, "dn").f;
     if (Q->n <= 0. || Q->n > 1.)
     {
         proj_log_error(P, _("Invalid value for n: it should be in ]0,1] range."));
@@ -71,7 +71,7 @@ PJ *PROJECTION(urmfps) {
 
 
 PJ *PROJECTION(wag1) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;

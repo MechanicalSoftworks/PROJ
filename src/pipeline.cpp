@@ -296,7 +296,7 @@ static PJ *destructor (PJ *P, int errlev) {
     free (pipeline->argv);
     free (pipeline->current_argv);
 
-    delete pipeline;
+    svm_delete(pipeline);
     P->opaque = nullptr;
 
     return pj_default_destructor(P, errlev);
@@ -349,7 +349,7 @@ static void set_ellipsoid(PJ *P) {
 
     /* Break the linked list after the global args */
     attachment = nullptr;
-    for (cur = P->params; cur != nullptr; cur = cur->next)
+    for (cur = P->host->params; cur != nullptr; cur = cur->next)
         /* cur->next will always be non 0 given argv_sentinel presence, */
         /* but this is far from being obvious for a static analyzer */
         if (cur->next != nullptr && strcmp(argv_sentinel, cur->next->param) == 0) {
@@ -419,13 +419,13 @@ PJ *OPERATION(pipeline,0) {
     P->skip_inv_finalize = 1;
 
 
-    P->opaque  = new (std::nothrow) Pipeline();
+    P->opaque  = svm_new<Pipeline>();
     if (nullptr==P->opaque)
         return destructor(P, PROJ_ERR_INVALID_OP /* ENOMEM */);
 
-    argc = (int)argc_params (P->params);
+    argc = (int)argc_params (P->host->params);
     auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    pipeline->argv = argv = argv_params (P->params, argc);
+    pipeline->argv = argv = argv_params (P->host->params, argc);
     if (nullptr==argv)
         return destructor (P, PROJ_ERR_INVALID_OP /* ENOMEM */);
 
@@ -516,8 +516,8 @@ PJ *OPERATION(pipeline,0) {
             }
         }
 
-        bool omit_fwd = pj_param(P->ctx, next_step->params, "bomit_fwd").i != 0;
-        bool omit_inv = pj_param(P->ctx, next_step->params, "bomit_inv").i != 0;
+        bool omit_fwd = pj_param(P->ctx, next_step->host->params, "bomit_fwd").i != 0;
+        bool omit_inv = pj_param(P->ctx, next_step->host->params, "bomit_inv").i != 0;
         pipeline->steps.emplace_back(next_step, omit_fwd, omit_inv);
 
         proj_log_trace (P, "Pipeline at [%p]:    step at [%p] (%s) done", P, next_step, current_argv[0]);
@@ -659,21 +659,21 @@ static PJ_COORD pop(PJ_COORD point, PJ *P) {
 
 
 static PJ *setup_pushpop(PJ *P) {
-    auto pushpop = static_cast<struct PushPop*>(calloc (1, sizeof(struct PushPop)));
+    auto pushpop = static_cast<struct PushPop*>(svm_calloc (1, sizeof(struct PushPop)));
     P->opaque = pushpop;
     if (nullptr==P->opaque)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
-    if (pj_param_exists(P->params, "v_1"))
+    if (pj_param_exists(P->host->params, "v_1"))
         pushpop->v1 = true;
 
-    if (pj_param_exists(P->params, "v_2"))
+    if (pj_param_exists(P->host->params, "v_2"))
         pushpop->v2 = true;
 
-    if (pj_param_exists(P->params, "v_3"))
+    if (pj_param_exists(P->host->params, "v_3"))
         pushpop->v3 = true;
 
-    if (pj_param_exists(P->params, "v_4"))
+    if (pj_param_exists(P->host->params, "v_4"))
         pushpop->v4 = true;
 
     P->left  = PJ_IO_UNITS_WHATEVER;

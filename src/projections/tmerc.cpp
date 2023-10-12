@@ -214,7 +214,7 @@ static PJ *destructor(PJ *P, int errlev) {
     if (nullptr==P->opaque)
         return pj_default_destructor(P, errlev);
 
-    free (static_cast<struct tmerc_data*>(P->opaque)->approx.en);
+    pj_free_en (static_cast<struct tmerc_data*>(P->opaque)->approx.en);
     return pj_default_destructor(P, errlev);
 }
 
@@ -589,7 +589,7 @@ static PJ_LP auto_e_inv (PJ_XY xy, PJ *P) {
 
 static PJ *setup(PJ *P, TMercAlgo eAlg) {
 
-    struct tmerc_data *Q = static_cast<struct tmerc_data*>(calloc (1, sizeof (struct tmerc_data)));
+    struct tmerc_data *Q = static_cast<struct tmerc_data*>(svm_calloc (1, sizeof (struct tmerc_data)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -643,13 +643,13 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
 
 static bool getAlgoFromParams(PJ* P, TMercAlgo& algo)
 {
-    if( pj_param (P->ctx, P->params, "bapprox").i )
+    if( pj_param (P->ctx, P->host->params, "bapprox").i )
     {
         algo = TMercAlgo::EVENDEN_SNYDER;
         return true;
     }
 
-    const char* algStr = pj_param (P->ctx, P->params, "salgo").s;
+    const char* algStr = pj_param (P->ctx, P->host->params, "salgo").s;
     if( algStr )
     {
         if( strcmp(algStr, "evenden_snyder") == 0 )
@@ -736,11 +736,11 @@ PJ *PROJECTION(utm) {
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    P->y0 = pj_param (P->ctx, P->params, "bsouth").i ? 10000000. : 0.;
+    P->y0 = pj_param (P->ctx, P->host->params, "bsouth").i ? 10000000. : 0.;
     P->x0 = 500000.;
-    if (pj_param (P->ctx, P->params, "tzone").i) /* zone input ? */
+    if (pj_param (P->ctx, P->host->params, "tzone").i) /* zone input ? */
     {
-        zone = pj_param(P->ctx, P->params, "izone").i;
+        zone = pj_param(P->ctx, P->host->params, "izone").i;
         if (zone > 0 && zone <= 60)
             --zone;
         else {

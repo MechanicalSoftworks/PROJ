@@ -76,17 +76,17 @@ int pj_ellipsoid (PJ *P) {
     int err = proj_errno_reset (P);
     const char *empty = {""};
 
-    free(P->def_size);
-    P->def_size = nullptr;
-    free(P->def_shape);
-    P->def_shape = nullptr;
-    free(P->def_spherification);
-    P->def_spherification = nullptr;
-    free(P->def_ellps);
-    P->def_ellps = nullptr;
+    free(P->host->def_size);
+    P->host->def_size = nullptr;
+    free(P->host->def_shape);
+    P->host->def_shape = nullptr;
+    free(P->host->def_spherification);
+    P->host->def_spherification = nullptr;
+    free(P->host->def_ellps);
+    P->host->def_ellps = nullptr;
 
     /* Specifying R overrules everything */
-    if (pj_get_param (P->params, "R")) {
+    if (pj_get_param (P->host->params, "R")) {
         if (0 != ellps_size (P))
             return 1;
         pj_calc_ellipsoid_params (P, P->a, 0);
@@ -118,10 +118,10 @@ int pj_ellipsoid (PJ *P) {
     proj_log_trace (P, "pj_ellipsoid - final: a=%.3f f=1/%7.3f, errno=%d",
                         P->a,  P->f!=0? 1/P->f: 0,  proj_errno (P));
     proj_log_trace (P, "pj_ellipsoid - final: %s %s %s %s",
-                        P->def_size?           P->def_size: empty,
-                        P->def_shape?          P->def_shape: empty,
-                        P->def_spherification? P->def_spherification: empty,
-                        P->def_ellps?          P->def_ellps: empty            );
+                        P->host->def_size?           P->host->def_size: empty,
+                        P->host->def_shape?          P->host->def_shape: empty,
+                        P->host->def_spherification? P->host->def_spherification: empty,
+                        P->host->def_ellps?          P->host->def_ellps: empty            );
 
     if (proj_errno (P))
         return 5;
@@ -140,7 +140,7 @@ static int ellps_ellps (PJ *P) {
     int err;
 
     /* Sail home if ellps=xxx is not specified */
-    par = pj_get_param (P->params, "ellps");
+    par = pj_get_param (P->host->params, "ellps");
     if (nullptr==par)
         return 0;
 
@@ -170,8 +170,8 @@ static int ellps_ellps (PJ *P) {
         free(new_params);
         return proj_errno_set (P, PROJ_ERR_OTHER /*ENOMEM*/);
     }
-    paralist* old_params = P->params;
-    P->params = new_params;
+    paralist* old_params = P->host->params;
+    P->host->params = new_params;
 
     {
         PJ empty_PJ;
@@ -180,14 +180,14 @@ static int ellps_ellps (PJ *P) {
     ellps_size (P);
     ellps_shape (P);
 
-    P->params = old_params;
+    P->host->params = old_params;
     free (new_params->next);
     free (new_params);
     if (proj_errno (P))
         return proj_errno (P);
 
     /* Finally update P and sail home */
-    P->def_ellps = pj_strdup(par->param);
+    P->host->def_ellps = pj_strdup(par->param);
     par->used = 1;
 
     return proj_errno_restore (P, err);
@@ -200,17 +200,17 @@ static int ellps_size (PJ *P) {
     paralist *par = nullptr;
     int a_was_set = 0;
 
-    free(P->def_size);
-    P->def_size = nullptr;
+    free(P->host->def_size);
+    P->host->def_size = nullptr;
 
     /* A size parameter *must* be given, but may have been given as ellps prior */
     if (P->a != 0)
         a_was_set = 1;
 
     /* Check which size key is specified */
-    par = pj_get_param (P->params, "R");
+    par = pj_get_param (P->host->params, "R");
     if (nullptr==par)
-        par = pj_get_param (P->params, "a");
+        par = pj_get_param (P->host->params, "a");
     if (nullptr==par)
     {
         if( a_was_set )
@@ -220,7 +220,7 @@ static int ellps_size (PJ *P) {
         return proj_errno_set (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
-    P->def_size = pj_strdup(par->param);
+    P->host->def_size = pj_strdup(par->param);
     par->used = 1;
     P->a = pj_atof (pj_param_value (par));
     if (P->a <= 0)
@@ -252,12 +252,12 @@ static int ellps_shape (PJ *P) {
     par = nullptr;
     len = sizeof (keys) / sizeof (char *);
 
-    free(P->def_shape);
-    P->def_shape = nullptr;
+    free(P->host->def_shape);
+    P->host->def_shape = nullptr;
 
     /* Check which shape key is specified */
     for (i = 0;  i < len;  i++) {
-        par = pj_get_param (P->params, keys[i]);
+        par = pj_get_param (P->host->params, keys[i]);
         if (par)
             break;
     }
@@ -272,7 +272,7 @@ static int ellps_shape (PJ *P) {
         return 0;
     }
 
-    P->def_shape = pj_strdup(par->param);
+    P->host->def_shape = pj_strdup(par->param);
     par->used = 1;
     P->es = P->f = P->b = P->e = P->rf = 0;
 
@@ -374,7 +374,7 @@ static int ellps_spherification (PJ *P) {
 
     /* Check which spherification key is specified */
     for (i = 0;  i < len;  i++) {
-        par = pj_get_param (P->params, keys[i]);
+        par = pj_get_param (P->host->params, keys[i]);
         if (par)
             break;
     }
@@ -384,7 +384,7 @@ static int ellps_spherification (PJ *P) {
         return 0;
 
     /* Store definition */
-    P->def_spherification = pj_strdup(par->param);
+    P->host->def_spherification = pj_strdup(par->param);
     par->used = 1;
 
     switch (i) {
@@ -627,7 +627,7 @@ int pj_ell_set (PJ_CONTEXT *ctx, paralist *pl, double *a, double *es) {
     int ret;
 
     B.ctx = ctx;
-    B.params = pl;
+    B.host->params = pl;
 
     ret = pj_ellipsoid (&B);
     if (ret)

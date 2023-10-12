@@ -212,7 +212,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
     auto pj = pj_new();
     if (pj) {
         pj->ctx = ctx;
-        pj->descr = "ISO-19111 object";
+        pj->host->descr = "ISO-19111 object";
         pj->host->iso_obj = objIn;
         try {
             auto crs = dynamic_cast<const CRS *>(objIn.get());
@@ -232,7 +232,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
                     pj_calc_ellipsoid_params(pj, a, es);
                     assert(pj->geod == nullptr);
                     pj->geod = static_cast<struct geod_geodesic *>(
-                        calloc(1, sizeof(struct geod_geodesic)));
+                        svm_calloc(1, sizeof(struct geod_geodesic)));
                     if (pj->geod) {
                         geod_init(pj->geod, pj->a,
                                   pj->es / (1 + sqrt(pj->one_es)));
@@ -517,7 +517,7 @@ PJ *proj_clone(PJ_CONTEXT *ctx, const PJ *obj) {
         if (!obj->host->alternativeCoordinateOperations.empty()) {
             auto newPj = pj_new();
             if (newPj) {
-                newPj->descr = "Set of coordinate operations";
+                newPj->host->descr = "Set of coordinate operations";
                 newPj->ctx = ctx;
                 for (const auto &altOp : obj->host->alternativeCoordinateOperations) {
                     newPj->host->alternativeCoordinateOperations.emplace_back(
@@ -8756,7 +8756,7 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
             if (!pjNew)
                 return nullptr;
             pjNew->ctx = ctx;
-            pjNew->descr = "Set of coordinate operations";
+            pjNew->host->descr = "Set of coordinate operations";
             pjNew->left = obj->left;
             pjNew->right = obj->right;
 

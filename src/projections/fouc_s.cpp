@@ -55,12 +55,12 @@ static PJ_LP fouc_s_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
 
 PJ *PROJECTION(fouc_s) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->n = pj_param(P->ctx, P->params, "dn").f;
+    Q->n = pj_param(P->ctx, P->host->params, "dn").f;
     if (Q->n < 0. || Q->n > 1.)
     {
         proj_log_error(P, _("Invalid value for n: it should be in [0,1] range."));

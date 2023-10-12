@@ -398,7 +398,7 @@ PJ *TRANSFORMATION(defmodel, 1) {
     P->host->destructor = destructor;
     P->host->reassign_context = reassign_context;
 
-    const char *model = pj_param(P->ctx, P->params, "smodel").s;
+    const char *model = pj_param(P->ctx, P->host->params, "smodel").s;
     if (!model) {
         proj_log_error(P, _("+model= should be specified."));
         return destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);

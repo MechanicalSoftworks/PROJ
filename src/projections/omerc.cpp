@@ -126,34 +126,34 @@ PJ *PROJECTION(omerc) {
         gamma0, lamc=0, lam1=0, lam2=0, phi1=0, phi2=0, alpha_c=0;
     int alp, gam, no_off = 0;
 
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->no_rot = pj_param(P->ctx, P->params, "bno_rot").i;
-        if ((alp = pj_param(P->ctx, P->params, "talpha").i) != 0)
-            alpha_c = pj_param(P->ctx, P->params, "ralpha").f;
-        if ((gam = pj_param(P->ctx, P->params, "tgamma").i) != 0)
-            gamma = pj_param(P->ctx, P->params, "rgamma").f;
+    Q->no_rot = pj_param(P->ctx, P->host->params, "bno_rot").i;
+        if ((alp = pj_param(P->ctx, P->host->params, "talpha").i) != 0)
+            alpha_c = pj_param(P->ctx, P->host->params, "ralpha").f;
+        if ((gam = pj_param(P->ctx, P->host->params, "tgamma").i) != 0)
+            gamma = pj_param(P->ctx, P->host->params, "rgamma").f;
     if (alp || gam) {
-        lamc    = pj_param(P->ctx, P->params, "rlonc").f;
+        lamc    = pj_param(P->ctx, P->host->params, "rlonc").f;
         no_off =
                     /* For libproj4 compatibility */
-                    pj_param(P->ctx, P->params, "tno_off").i
+                    pj_param(P->ctx, P->host->params, "tno_off").i
                     /* for backward compatibility */
-                    || pj_param(P->ctx, P->params, "tno_uoff").i;
+                    || pj_param(P->ctx, P->host->params, "tno_uoff").i;
         if( no_off )
         {
             /* Mark the parameter as used, so that the pj_get_def() return them */
-            pj_param(P->ctx, P->params, "sno_uoff");
-            pj_param(P->ctx, P->params, "sno_off");
+            pj_param(P->ctx, P->host->params, "sno_uoff");
+            pj_param(P->ctx, P->host->params, "sno_off");
         }
     } else {
-        lam1 = pj_param(P->ctx, P->params, "rlon_1").f;
-        phi1 = pj_param(P->ctx, P->params, "rlat_1").f;
-        lam2 = pj_param(P->ctx, P->params, "rlon_2").f;
-        phi2 = pj_param(P->ctx, P->params, "rlat_2").f;
+        lam1 = pj_param(P->ctx, P->host->params, "rlon_1").f;
+        phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+        lam2 = pj_param(P->ctx, P->host->params, "rlon_2").f;
+        phi2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
         con = fabs(phi1);
 
         if (fabs(phi1) > M_HALFPI - TOL)

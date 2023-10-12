@@ -178,7 +178,7 @@ PJ *PROJECTION(ob_tran) {
     ARGS args;
     PJ *R; /* projection to rotate */
 
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
@@ -186,14 +186,14 @@ PJ *PROJECTION(ob_tran) {
     P->host->destructor = destructor;
 
     /* get name of projection to be translated */
-    if (pj_param(P->ctx, P->params, "so_proj").s == nullptr)
+    if (pj_param(P->ctx, P->host->params, "so_proj").s == nullptr)
     {
         proj_log_error(P, _("Missing parameter: o_proj"));
         return destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* Create the target projection object to rotate */
-    args = ob_tran_target_params (P->params);
+    args = ob_tran_target_params (P->host->params);
     /* avoid endless recursion */
     if (args.argv == nullptr ) {
         proj_log_error(P, _("Failed to find projection to be rotated"));
@@ -209,12 +209,12 @@ PJ *PROJECTION(ob_tran) {
     }
     Q->link = R;
 
-    if (pj_param(P->ctx, P->params, "to_alpha").i) {
+    if (pj_param(P->ctx, P->host->params, "to_alpha").i) {
         double lamc, phic, alpha;
 
-        lamc    = pj_param(P->ctx, P->params, "ro_lon_c").f;
-        phic    = pj_param(P->ctx, P->params, "ro_lat_c").f;
-        alpha   = pj_param(P->ctx, P->params, "ro_alpha").f;
+        lamc    = pj_param(P->ctx, P->host->params, "ro_lon_c").f;
+        phic    = pj_param(P->ctx, P->host->params, "ro_lat_c").f;
+        alpha   = pj_param(P->ctx, P->host->params, "ro_alpha").f;
 
         if (fabs(fabs(phic) - M_HALFPI) <= TOL)
         {
@@ -224,16 +224,16 @@ PJ *PROJECTION(ob_tran) {
 
         Q->lamp = lamc + aatan2(-cos(alpha), -sin(alpha) * sin(phic));
         phip = aasin(P->ctx,cos(phic) * sin(alpha));
-    } else if (pj_param(P->ctx, P->params, "to_lat_p").i) { /* specified new pole */
-        Q->lamp = pj_param(P->ctx, P->params, "ro_lon_p").f;
-        phip = pj_param(P->ctx, P->params, "ro_lat_p").f;
+    } else if (pj_param(P->ctx, P->host->params, "to_lat_p").i) { /* specified new pole */
+        Q->lamp = pj_param(P->ctx, P->host->params, "ro_lon_p").f;
+        phip = pj_param(P->ctx, P->host->params, "ro_lat_p").f;
     } else { /* specified new "equator" points */
         double lam1, lam2, phi1, phi2, con;
 
-        lam1 = pj_param(P->ctx, P->params, "ro_lon_1").f;
-        phi1 = pj_param(P->ctx, P->params, "ro_lat_1").f;
-        lam2 = pj_param(P->ctx, P->params, "ro_lon_2").f;
-        phi2 = pj_param(P->ctx, P->params, "ro_lat_2").f;
+        lam1 = pj_param(P->ctx, P->host->params, "ro_lon_1").f;
+        phi1 = pj_param(P->ctx, P->host->params, "ro_lat_1").f;
+        lam2 = pj_param(P->ctx, P->host->params, "ro_lon_2").f;
+        phi2 = pj_param(P->ctx, P->host->params, "ro_lat_2").f;
         con = fabs(phi1);
 
         if (fabs(phi1) > M_HALFPI - TOL)

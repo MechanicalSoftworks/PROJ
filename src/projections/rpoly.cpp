@@ -44,12 +44,12 @@ static PJ_XY rpoly_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 
 
 PJ *PROJECTION(rpoly) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->phi1 = fabs(pj_param(P->ctx, P->params, "rlat_ts").f);
+    Q->phi1 = fabs(pj_param(P->ctx, P->host->params, "rlat_ts").f);
     Q->mode = Q->phi1 > EPS;
     if (Q->mode) {
         Q->fxb = 0.5 * sin(Q->phi1);

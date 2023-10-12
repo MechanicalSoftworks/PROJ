@@ -187,7 +187,7 @@ static PJ *setup(PJ *P) {
 
 
 PJ *PROJECTION(aitoff) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -198,14 +198,14 @@ PJ *PROJECTION(aitoff) {
 
 
 PJ *PROJECTION(wintri) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
     Q->mode = WINKEL_TRIPEL;
-    if (pj_param(P->ctx, P->params, "tlat_1").i) {
-        if ((Q->cosphi1 = cos(pj_param(P->ctx, P->params, "rlat_1").f)) == 0.)
+    if (pj_param(P->ctx, P->host->params, "tlat_1").i) {
+        if ((Q->cosphi1 = cos(pj_param(P->ctx, P->host->params, "rlat_1").f)) == 0.)
         {
             proj_log_error(P, _("Invalid value for lat_1: |lat_1| should be < 90°"));
             return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);

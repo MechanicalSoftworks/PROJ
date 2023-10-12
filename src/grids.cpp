@@ -2798,7 +2798,7 @@ void GenericShiftGridSet::reassign_context(PJ_CONTEXT *ctx) {
 ListOfGenericGrids pj_generic_grid_init(PJ *P, const char *gridkey) {
     std::string key("s");
     key += gridkey;
-    const char *gridnames = pj_param(P->ctx, P->params, key.c_str()).s;
+    const char *gridnames = pj_param(P->ctx, P->host->params, key.c_str()).s;
     if (gridnames == nullptr)
         return {};
 
@@ -2893,7 +2893,7 @@ ListOfHGrids pj_hgrid_init(PJ *P, const char *gridkey) {
 
     std::string key("s");
     key += gridkey;
-    const char *grids = pj_param(P->ctx, P->params, key.c_str()).s;
+    const char *grids = pj_param(P->ctx, P->host->params, key.c_str()).s;
     if (grids == nullptr)
         return {};
 
@@ -3351,7 +3351,7 @@ ListOfVGrids pj_vgrid_init(PJ *P, const char *gridkey) {
 
     std::string key("s");
     key += gridkey;
-    const char *gridnames = pj_param(P->ctx, P->params, key.c_str()).s;
+    const char *gridnames = pj_param(P->ctx, P->host->params, key.c_str()).s;
     if (gridnames == nullptr)
         return {};
 

@@ -103,7 +103,7 @@ static PJ_XY chamb_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 PJ *PROJECTION(chamb) {
     int i, j;
     char line[10];
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -111,9 +111,9 @@ PJ *PROJECTION(chamb) {
 
     for (i = 0; i < 3; ++i) { /* get control point locations */
         (void)sprintf(line, "rlat_%d", i+1);
-        Q->c[i].phi = pj_param(P->ctx, P->params, line).f;
+        Q->c[i].phi = pj_param(P->ctx, P->host->params, line).f;
         (void)sprintf(line, "rlon_%d", i+1);
-        Q->c[i].lam = pj_param(P->ctx, P->params, line).f;
+        Q->c[i].lam = pj_param(P->ctx, P->host->params, line).f;
         Q->c[i].lam = adjlon(Q->c[i].lam - P->lam0);
         Q->c[i].cosphi = cos(Q->c[i].phi);
         Q->c[i].sinphi = sin(Q->c[i].phi);

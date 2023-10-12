@@ -52,7 +52,7 @@ static PJ_LP ocea_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 PJ *PROJECTION(ocea) {
     double phi_1, phi_2, lam_1, lam_2, lonz, alpha;
 
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -61,13 +61,13 @@ PJ *PROJECTION(ocea) {
     Q->rtk = P->k0;
     double lam_p, phi_p;
     /*If the keyword "alpha" is found in the sentence then use 1point+1azimuth*/
-    if ( pj_param(P->ctx, P->params, "talpha").i) {
+    if ( pj_param(P->ctx, P->host->params, "talpha").i) {
         /*Define Pole of oblique transformation from 1 point & 1 azimuth*/
         // ERO: I've added M_PI so that the alpha is the angle from point 1 to point 2
         // from the North in a clockwise direction
         // (to be consistent with omerc behavior)
-        alpha   = M_PI + pj_param(P->ctx, P->params, "ralpha").f;
-        lonz = pj_param(P->ctx, P->params, "rlonc").f;
+        alpha   = M_PI + pj_param(P->ctx, P->host->params, "ralpha").f;
+        lonz = pj_param(P->ctx, P->host->params, "rlonc").f;
         /*Equation 9-8 page 80 (http://pubs.usgs.gov/pp/1395/report.pdf)*/
         // Actually slightliy modified to use atan2(), as it is suggested by
         // Snyder for equation 9-1, but this is not mentioned here
@@ -77,10 +77,10 @@ PJ *PROJECTION(ocea) {
     /*If the keyword "alpha" is NOT found in the sentence then use 2points*/
     } else {
         /*Define Pole of oblique transformation from 2 points*/
-        phi_1 = pj_param(P->ctx, P->params, "rlat_1").f;
-        phi_2 = pj_param(P->ctx, P->params, "rlat_2").f;
-        lam_1 = pj_param(P->ctx, P->params, "rlon_1").f;
-        lam_2 = pj_param(P->ctx, P->params, "rlon_2").f;
+        phi_1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+        phi_2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
+        lam_1 = pj_param(P->ctx, P->host->params, "rlon_1").f;
+        lam_2 = pj_param(P->ctx, P->host->params, "rlon_2").f;
         /*Equation 9-1 page 80 (http://pubs.usgs.gov/pp/1395/report.pdf)*/
         lam_p = atan2(cos(phi_1) * sin(phi_2) * cos(lam_1) -
             sin(phi_1) * cos(phi_2) * cos(lam_2),

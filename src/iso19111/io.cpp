@@ -10763,7 +10763,7 @@ PROJStringParser::createFromPROJString(const std::string &projString) {
                 // We recognize it in our CRS parsing code
                 recognizedByPROJ = true;
             } else {
-                for (auto cur = pj->params; cur; cur = cur->next) {
+                for (auto cur = pj->host->params; cur; cur = cur->next) {
                     const char *equal = strchr(cur->param, '=');
                     if (equal && static_cast<size_t>(equal - cur->param) ==
                                      kv.key.size()) {

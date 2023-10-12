@@ -494,8 +494,8 @@ int main(int argc, char **argv) {
     }
 
     // Ugly hack. See https://github.com/OSGeo/PROJ/issues/1782
-    if( Proj->right == PJ_IO_UNITS_WHATEVER && Proj->descr &&
-        strncmp(Proj->descr, "General Oblique Transformation",
+    if( Proj->right == PJ_IO_UNITS_WHATEVER && Proj->host->descr &&
+        strncmp(Proj->host->descr, "General Oblique Transformation",
                 strlen("General Oblique Transformation")) == 0 )
     {
         Proj->right = PJ_IO_UNITS_PROJECTED;

@@ -480,7 +480,7 @@ static PJ_COORD helmert_reverse_4d (PJ_COORD point, PJ *P) {
 
 
 static PJ* init_helmert_six_parameters(PJ* P) {
-    struct pj_opaque_helmert *Q = static_cast<struct pj_opaque_helmert*>(calloc (1, sizeof (struct pj_opaque_helmert)));
+    struct pj_opaque_helmert *Q = static_cast<struct pj_opaque_helmert*>(svm_calloc (1, sizeof (struct pj_opaque_helmert)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
@@ -490,27 +490,27 @@ static PJ* init_helmert_six_parameters(PJ* P) {
     P->right = PJ_IO_UNITS_CARTESIAN;
 
     /* Translations */
-    if (pj_param (P->ctx, P->params, "tx").i)
-        Q->xyz_0.x = pj_param (P->ctx, P->params, "dx").f;
+    if (pj_param (P->ctx, P->host->params, "tx").i)
+        Q->xyz_0.x = pj_param (P->ctx, P->host->params, "dx").f;
 
-    if (pj_param (P->ctx, P->params, "ty").i)
-        Q->xyz_0.y = pj_param (P->ctx, P->params, "dy").f;
+    if (pj_param (P->ctx, P->host->params, "ty").i)
+        Q->xyz_0.y = pj_param (P->ctx, P->host->params, "dy").f;
 
-    if (pj_param (P->ctx, P->params, "tz").i)
-        Q->xyz_0.z = pj_param (P->ctx, P->params, "dz").f;
+    if (pj_param (P->ctx, P->host->params, "tz").i)
+        Q->xyz_0.z = pj_param (P->ctx, P->host->params, "dz").f;
 
     /* Rotations */
-    if (pj_param (P->ctx, P->params, "trx").i)
-        Q->opk_0.o = pj_param (P->ctx, P->params, "drx").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "trx").i)
+        Q->opk_0.o = pj_param (P->ctx, P->host->params, "drx").f * ARCSEC_TO_RAD;
 
-    if (pj_param (P->ctx, P->params, "try").i)
-        Q->opk_0.p = pj_param (P->ctx, P->params, "dry").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "try").i)
+        Q->opk_0.p = pj_param (P->ctx, P->host->params, "dry").f * ARCSEC_TO_RAD;
 
-    if (pj_param (P->ctx, P->params, "trz").i)
-        Q->opk_0.k = pj_param (P->ctx, P->params, "drz").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "trz").i)
+        Q->opk_0.k = pj_param (P->ctx, P->host->params, "drz").f * ARCSEC_TO_RAD;
 
     /* Use small angle approximations? */
-    if (pj_param (P->ctx, P->params, "bexact").i)
+    if (pj_param (P->ctx, P->host->params, "bexact").i)
         Q->exact = 1;
 
     return P;
@@ -524,7 +524,7 @@ static PJ* read_convention(PJ* P) {
     /* In case there are rotational terms, we require an explicit convention
      * to be provided. */
     if (!Q->no_rotation) {
-        const char* convention = pj_param (P->ctx, P->params, "sconvention").s;
+        const char* convention = pj_param (P->ctx, P->host->params, "sconvention").s;
         if( !convention ) {
             proj_log_error (P, _("helmert: missing 'convention' argument"));
             return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
@@ -542,7 +542,7 @@ static PJ* read_convention(PJ* P) {
 
         /* historically towgs84 in PROJ has always been using position_vector
          * convention. Accepting coordinate_frame would be confusing. */
-        if (pj_param_exists (P->params, "towgs84")) {
+        if (pj_param_exists (P->host->params, "towgs84")) {
             if( !Q->is_position_vector ) {
                 proj_log_error (P, _("helmert: towgs84 should only be used with "
                                 "convention=position_vector"));
@@ -566,7 +566,7 @@ PJ *TRANSFORMATION(helmert, 0) {
     }
 
     /* In the 2D case, the coordinates are projected */
-    if (pj_param_exists (P->params, "theta")) {
+    if (pj_param_exists (P->host->params, "theta")) {
         P->left  = PJ_IO_UNITS_PROJECTED;
         P->right = PJ_IO_UNITS_PROJECTED;
         P->host->fwd    = helmert_forward;
@@ -581,7 +581,7 @@ PJ *TRANSFORMATION(helmert, 0) {
     Q = (struct pj_opaque_helmert *)P->opaque;
 
     /* Detect obsolete transpose flag and error out if found */
-    if (pj_param (P->ctx, P->params, "ttranspose").i) {
+    if (pj_param (P->ctx, P->host->params, "ttranspose").i) {
         proj_log_error (P, _("helmert: 'transpose' argument is no longer valid. "
                         "Use convention=position_vector/coordinate_frame"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
@@ -590,7 +590,7 @@ PJ *TRANSFORMATION(helmert, 0) {
     /* Support the classic PROJ towgs84 parameter, but allow later overrides.*/
     /* Note that if towgs84 is specified, the datum_params array is set up   */
     /* for us automagically by the pj_datum_set call in pj_init_ctx */
-    if (pj_param_exists (P->params, "towgs84")) {
+    if (pj_param_exists (P->host->params, "towgs84")) {
         Q->xyz_0.x = P->datum_params[0];
         Q->xyz_0.y = P->datum_params[1];
         Q->xyz_0.z = P->datum_params[2];
@@ -606,21 +606,21 @@ PJ *TRANSFORMATION(helmert, 0) {
             Q->scale_0 = (P->datum_params[6] - 1) * 1e6;
     }
 
-    if (pj_param (P->ctx, P->params, "ttheta").i) {
-        Q->theta_0 = pj_param (P->ctx, P->params, "dtheta").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "ttheta").i) {
+        Q->theta_0 = pj_param (P->ctx, P->host->params, "dtheta").f * ARCSEC_TO_RAD;
         Q->fourparam = 1;
         Q->scale_0 = 1.0; /* default scale for the 4-param shift */
     }
 
     /* Scale */
-    if (pj_param (P->ctx, P->params, "ts").i) {
-        Q->scale_0 = pj_param (P->ctx, P->params, "ds").f;
+    if (pj_param (P->ctx, P->host->params, "ts").i) {
+        Q->scale_0 = pj_param (P->ctx, P->host->params, "ds").f;
         if( Q->scale_0 <= -1.0e6 )
         {
             proj_log_error (P, _("helmert: invalid value for s."));
             return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
         }
-        if (pj_param (P->ctx, P->params, "ttheta").i && Q->scale_0 == 0.0)
+        if (pj_param (P->ctx, P->host->params, "ttheta").i && Q->scale_0 == 0.0)
         {
             proj_log_error (P, _("helmert: invalid value for s."));
             return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
@@ -628,36 +628,36 @@ PJ *TRANSFORMATION(helmert, 0) {
     }
 
     /* Translation rates */
-    if (pj_param(P->ctx, P->params, "tdx").i)
-        Q->dxyz.x = pj_param (P->ctx, P->params, "ddx").f;
+    if (pj_param(P->ctx, P->host->params, "tdx").i)
+        Q->dxyz.x = pj_param (P->ctx, P->host->params, "ddx").f;
 
-    if (pj_param(P->ctx, P->params, "tdy").i)
-        Q->dxyz.y = pj_param (P->ctx, P->params, "ddy").f;
+    if (pj_param(P->ctx, P->host->params, "tdy").i)
+        Q->dxyz.y = pj_param (P->ctx, P->host->params, "ddy").f;
 
-    if (pj_param(P->ctx, P->params, "tdz").i)
-        Q->dxyz.z = pj_param (P->ctx, P->params, "ddz").f;
+    if (pj_param(P->ctx, P->host->params, "tdz").i)
+        Q->dxyz.z = pj_param (P->ctx, P->host->params, "ddz").f;
 
     /* Rotations rates */
-    if (pj_param (P->ctx, P->params, "tdrx").i)
-        Q->dopk.o = pj_param (P->ctx, P->params, "ddrx").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "tdrx").i)
+        Q->dopk.o = pj_param (P->ctx, P->host->params, "ddrx").f * ARCSEC_TO_RAD;
 
-    if (pj_param (P->ctx, P->params, "tdry").i)
-        Q->dopk.p = pj_param (P->ctx, P->params, "ddry").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "tdry").i)
+        Q->dopk.p = pj_param (P->ctx, P->host->params, "ddry").f * ARCSEC_TO_RAD;
 
-    if (pj_param (P->ctx, P->params, "tdrz").i)
-        Q->dopk.k = pj_param (P->ctx, P->params, "ddrz").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "tdrz").i)
+        Q->dopk.k = pj_param (P->ctx, P->host->params, "ddrz").f * ARCSEC_TO_RAD;
 
-    if (pj_param (P->ctx, P->params, "tdtheta").i)
-        Q->dtheta = pj_param (P->ctx, P->params, "ddtheta").f * ARCSEC_TO_RAD;
+    if (pj_param (P->ctx, P->host->params, "tdtheta").i)
+        Q->dtheta = pj_param (P->ctx, P->host->params, "ddtheta").f * ARCSEC_TO_RAD;
 
     /* Scale rate */
-    if (pj_param (P->ctx, P->params, "tds").i)
-        Q->dscale = pj_param (P->ctx, P->params, "dds").f;
+    if (pj_param (P->ctx, P->host->params, "tds").i)
+        Q->dscale = pj_param (P->ctx, P->host->params, "dds").f;
 
 
     /* Epoch */
-    if (pj_param(P->ctx, P->params, "tt_epoch").i)
-        Q->t_epoch = pj_param (P->ctx, P->params, "dt_epoch").f;
+    if (pj_param(P->ctx, P->host->params, "tt_epoch").i)
+        Q->t_epoch = pj_param (P->ctx, P->host->params, "dt_epoch").f;
 
     Q->xyz    =  Q->xyz_0;
     Q->opk    =  Q->opk_0;
@@ -711,8 +711,8 @@ PJ *TRANSFORMATION(molobadekas, 0) {
     Q = (struct pj_opaque_helmert *)P->opaque;
 
     /* Scale */
-    if (pj_param (P->ctx, P->params, "ts").i) {
-        Q->scale_0 = pj_param (P->ctx, P->params, "ds").f;
+    if (pj_param (P->ctx, P->host->params, "ts").i) {
+        Q->scale_0 = pj_param (P->ctx, P->host->params, "ds").f;
     }
 
     Q->opk    =  Q->opk_0;
@@ -723,14 +723,14 @@ PJ *TRANSFORMATION(molobadekas, 0) {
     }
 
     /* Reference point */
-    if (pj_param (P->ctx, P->params, "tpx").i)
-        Q->refp.x = pj_param (P->ctx, P->params, "dpx").f;
+    if (pj_param (P->ctx, P->host->params, "tpx").i)
+        Q->refp.x = pj_param (P->ctx, P->host->params, "dpx").f;
 
-    if (pj_param (P->ctx, P->params, "tpy").i)
-        Q->refp.y = pj_param (P->ctx, P->params, "dpy").f;
+    if (pj_param (P->ctx, P->host->params, "tpy").i)
+        Q->refp.y = pj_param (P->ctx, P->host->params, "dpy").f;
 
-    if (pj_param (P->ctx, P->params, "tpz").i)
-        Q->refp.z = pj_param (P->ctx, P->params, "dpz").f;
+    if (pj_param (P->ctx, P->host->params, "tpz").i)
+        Q->refp.z = pj_param (P->ctx, P->host->params, "dpz").f;
 
 
     /* Let's help with debugging */
