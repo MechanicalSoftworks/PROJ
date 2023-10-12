@@ -61,7 +61,7 @@ static PJ_LPZ sch_inverse3d(PJ_XYZ xyz, PJ *P) {
     lpz.lam = xyz.x * (P->a / Q->rcurv);
     lpz.phi = xyz.y * (P->a / Q->rcurv);
     lpz.z = xyz.z;
-    xyz  =  Q->cart_sph->fwd3d (lpz, Q->cart_sph);
+    xyz  =  Q->cart_sph->host->fwd3d (lpz, Q->cart_sph);
 
     /* Apply rotation */
     xyz = {
@@ -76,14 +76,14 @@ static PJ_LPZ sch_inverse3d(PJ_XYZ xyz, PJ *P) {
     xyz.z += Q->xyzoff[2];
 
     /* Convert geocentric coordinates to lat lon */
-    return Q->cart->inv3d (xyz, Q->cart);
+    return Q->cart->host->inv3d (xyz, Q->cart);
 }
 
 static PJ_XYZ sch_forward3d(PJ_LPZ lpz, PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     /* Convert lat lon to geocentric coordinates */
-    PJ_XYZ xyz  =  Q->cart->fwd3d (lpz, Q->cart);
+    PJ_XYZ xyz  =  Q->cart->host->fwd3d (lpz, Q->cart);
 
     /* Adjust for offset */
     xyz.x -= Q->xyzoff[0];
@@ -98,7 +98,7 @@ static PJ_XYZ sch_forward3d(PJ_LPZ lpz, PJ *P) {
     };
 
     /* Convert to local lat,lon */
-    lpz  =  Q->cart_sph->inv3d (xyz, Q->cart_sph);
+    lpz  =  Q->cart_sph->host->inv3d (xyz, Q->cart_sph);
 
     /* Scale by radius */
     xyz.x = lpz.lam * (Q->rcurv / P->a);
@@ -116,9 +116,9 @@ static PJ *destructor (PJ *P, int errlev) {
     if( Q )
     {
         if (Q->cart)
-            Q->cart->destructor (Q->cart, errlev);
+            Q->cart->host->destructor (Q->cart, errlev);
         if (Q->cart_sph)
-            Q->cart_sph->destructor (Q->cart_sph, errlev);
+            Q->cart_sph->host->destructor (Q->cart_sph, errlev);
     }
 
     return pj_default_destructor(P, errlev);
@@ -172,13 +172,13 @@ static PJ *setup(PJ *P) { /* general initialization */
     lpz.lam = Q->plon;
     lpz.phi = Q->plat;
     lpz.z = Q->h0;
-    PJ_XYZ xyz  =  Q->cart->fwd3d (lpz, Q->cart);
+    PJ_XYZ xyz  =  Q->cart->host->fwd3d (lpz, Q->cart);
     Q->xyzoff[0] = xyz.x - (Q->rcurv) * clt * clo;
     Q->xyzoff[1] = xyz.y- (Q->rcurv) * clt * slo;
     Q->xyzoff[2] = xyz.z - (Q->rcurv) * slt;
 
-    P->fwd3d = sch_forward3d;
-    P->inv3d = sch_inverse3d;
+    P->host->fwd3d = sch_forward3d;
+    P->host->inv3d = sch_inverse3d;
     return P;
 }
 
@@ -188,7 +188,7 @@ PJ *PROJECTION(sch) {
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->h0 = 0.0;
 

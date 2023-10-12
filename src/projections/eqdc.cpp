@@ -81,7 +81,7 @@ PJ *PROJECTION(eqdc) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->phi1 = pj_param(P->ctx, P->params, "rlat_1").f;
     Q->phi2 = pj_param(P->ctx, P->params, "rlat_2").f;
@@ -142,8 +142,8 @@ PJ *PROJECTION(eqdc) {
         Q->rho0 = Q->c - P->phi0;
     }
 
-    P->inv = eqdc_e_inverse;
-    P->fwd = eqdc_e_forward;
+    P->host->inv = eqdc_e_inverse;
+    P->host->fwd = eqdc_e_forward;
 
     return P;
 }

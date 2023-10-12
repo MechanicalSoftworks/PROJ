@@ -126,8 +126,8 @@ PJ *PROJECTION(nzmg) {
     P->x0 = 2510000.;
     P->y0 = 6023150.;
 
-    P->inv = nzmg_e_inverse;
-    P->fwd = nzmg_e_forward;
+    P->host->inv = nzmg_e_inverse;
+    P->host->fwd = nzmg_e_forward;
 
 
     return P;

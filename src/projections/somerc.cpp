@@ -90,7 +90,7 @@ PJ *PROJECTION(somerc) {
         log (tan (M_FORTPI + 0.5 * P->phi0)) - Q->hlf_e *
         log ((1. + sp) / (1. - sp)));
     Q->kR = P->k0 * sqrt(P->one_es) / (1. - sp * sp);
-    P->inv = somerc_e_inverse;
-    P->fwd = somerc_e_forward;
+    P->host->inv = somerc_e_inverse;
+    P->host->fwd = somerc_e_forward;
     return P;
 }

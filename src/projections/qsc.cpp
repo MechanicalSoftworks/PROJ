@@ -382,8 +382,8 @@ PJ *PROJECTION(qsc) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    P->inv = qsc_e_inverse;
-    P->fwd = qsc_e_forward;
+    P->host->inv = qsc_e_inverse;
+    P->host->fwd = qsc_e_forward;
     /* Determine the cube face from the center of projection. */
     if (P->phi0 >= M_HALFPI - M_FORTPI / 2.0) {
         Q->face = FACE_TOP;

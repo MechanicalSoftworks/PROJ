@@ -147,9 +147,9 @@ PJ *PROJECTION(eqearth) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
-    P->fwd = eqearth_e_forward;
-    P->inv = eqearth_e_inverse;
+    P->host->destructor = destructor;
+    P->host->fwd = eqearth_e_forward;
+    P->host->inv = eqearth_e_inverse;
     Q->rqda = 1.0;
 
     /* Ellipsoidal case */

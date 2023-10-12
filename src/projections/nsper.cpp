@@ -174,8 +174,8 @@ static PJ *setup(PJ *P) {
     Q->rp = 1. / Q->p;
     Q->h = 1. / Q->pn1;
     Q->pfact = (Q->p + 1.) * Q->h;
-    P->inv = nsper_s_inverse;
-    P->fwd = nsper_s_forward;
+    P->host->inv = nsper_s_inverse;
+    P->host->fwd = nsper_s_forward;
     P->es = 0.;
 
     return P;

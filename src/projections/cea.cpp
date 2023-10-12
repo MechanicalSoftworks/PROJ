@@ -77,7 +77,7 @@ PJ *PROJECTION(cea) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
 
     if (pj_param(P->ctx, P->params, "tlat_ts").i) {
@@ -98,11 +98,11 @@ PJ *PROJECTION(cea) {
             return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
         Q->qp = pj_qsfn(1., P->e, P->one_es);
-        P->inv = cea_e_inverse;
-        P->fwd = cea_e_forward;
+        P->host->inv = cea_e_inverse;
+        P->host->fwd = cea_e_forward;
     } else {
-        P->inv = cea_s_inverse;
-        P->fwd = cea_s_forward;
+        P->host->inv = cea_s_inverse;
+        P->host->fwd = cea_s_forward;
     }
 
     return P;

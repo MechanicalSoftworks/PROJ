@@ -192,18 +192,18 @@ PJ_XY pj_fwd(PJ_LP lp, PJ *P) {
         return proj_coord_error ().xy;
 
     /* Do the transformation, using the lowest dimensional transformer available */
-    if (P->fwd)
+    if (P->host->fwd)
     {
-        const auto xy = P->fwd(coo.lp, P);
+        const auto xy = P->host->fwd(coo.lp, P);
         coo.xy = xy;
     }
-    else if (P->fwd3d)
+    else if (P->host->fwd3d)
     {
-        const auto xyz = P->fwd3d (coo.lpz, P);
+        const auto xyz = P->host->fwd3d (coo.lpz, P);
         coo.xyz = xyz;
     }
-    else if (P->fwd4d)
-        coo = P->fwd4d (coo, P);
+    else if (P->host->fwd4d)
+        coo = P->host->fwd4d (coo, P);
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
         return proj_coord_error ().xy;
@@ -232,16 +232,16 @@ PJ_XYZ pj_fwd3d(PJ_LPZ lpz, PJ *P) {
         return proj_coord_error ().xyz;
 
     /* Do the transformation, using the lowest dimensional transformer feasible */
-    if (P->fwd3d)
+    if (P->host->fwd3d)
     {
-        const auto xyz = P->fwd3d(coo.lpz, P);
+        const auto xyz = P->host->fwd3d(coo.lpz, P);
         coo.xyz = xyz;
     }
-    else if (P->fwd4d)
-        coo = P->fwd4d (coo, P);
-    else if (P->fwd)
+    else if (P->host->fwd4d)
+        coo = P->host->fwd4d (coo, P);
+    else if (P->host->fwd)
     {
-        const auto xy = P->fwd (coo.lp, P);
+        const auto xy = P->host->fwd (coo.lp, P);
         coo.xy = xy;
     }
     else {
@@ -270,16 +270,16 @@ PJ_COORD pj_fwd4d (PJ_COORD coo, PJ *P) {
         return proj_coord_error ();
 
     /* Call the highest dimensional converter available */
-    if (P->fwd4d)
-        coo = P->fwd4d (coo, P);
-    else if (P->fwd3d)
+    if (P->host->fwd4d)
+        coo = P->host->fwd4d (coo, P);
+    else if (P->host->fwd3d)
     {
-        const auto xyz = P->fwd3d (coo.lpz, P);
+        const auto xyz = P->host->fwd3d (coo.lpz, P);
         coo.xyz  = xyz;
     }
-    else if (P->fwd)
+    else if (P->host->fwd)
     {
-        const auto xy = P->fwd (coo.lp, P);
+        const auto xy = P->host->fwd (coo.lp, P);
         coo.xy  = xy;
     }
     else {

@@ -62,15 +62,15 @@ PJ *PROJECTION(merc) {
     if (P->es != 0.0) { /* ellipsoid */
         if (is_phits)
             P->k0 = pj_msfn(sin(phits), cos(phits), P->es);
-        P->inv = merc_e_inverse;
-        P->fwd = merc_e_forward;
+        P->host->inv = merc_e_inverse;
+        P->host->fwd = merc_e_forward;
     }
 
     else { /* sphere */
         if (is_phits)
             P->k0 = cos(phits);
-        P->inv = merc_s_inverse;
-        P->fwd = merc_s_forward;
+        P->host->inv = merc_s_inverse;
+        P->host->fwd = merc_s_forward;
     }
 
     return P;
@@ -81,7 +81,7 @@ PJ *PROJECTION(webmerc) {
     /* Overriding k_0 with fixed parameter */
     P->k0 = 1.0;
 
-    P->inv = merc_s_inverse;
-    P->fwd = merc_s_forward;
+    P->host->inv = merc_s_inverse;
+    P->host->fwd = merc_s_forward;
     return P;
 }

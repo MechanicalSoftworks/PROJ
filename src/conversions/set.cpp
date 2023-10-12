@@ -36,8 +36,8 @@ static PJ_COORD set_fwd_inv(PJ_COORD point, PJ *P) {
 }
 
 PJ *OPERATION(set, 0) {
-    P->inv4d = set_fwd_inv;
-    P->fwd4d = set_fwd_inv;
+    P->host->inv4d = set_fwd_inv;
+    P->host->fwd4d = set_fwd_inv;
 
     auto set = static_cast<struct Set*>(calloc (1, sizeof(struct Set)));
     P->opaque = set;

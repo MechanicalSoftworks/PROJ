@@ -73,8 +73,8 @@ static PJ_LP times_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 PJ *PROJECTION(times) {
     P->es = 0.0;
 
-    P->inv = times_s_inverse;
-    P->fwd = times_s_forward;
+    P->host->inv = times_s_inverse;
+    P->host->fwd = times_s_forward;
 
     return P;
 }

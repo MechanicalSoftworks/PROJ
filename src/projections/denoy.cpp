@@ -27,7 +27,7 @@ static PJ_XY denoy_s_forward (PJ_LP lp, PJ *P) {            /* Spheroidal, forwa
 
 PJ *PROJECTION(denoy) {
     P->es = 0.0;
-    P->fwd = denoy_s_forward;
+    P->host->fwd = denoy_s_forward;
 
     return P;
 }

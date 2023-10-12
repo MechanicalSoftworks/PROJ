@@ -231,9 +231,9 @@ PJ *PROJECTION(imw_p) {
     Q->Pp = (m2 * x1 - m1 * x2) * t;
     Q->Qp = (x2 - x1) * t;
 
-    P->fwd = imw_p_e_forward;
-    P->inv = imw_p_e_inverse;
-    P->destructor = destructor;
+    P->host->fwd = imw_p_e_forward;
+    P->host->inv = imw_p_e_inverse;
+    P->host->destructor = destructor;
 
     return P;
 }

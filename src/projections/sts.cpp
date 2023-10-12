@@ -58,8 +58,8 @@ static PJ_LP sts_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse 
 
 static PJ *setup(PJ *P, double p, double q, int mode) {
     P->es  = 0.;
-    P->inv = sts_s_inverse;
-    P->fwd = sts_s_forward;
+    P->host->inv = sts_s_inverse;
+    P->host->fwd = sts_s_forward;
     static_cast<struct pj_opaque*>(P->opaque)->C_x = q / p;
     static_cast<struct pj_opaque*>(P->opaque)->C_y = p;
     static_cast<struct pj_opaque*>(P->opaque)->C_p = 1/ q;

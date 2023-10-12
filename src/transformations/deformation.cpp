@@ -341,7 +341,7 @@ static PJ *destructor(PJ *P, int errlev) {
     if( Q )
     {
         if (Q->cart)
-            Q->cart->destructor (Q->cart, errlev);
+            Q->cart->host->destructor (Q->cart, errlev);
         delete Q;
     }
     P->opaque = nullptr;
@@ -353,7 +353,7 @@ static PJ *destructor(PJ *P, int errlev) {
 PJ *TRANSFORMATION(deformation,1) {
     auto Q = new deformationData;
     P->opaque = (void *) Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     // Pass a dummy ellipsoid definition that will be overridden just afterwards
     Q->cart = proj_create(P->ctx, "+proj=cart +a=1");
@@ -422,12 +422,12 @@ PJ *TRANSFORMATION(deformation,1) {
         return destructor(P, PROJ_ERR_INVALID_OP_MUTUALLY_EXCLUSIVE_ARGS);
     }
 
-    P->fwd4d = forward_4d;
-    P->inv4d = reverse_4d;
-    P->fwd3d  = forward_3d;
-    P->inv3d  = reverse_3d;
-    P->fwd    = nullptr;
-    P->inv    = nullptr;
+    P->host->fwd4d = forward_4d;
+    P->host->inv4d = reverse_4d;
+    P->host->fwd3d  = forward_3d;
+    P->host->inv3d  = reverse_3d;
+    P->host->fwd    = nullptr;
+    P->host->inv    = nullptr;
 
     P->left  = PJ_IO_UNITS_CARTESIAN;
     P->right = PJ_IO_UNITS_CARTESIAN;

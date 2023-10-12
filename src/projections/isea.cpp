@@ -1045,7 +1045,7 @@ PJ *PROJECTION(isea) {
     P->opaque = Q;
 
 
-    P->fwd = isea_s_forward;
+    P->host->fwd = isea_s_forward;
     isea_grid_init(&Q->dgg);
 
     Q->dgg.output = ISEA_PLANE;

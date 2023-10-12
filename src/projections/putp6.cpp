@@ -71,8 +71,8 @@ PJ *PROJECTION(putp6) {
     Q->D   = 2.;
 
     P->es = 0.;
-    P->inv = putp6_s_inverse;
-    P->fwd = putp6_s_forward;
+    P->host->inv = putp6_s_inverse;
+    P->host->fwd = putp6_s_forward;
 
     return P;
 }
@@ -91,8 +91,8 @@ PJ *PROJECTION(putp6p) {
     Q->D   = 3.;
 
     P->es = 0.;
-    P->inv = putp6_s_inverse;
-    P->fwd = putp6_s_forward;
+    P->host->inv = putp6_s_inverse;
+    P->host->fwd = putp6_s_forward;
 
     return P;
 }

@@ -139,8 +139,8 @@ PJ *PROJECTION(gnom) {
         Q->cosph0 = cos(P->phi0);
     }
 
-    P->inv = gnom_s_inverse;
-    P->fwd = gnom_s_forward;
+    P->host->inv = gnom_s_inverse;
+    P->host->fwd = gnom_s_forward;
     P->es = 0.;
 
     return P;

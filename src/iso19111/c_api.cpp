@@ -201,7 +201,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
             auto pj = pj_create_internal(ctx, projString.c_str());
             ctx->defer_grid_opening = false;
             if (pj) {
-                pj->iso_obj = objIn;
+                pj->host->iso_obj = objIn;
                 return pj;
             }
         } catch (const std::exception &) {
@@ -213,7 +213,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
     if (pj) {
         pj->ctx = ctx;
         pj->descr = "ISO-19111 object";
-        pj->iso_obj = objIn;
+        pj->host->iso_obj = objIn;
         try {
             auto crs = dynamic_cast<const CRS *>(objIn.get());
             if (crs) {
@@ -513,14 +513,14 @@ PJ *proj_clone(PJ_CONTEXT *ctx, const PJ *obj) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    if (!obj->iso_obj) {
-        if (!obj->alternativeCoordinateOperations.empty()) {
+    if (!obj->host->iso_obj) {
+        if (!obj->host->alternativeCoordinateOperations.empty()) {
             auto newPj = pj_new();
             if (newPj) {
                 newPj->descr = "Set of coordinate operations";
                 newPj->ctx = ctx;
-                for (const auto &altOp : obj->alternativeCoordinateOperations) {
-                    newPj->alternativeCoordinateOperations.emplace_back(
+                for (const auto &altOp : obj->host->alternativeCoordinateOperations) {
+                    newPj->host->alternativeCoordinateOperations.emplace_back(
                         PJCoordOperation(ctx, altOp));
                 }
             }
@@ -529,7 +529,7 @@ PJ *proj_clone(PJ_CONTEXT *ctx, const PJ *obj) {
         return nullptr;
     }
     try {
-        return pj_obj_create(ctx, NN_NO_CHECK(obj->iso_obj));
+        return pj_obj_create(ctx, NN_NO_CHECK(obj->host->iso_obj));
     } catch (const std::exception &e) {
         proj_log_error(ctx, __FUNCTION__, e.what());
     }
@@ -1147,14 +1147,14 @@ PJ_OBJ_LIST *proj_create_from_name(PJ_CONTEXT *ctx, const char *auth_name,
  * @return its type.
  */
 PJ_TYPE proj_get_type(const PJ *obj) {
-    if (!obj || !obj->iso_obj) {
+    if (!obj || !obj->host->iso_obj) {
         return PJ_TYPE_UNKNOWN;
     }
     if (obj->type != PJ_TYPE_UNKNOWN)
         return obj->type;
 
     const auto getType = [&obj]() {
-        auto ptr = obj->iso_obj.get();
+        auto ptr = obj->host->iso_obj.get();
         if (dynamic_cast<Ellipsoid *>(ptr)) {
             return PJ_TYPE_ELLIPSOID;
         }
@@ -1260,10 +1260,10 @@ PJ_TYPE proj_get_type(const PJ *obj) {
  * @return TRUE if it is deprecated, FALSE otherwise
  */
 int proj_is_deprecated(const PJ *obj) {
-    if (!obj || !obj->iso_obj) {
+    if (!obj || !obj->host->iso_obj) {
         return false;
     }
-    return obj->iso_obj->isDeprecated();
+    return obj->host->iso_obj->isDeprecated();
 }
 
 // ---------------------------------------------------------------------------
@@ -1283,7 +1283,7 @@ PJ_OBJ_LIST *proj_get_non_deprecated(PJ_CONTEXT *ctx, const PJ *obj) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto crs = dynamic_cast<const CRS *>(obj->iso_obj.get());
+    auto crs = dynamic_cast<const CRS *>(obj->host->iso_obj.get());
     if (!crs) {
         return nullptr;
     }
@@ -1314,21 +1314,21 @@ static int proj_is_equivalent_to_internal(PJ_CONTEXT *ctx, const PJ *obj,
         return false;
     }
 
-    if (obj->iso_obj == nullptr && other->iso_obj == nullptr &&
-        !obj->alternativeCoordinateOperations.empty() &&
-        obj->alternativeCoordinateOperations.size() ==
-            other->alternativeCoordinateOperations.size()) {
-        for (size_t i = 0; i < obj->alternativeCoordinateOperations.size();
+    if (obj->host->iso_obj == nullptr && other->host->iso_obj == nullptr &&
+        !obj->host->alternativeCoordinateOperations.empty() &&
+        obj->host->alternativeCoordinateOperations.size() ==
+            other->host->alternativeCoordinateOperations.size()) {
+        for (size_t i = 0; i < obj->host->alternativeCoordinateOperations.size();
              ++i) {
-            if (obj->alternativeCoordinateOperations[i] !=
-                other->alternativeCoordinateOperations[i]) {
+            if (obj->host->alternativeCoordinateOperations[i] !=
+                other->host->alternativeCoordinateOperations[i]) {
                 return false;
             }
         }
         return true;
     }
 
-    if (!obj->iso_obj || !other->iso_obj) {
+    if (!obj->host->iso_obj || !other->host->iso_obj) {
         return false;
     }
     const auto cppCriterion = ([](PJ_COMPARISON_CRITERION l_criterion) {
@@ -1343,8 +1343,8 @@ static int proj_is_equivalent_to_internal(PJ_CONTEXT *ctx, const PJ *obj,
         return IComparable::Criterion::EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS;
     })(criterion);
 
-    int res = obj->iso_obj->isEquivalentTo(
-        other->iso_obj.get(), cppCriterion,
+    int res = obj->host->iso_obj->isEquivalentTo(
+        other->host->iso_obj.get(), cppCriterion,
         ctx ? getDBcontextNoException(ctx, "proj_is_equivalent_to_with_ctx")
             : nullptr);
     return res;
@@ -1396,7 +1396,7 @@ int proj_is_crs(const PJ *obj) {
     if (!obj) {
         return false;
     }
-    return dynamic_cast<CRS *>(obj->iso_obj.get()) != nullptr;
+    return dynamic_cast<CRS *>(obj->host->iso_obj.get()) != nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -1409,10 +1409,10 @@ int proj_is_crs(const PJ *obj) {
  * @return a string, or NULL in case of error or missing name.
  */
 const char *proj_get_name(const PJ *obj) {
-    if (!obj || !obj->iso_obj) {
+    if (!obj || !obj->host->iso_obj) {
         return nullptr;
     }
-    const auto &desc = obj->iso_obj->name()->description();
+    const auto &desc = obj->host->iso_obj->name()->description();
     if (!desc.has_value()) {
         return nullptr;
     }
@@ -1431,12 +1431,12 @@ const char *proj_get_name(const PJ *obj) {
  * @return a string, or NULL in case of error.
  */
 const char *proj_get_remarks(const PJ *obj) {
-    if (!obj || !obj->iso_obj) {
+    if (!obj || !obj->host->iso_obj) {
         return nullptr;
     }
     // The object will still be alive after the function call.
     // cppcheck-suppress stlcstr
-    return obj->iso_obj->remarks().c_str();
+    return obj->host->iso_obj->remarks().c_str();
 }
 
 // ---------------------------------------------------------------------------
@@ -1450,10 +1450,10 @@ const char *proj_get_remarks(const PJ *obj) {
  * @return a string, or NULL in case of error or missing name.
  */
 const char *proj_get_id_auth_name(const PJ *obj, int index) {
-    if (!obj || !obj->iso_obj) {
+    if (!obj || !obj->host->iso_obj) {
         return nullptr;
     }
-    const auto &ids = obj->iso_obj->identifiers();
+    const auto &ids = obj->host->iso_obj->identifiers();
     if (static_cast<size_t>(index) >= ids.size()) {
         return nullptr;
     }
@@ -1477,10 +1477,10 @@ const char *proj_get_id_auth_name(const PJ *obj, int index) {
  * @return a string, or NULL in case of error or missing name.
  */
 const char *proj_get_id_code(const PJ *obj, int index) {
-    if (!obj || !obj->iso_obj) {
+    if (!obj || !obj->host->iso_obj) {
         return nullptr;
     }
-    const auto &ids = obj->iso_obj->identifiers();
+    const auto &ids = obj->host->iso_obj->identifiers();
     if (static_cast<size_t>(index) >= ids.size()) {
         return nullptr;
     }
@@ -1530,7 +1530,7 @@ const char *proj_as_wkt(PJ_CONTEXT *ctx, const PJ *obj, PJ_WKT_TYPE type,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    if (!obj->iso_obj) {
+    if (!obj->host->iso_obj) {
         return nullptr;
     }
 
@@ -1582,8 +1582,8 @@ const char *proj_as_wkt(PJ_CONTEXT *ctx, const PJ *obj, PJ_WKT_TYPE type,
                 return nullptr;
             }
         }
-        obj->lastWKT = obj->iso_obj->exportToWKT(formatter.get());
-        return obj->lastWKT.c_str();
+        obj->host->lastWKT = obj->host->iso_obj->exportToWKT(formatter.get());
+        return obj->host->lastWKT.c_str();
     } catch (const std::exception &e) {
         proj_log_error(ctx, __FUNCTION__, e.what());
         return nullptr;
@@ -1635,7 +1635,7 @@ const char *proj_as_proj_string(PJ_CONTEXT *ctx, const PJ *obj,
         return nullptr;
     }
     auto exportable =
-        dynamic_cast<const IPROJStringExportable *>(obj->iso_obj.get());
+        dynamic_cast<const IPROJStringExportable *>(obj->host->iso_obj.get());
     if (!exportable) {
         proj_log_error(ctx, __FUNCTION__, "Object type not exportable to PROJ");
         return nullptr;
@@ -1676,8 +1676,8 @@ const char *proj_as_proj_string(PJ_CONTEXT *ctx, const PJ *obj,
                 return nullptr;
             }
         }
-        obj->lastPROJString = exportable->exportToPROJString(formatter.get());
-        return obj->lastPROJString.c_str();
+        obj->host->lastPROJString = exportable->exportToPROJString(formatter.get());
+        return obj->host->lastPROJString.c_str();
     } catch (const std::exception &e) {
         proj_log_error(ctx, __FUNCTION__, e.what());
         return nullptr;
@@ -1722,7 +1722,7 @@ const char *proj_as_projjson(PJ_CONTEXT *ctx, const PJ *obj,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto exportable = dynamic_cast<const IJSONExportable *>(obj->iso_obj.get());
+    auto exportable = dynamic_cast<const IJSONExportable *>(obj->host->iso_obj.get());
     if (!exportable) {
         proj_log_error(ctx, __FUNCTION__, "Object type not exportable to JSON");
         return nullptr;
@@ -1746,8 +1746,8 @@ const char *proj_as_projjson(PJ_CONTEXT *ctx, const PJ *obj,
                 return nullptr;
             }
         }
-        obj->lastJSONString = exportable->exportToJSON(formatter.get());
-        return obj->lastJSONString.c_str();
+        obj->host->lastJSONString = exportable->exportToJSON(formatter.get());
+        return obj->host->lastJSONString.c_str();
     } catch (const std::exception &e) {
         proj_log_error(ctx, __FUNCTION__, e.what());
         return nullptr;
@@ -1766,10 +1766,10 @@ const char *proj_as_projjson(PJ_CONTEXT *ctx, const PJ *obj,
  * @return a string, or NULL in case of error or missing scope.
  */
 const char *proj_get_scope(const PJ *obj) {
-    if (!obj || !obj->iso_obj) {
+    if (!obj || !obj->host->iso_obj) {
         return nullptr;
     }
-    auto objectUsage = dynamic_cast<const ObjectUsage *>(obj->iso_obj.get());
+    auto objectUsage = dynamic_cast<const ObjectUsage *>(obj->host->iso_obj.get());
     if (!objectUsage) {
         return nullptr;
     }
@@ -1821,7 +1821,7 @@ int proj_get_area_of_use(PJ_CONTEXT *ctx, const PJ *obj,
     if (out_area_name) {
         *out_area_name = nullptr;
     }
-    auto objectUsage = dynamic_cast<const ObjectUsage *>(obj->iso_obj.get());
+    auto objectUsage = dynamic_cast<const ObjectUsage *>(obj->host->iso_obj.get());
     if (!objectUsage) {
         return false;
     }
@@ -1882,7 +1882,7 @@ static const GeodeticCRS *extractGeodeticCRS(PJ_CONTEXT *ctx, const PJ *crs,
         proj_log_error(ctx, fname, "missing required input");
         return nullptr;
     }
-    auto l_crs = dynamic_cast<const CRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<const CRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, fname, "Object is not a CRS");
         return nullptr;
@@ -1933,7 +1933,7 @@ int proj_crs_is_derived(PJ_CONTEXT *ctx, const PJ *crs) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return false;
     }
-    auto l_crs = dynamic_cast<const CRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<const CRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a CRS");
         return false;
@@ -1963,7 +1963,7 @@ PJ *proj_crs_get_sub_crs(PJ_CONTEXT *ctx, const PJ *crs, int index) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_crs = dynamic_cast<CompoundCRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<CompoundCRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a CompoundCRS");
         return nullptr;
@@ -1998,18 +1998,18 @@ PJ *proj_crs_create_bound_crs(PJ_CONTEXT *ctx, const PJ *base_crs,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_base_crs = std::dynamic_pointer_cast<CRS>(base_crs->iso_obj);
+    auto l_base_crs = std::dynamic_pointer_cast<CRS>(base_crs->host->iso_obj);
     if (!l_base_crs) {
         proj_log_error(ctx, __FUNCTION__, "base_crs is not a CRS");
         return nullptr;
     }
-    auto l_hub_crs = std::dynamic_pointer_cast<CRS>(hub_crs->iso_obj);
+    auto l_hub_crs = std::dynamic_pointer_cast<CRS>(hub_crs->host->iso_obj);
     if (!l_hub_crs) {
         proj_log_error(ctx, __FUNCTION__, "hub_crs is not a CRS");
         return nullptr;
     }
     auto l_transformation =
-        std::dynamic_pointer_cast<Transformation>(transformation->iso_obj);
+        std::dynamic_pointer_cast<Transformation>(transformation->host->iso_obj);
     if (!l_transformation) {
         proj_log_error(ctx, __FUNCTION__, "transformation is not a CRS");
         return nullptr;
@@ -2058,7 +2058,7 @@ PJ *proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT *ctx, const PJ *crs,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_crs = dynamic_cast<const CRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<const CRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a CRS");
         return nullptr;
@@ -2119,13 +2119,13 @@ PJ *proj_crs_create_bound_vertical_crs(PJ_CONTEXT *ctx, const PJ *vert_crs,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_crs = std::dynamic_pointer_cast<VerticalCRS>(vert_crs->iso_obj);
+    auto l_crs = std::dynamic_pointer_cast<VerticalCRS>(vert_crs->host->iso_obj);
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "vert_crs is not a VerticalCRS");
         return nullptr;
     }
     auto hub_crs =
-        std::dynamic_pointer_cast<CRS>(hub_geographic_3D_crs->iso_obj);
+        std::dynamic_pointer_cast<CRS>(hub_geographic_3D_crs->host->iso_obj);
     if (!hub_crs) {
         proj_log_error(ctx, __FUNCTION__, "hub_geographic_3D_crs is not a CRS");
         return nullptr;
@@ -2163,7 +2163,7 @@ PJ *proj_crs_create_bound_vertical_crs(PJ_CONTEXT *ctx, const PJ *vert_crs,
  */
 PJ *proj_get_ellipsoid(PJ_CONTEXT *ctx, const PJ *obj) {
     SANITIZE_CTX(ctx);
-    auto ptr = obj->iso_obj.get();
+    auto ptr = obj->host->iso_obj.get();
     if (dynamic_cast<const CRS *>(ptr)) {
         auto geodCRS = extractGeodeticCRS(ctx, obj, __FUNCTION__);
         if (geodCRS) {
@@ -2193,7 +2193,7 @@ PJ *proj_get_ellipsoid(PJ_CONTEXT *ctx, const PJ *obj) {
  */
 const char *proj_get_celestial_body_name(PJ_CONTEXT *ctx, const PJ *obj) {
     SANITIZE_CTX(ctx);
-    const IdentifiedObject *ptr = obj->iso_obj.get();
+    const IdentifiedObject *ptr = obj->host->iso_obj.get();
     if (dynamic_cast<const CRS *>(ptr)) {
         const auto geodCRS = extractGeodeticCRS(ctx, obj, __FUNCTION__);
         if (!geodCRS) {
@@ -2293,7 +2293,7 @@ int proj_ellipsoid_get_parameters(PJ_CONTEXT *ctx, const PJ *ellipsoid,
         return FALSE;
     }
     auto l_ellipsoid =
-        dynamic_cast<const Ellipsoid *>(ellipsoid->iso_obj.get());
+        dynamic_cast<const Ellipsoid *>(ellipsoid->host->iso_obj.get());
     if (!l_ellipsoid) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a Ellipsoid");
         return FALSE;
@@ -2332,7 +2332,7 @@ int proj_ellipsoid_get_parameters(PJ_CONTEXT *ctx, const PJ *ellipsoid,
 
 PJ *proj_get_prime_meridian(PJ_CONTEXT *ctx, const PJ *obj) {
     SANITIZE_CTX(ctx);
-    auto ptr = obj->iso_obj.get();
+    auto ptr = obj->host->iso_obj.get();
     if (dynamic_cast<CRS *>(ptr)) {
         auto geodCRS = extractGeodeticCRS(ctx, obj, __FUNCTION__);
         if (geodCRS) {
@@ -2375,7 +2375,7 @@ int proj_prime_meridian_get_parameters(PJ_CONTEXT *ctx,
         return false;
     }
     auto l_pm =
-        dynamic_cast<const PrimeMeridian *>(prime_meridian->iso_obj.get());
+        dynamic_cast<const PrimeMeridian *>(prime_meridian->host->iso_obj.get());
     if (!l_pm) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a PrimeMeridian");
         return false;
@@ -2413,7 +2413,7 @@ PJ *proj_get_source_crs(PJ_CONTEXT *ctx, const PJ *obj) {
     if (!obj) {
         return nullptr;
     }
-    auto ptr = obj->iso_obj.get();
+    auto ptr = obj->host->iso_obj.get();
     auto boundCRS = dynamic_cast<const BoundCRS *>(ptr);
     if (boundCRS) {
         return pj_obj_create(ctx, boundCRS->baseCRS());
@@ -2430,9 +2430,9 @@ PJ *proj_get_source_crs(PJ_CONTEXT *ctx, const PJ *obj) {
         }
         return nullptr;
     }
-    if (!obj->alternativeCoordinateOperations.empty()) {
+    if (!obj->host->alternativeCoordinateOperations.empty()) {
         return proj_get_source_crs(ctx,
-                                   obj->alternativeCoordinateOperations[0].pj);
+                                   obj->host->alternativeCoordinateOperations[0].pj);
     }
     proj_log_error(ctx, __FUNCTION__,
                    "Object is not a BoundCRS or a CoordinateOperation");
@@ -2460,7 +2460,7 @@ PJ *proj_get_target_crs(PJ_CONTEXT *ctx, const PJ *obj) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto ptr = obj->iso_obj.get();
+    auto ptr = obj->host->iso_obj.get();
     auto boundCRS = dynamic_cast<const BoundCRS *>(ptr);
     if (boundCRS) {
         return pj_obj_create(ctx, boundCRS->hubCRS());
@@ -2473,9 +2473,9 @@ PJ *proj_get_target_crs(PJ_CONTEXT *ctx, const PJ *obj) {
         }
         return nullptr;
     }
-    if (!obj->alternativeCoordinateOperations.empty()) {
+    if (!obj->host->alternativeCoordinateOperations.empty()) {
         return proj_get_target_crs(ctx,
-                                   obj->alternativeCoordinateOperations[0].pj);
+                                   obj->host->alternativeCoordinateOperations[0].pj);
     }
     proj_log_error(ctx, __FUNCTION__,
                    "Object is not a BoundCRS or a CoordinateOperation");
@@ -2549,7 +2549,7 @@ PJ_OBJ_LIST *proj_identify(PJ_CONTEXT *ctx, const PJ *obj,
     if (out_confidence) {
         *out_confidence = nullptr;
     }
-    auto ptr = obj->iso_obj.get();
+    auto ptr = obj->host->iso_obj.get();
     auto crs = dynamic_cast<const CRS *>(ptr);
     if (!crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a CRS");
@@ -3075,11 +3075,11 @@ PJ *proj_crs_get_coordoperation(PJ_CONTEXT *ctx, const PJ *crs) {
     }
     SingleOperationPtr co;
 
-    auto derivedCRS = dynamic_cast<const DerivedCRS *>(crs->iso_obj.get());
+    auto derivedCRS = dynamic_cast<const DerivedCRS *>(crs->host->iso_obj.get());
     if (derivedCRS) {
         co = derivedCRS->derivingConversion().as_nullable();
     } else {
-        auto boundCRS = dynamic_cast<const BoundCRS *>(crs->iso_obj.get());
+        auto boundCRS = dynamic_cast<const BoundCRS *>(crs->host->iso_obj.get());
         if (boundCRS) {
             co = boundCRS->transformation().as_nullable();
         } else {
@@ -3119,7 +3119,7 @@ int proj_coordoperation_get_method_info(PJ_CONTEXT *ctx,
         return false;
     }
     auto singleOp =
-        dynamic_cast<const SingleOperation *>(coordoperation->iso_obj.get());
+        dynamic_cast<const SingleOperation *>(coordoperation->host->iso_obj.get());
     if (!singleOp) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a DerivedCRS or BoundCRS");
@@ -3306,7 +3306,7 @@ PJ *proj_create_geographic_crs(PJ_CONTEXT *ctx, const char *crs_name,
                                PJ *ellipsoidal_cs) {
 
     SANITIZE_CTX(ctx);
-    auto cs = std::dynamic_pointer_cast<EllipsoidalCS>(ellipsoidal_cs->iso_obj);
+    auto cs = std::dynamic_pointer_cast<EllipsoidalCS>(ellipsoidal_cs->host->iso_obj);
     if (!cs) {
         return nullptr;
     }
@@ -3352,10 +3352,10 @@ PJ *proj_create_geographic_crs_from_datum(PJ_CONTEXT *ctx, const char *crs_name,
         return nullptr;
     }
     auto l_datum = std::dynamic_pointer_cast<GeodeticReferenceFrame>(
-        datum_or_datum_ensemble->iso_obj);
+        datum_or_datum_ensemble->host->iso_obj);
     auto l_datum_ensemble = std::dynamic_pointer_cast<DatumEnsemble>(
-        datum_or_datum_ensemble->iso_obj);
-    auto cs = std::dynamic_pointer_cast<EllipsoidalCS>(ellipsoidal_cs->iso_obj);
+        datum_or_datum_ensemble->host->iso_obj);
+    auto cs = std::dynamic_pointer_cast<EllipsoidalCS>(ellipsoidal_cs->host->iso_obj);
     if (!cs) {
         return nullptr;
     }
@@ -3454,9 +3454,9 @@ PJ *proj_create_geocentric_crs_from_datum(PJ_CONTEXT *ctx, const char *crs_name,
         return nullptr;
     }
     auto l_datum = std::dynamic_pointer_cast<GeodeticReferenceFrame>(
-        datum_or_datum_ensemble->iso_obj);
+        datum_or_datum_ensemble->host->iso_obj);
     auto l_datum_ensemble = std::dynamic_pointer_cast<DatumEnsemble>(
-        datum_or_datum_ensemble->iso_obj);
+        datum_or_datum_ensemble->host->iso_obj);
     try {
         const UnitOfMeasure linearUnit(
             createLinearUnit(linear_units, linear_units_conv));
@@ -3496,10 +3496,10 @@ PJ *proj_create_derived_geographic_crs(PJ_CONTEXT *ctx, const char *crs_name,
                                        const PJ *ellipsoidal_cs) {
     SANITIZE_CTX(ctx);
     auto base_crs =
-        std::dynamic_pointer_cast<GeographicCRS>(base_geographic_crs->iso_obj);
+        std::dynamic_pointer_cast<GeographicCRS>(base_geographic_crs->host->iso_obj);
     auto conversion_cpp =
-        std::dynamic_pointer_cast<Conversion>(conversion->iso_obj);
-    auto cs = std::dynamic_pointer_cast<EllipsoidalCS>(ellipsoidal_cs->iso_obj);
+        std::dynamic_pointer_cast<Conversion>(conversion->host->iso_obj);
+    auto cs = std::dynamic_pointer_cast<EllipsoidalCS>(ellipsoidal_cs->host->iso_obj);
     if (!base_crs || !conversion_cpp || !cs) {
         return nullptr;
     }
@@ -3527,7 +3527,7 @@ PJ *proj_create_derived_geographic_crs(PJ_CONTEXT *ctx, const char *crs_name,
  */
 int proj_is_derived_crs(PJ_CONTEXT *ctx, const PJ *crs) {
     SANITIZE_CTX(ctx);
-    return dynamic_cast<DerivedCRS *>(crs->iso_obj.get()) != nullptr;
+    return dynamic_cast<DerivedCRS *>(crs->host->iso_obj.get()) != nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -3611,8 +3611,8 @@ PJ *proj_create_vertical_crs_ex(
                 VerticalCRS::create(props, datum, cs);
             const auto interpCRS =
                 geoid_geog_crs && std::dynamic_pointer_cast<GeographicCRS>(
-                                      geoid_geog_crs->iso_obj)
-                    ? std::dynamic_pointer_cast<CRS>(geoid_geog_crs->iso_obj)
+                                      geoid_geog_crs->host->iso_obj)
+                    ? std::dynamic_pointer_cast<CRS>(geoid_geog_crs->host->iso_obj)
                     : nullptr;
 
             std::vector<metadata::PositionalAccuracyNNPtr> accuracies;
@@ -3665,11 +3665,11 @@ PJ *proj_create_compound_crs(PJ_CONTEXT *ctx, const char *crs_name,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_horiz_crs = std::dynamic_pointer_cast<CRS>(horiz_crs->iso_obj);
+    auto l_horiz_crs = std::dynamic_pointer_cast<CRS>(horiz_crs->host->iso_obj);
     if (!l_horiz_crs) {
         return nullptr;
     }
-    auto l_vert_crs = std::dynamic_pointer_cast<CRS>(vert_crs->iso_obj);
+    auto l_vert_crs = std::dynamic_pointer_cast<CRS>(vert_crs->host->iso_obj);
     if (!l_vert_crs) {
         return nullptr;
     }
@@ -3708,7 +3708,7 @@ PJ PROJ_DLL *proj_alter_name(PJ_CONTEXT *ctx, const PJ *obj, const char *name) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto crs = dynamic_cast<const CRS *>(obj->iso_obj.get());
+    auto crs = dynamic_cast<const CRS *>(obj->host->iso_obj.get());
     if (!crs) {
         return nullptr;
     }
@@ -3746,7 +3746,7 @@ PJ PROJ_DLL *proj_alter_id(PJ_CONTEXT *ctx, const PJ *obj,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto crs = dynamic_cast<const CRS *>(obj->iso_obj.get());
+    auto crs = dynamic_cast<const CRS *>(obj->host->iso_obj.get());
     if (!crs) {
         return nullptr;
     }
@@ -3788,13 +3788,13 @@ PJ *proj_crs_alter_geodetic_crs(PJ_CONTEXT *ctx, const PJ *obj,
         return nullptr;
     }
     auto l_new_geod_crs =
-        std::dynamic_pointer_cast<GeodeticCRS>(new_geod_crs->iso_obj);
+        std::dynamic_pointer_cast<GeodeticCRS>(new_geod_crs->host->iso_obj);
     if (!l_new_geod_crs) {
         proj_log_error(ctx, __FUNCTION__, "new_geod_crs is not a GeodeticCRS");
         return nullptr;
     }
 
-    auto crs = dynamic_cast<const CRS *>(obj->iso_obj.get());
+    auto crs = dynamic_cast<const CRS *>(obj->host->iso_obj.get());
     if (!crs) {
         proj_log_error(ctx, __FUNCTION__, "obj is not a CRS");
         return nullptr;
@@ -3841,7 +3841,7 @@ PJ *proj_crs_alter_cs_angular_unit(PJ_CONTEXT *ctx, const PJ *obj,
     if (!geodCRS) {
         return nullptr;
     }
-    auto geogCRS = dynamic_cast<const GeographicCRS *>(geodCRS->iso_obj.get());
+    auto geogCRS = dynamic_cast<const GeographicCRS *>(geodCRS->host->iso_obj.get());
     if (!geogCRS) {
         proj_destroy(geodCRS);
         return nullptr;
@@ -3901,7 +3901,7 @@ PJ *proj_crs_alter_cs_linear_unit(PJ_CONTEXT *ctx, const PJ *obj,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto crs = dynamic_cast<const CRS *>(obj->iso_obj.get());
+    auto crs = dynamic_cast<const CRS *>(obj->host->iso_obj.get());
     if (!crs) {
         return nullptr;
     }
@@ -3954,7 +3954,7 @@ PJ *proj_crs_alter_parameters_linear_unit(PJ_CONTEXT *ctx, const PJ *obj,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto crs = dynamic_cast<const ProjectedCRS *>(obj->iso_obj.get());
+    auto crs = dynamic_cast<const ProjectedCRS *>(obj->host->iso_obj.get());
     if (!crs) {
         return nullptr;
     }
@@ -4000,7 +4000,7 @@ PJ *proj_crs_promote_to_3D(PJ_CONTEXT *ctx, const char *crs_3D_name,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto cpp_2D_crs = dynamic_cast<const CRS *>(crs_2D->iso_obj.get());
+    auto cpp_2D_crs = dynamic_cast<const CRS *>(crs_2D->host->iso_obj.get());
     if (!cpp_2D_crs) {
         proj_log_error(ctx, __FUNCTION__, "crs_2D is not a CRS");
         return nullptr;
@@ -4060,7 +4060,7 @@ PJ *proj_crs_create_projected_3D_crs_from_2D(PJ_CONTEXT *ctx,
         return nullptr;
     }
     auto cpp_projected_2D_crs =
-        dynamic_cast<const ProjectedCRS *>(projected_2D_crs->iso_obj.get());
+        dynamic_cast<const ProjectedCRS *>(projected_2D_crs->host->iso_obj.get());
     if (!cpp_projected_2D_crs) {
         proj_log_error(ctx, __FUNCTION__,
                        "projected_2D_crs is not a Projected CRS");
@@ -4069,9 +4069,9 @@ PJ *proj_crs_create_projected_3D_crs_from_2D(PJ_CONTEXT *ctx,
     const auto &oldCS = cpp_projected_2D_crs->coordinateSystem();
     const auto &oldCSAxisList = oldCS->axisList();
 
-    if (geog_3D_crs && geog_3D_crs->iso_obj) {
+    if (geog_3D_crs && geog_3D_crs->host->iso_obj) {
         auto cpp_geog_3D_CRS =
-            std::dynamic_pointer_cast<GeographicCRS>(geog_3D_crs->iso_obj);
+            std::dynamic_pointer_cast<GeographicCRS>(geog_3D_crs->host->iso_obj);
         if (!cpp_geog_3D_CRS) {
             proj_log_error(ctx, __FUNCTION__,
                            "geog_3D_crs is not a Geographic CRS");
@@ -4143,7 +4143,7 @@ PJ *proj_crs_demote_to_2D(PJ_CONTEXT *ctx, const char *crs_2D_name,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto cpp_3D_crs = dynamic_cast<const CRS *>(crs_3D->iso_obj.get());
+    auto cpp_3D_crs = dynamic_cast<const CRS *>(crs_3D->host->iso_obj.get());
     if (!cpp_3D_crs) {
         proj_log_error(ctx, __FUNCTION__, "crs_3D is not a CRS");
         return nullptr;
@@ -4352,13 +4352,13 @@ PJ *proj_create_transformation(PJ_CONTEXT *ctx, const char *name,
         return nullptr;
     }
 
-    auto l_sourceCRS = std::dynamic_pointer_cast<CRS>(source_crs->iso_obj);
+    auto l_sourceCRS = std::dynamic_pointer_cast<CRS>(source_crs->host->iso_obj);
     if (!l_sourceCRS) {
         proj_log_error(ctx, __FUNCTION__, "source_crs is not a CRS");
         return nullptr;
     }
 
-    auto l_targetCRS = std::dynamic_pointer_cast<CRS>(target_crs->iso_obj);
+    auto l_targetCRS = std::dynamic_pointer_cast<CRS>(target_crs->host->iso_obj);
     if (!l_targetCRS) {
         proj_log_error(ctx, __FUNCTION__, "target_crs is not a CRS");
         return nullptr;
@@ -4367,7 +4367,7 @@ PJ *proj_create_transformation(PJ_CONTEXT *ctx, const char *name,
     CRSPtr l_interpolationCRS;
     if (interpolation_crs) {
         l_interpolationCRS =
-            std::dynamic_pointer_cast<CRS>(interpolation_crs->iso_obj);
+            std::dynamic_pointer_cast<CRS>(interpolation_crs->host->iso_obj);
         if (!l_interpolationCRS) {
             proj_log_error(ctx, __FUNCTION__, "interpolation_crs is not a CRS");
             return nullptr;
@@ -4437,7 +4437,7 @@ PJ *proj_convert_conversion_to_other_method(PJ_CONTEXT *ctx,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto conv = dynamic_cast<const Conversion *>(conversion->iso_obj.get());
+    auto conv = dynamic_cast<const Conversion *>(conversion->host->iso_obj.get());
     if (!conv) {
         proj_log_error(ctx, __FUNCTION__, "not a Conversion");
         return nullptr;
@@ -4823,16 +4823,16 @@ PJ *proj_create_projected_crs(PJ_CONTEXT *ctx, const char *crs_name,
         return nullptr;
     }
     auto geodCRS =
-        std::dynamic_pointer_cast<GeodeticCRS>(geodetic_crs->iso_obj);
+        std::dynamic_pointer_cast<GeodeticCRS>(geodetic_crs->host->iso_obj);
     if (!geodCRS) {
         return nullptr;
     }
-    auto conv = std::dynamic_pointer_cast<Conversion>(conversion->iso_obj);
+    auto conv = std::dynamic_pointer_cast<Conversion>(conversion->host->iso_obj);
     if (!conv) {
         return nullptr;
     }
     auto cs =
-        std::dynamic_pointer_cast<CartesianCS>(coordinate_system->iso_obj);
+        std::dynamic_pointer_cast<CartesianCS>(coordinate_system->host->iso_obj);
     if (!cs) {
         return nullptr;
     }
@@ -7186,7 +7186,7 @@ int proj_coordoperation_is_instantiable(PJ_CONTEXT *ctx,
         return false;
     }
     auto op = dynamic_cast<const CoordinateOperation *>(
-        coordoperation->iso_obj.get());
+        coordoperation->host->iso_obj.get());
     if (!op) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a CoordinateOperation");
@@ -7230,7 +7230,7 @@ int proj_coordoperation_has_ballpark_transformation(PJ_CONTEXT *ctx,
         return false;
     }
     auto op = dynamic_cast<const CoordinateOperation *>(
-        coordoperation->iso_obj.get());
+        coordoperation->host->iso_obj.get());
     if (!op) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a CoordinateOperation");
@@ -7257,7 +7257,7 @@ int proj_coordoperation_get_param_count(PJ_CONTEXT *ctx,
         return false;
     }
     auto op =
-        dynamic_cast<const SingleOperation *>(coordoperation->iso_obj.get());
+        dynamic_cast<const SingleOperation *>(coordoperation->host->iso_obj.get());
     if (!op) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a SingleOperation");
         return 0;
@@ -7286,7 +7286,7 @@ int proj_coordoperation_get_param_index(PJ_CONTEXT *ctx,
         return -1;
     }
     auto op =
-        dynamic_cast<const SingleOperation *>(coordoperation->iso_obj.get());
+        dynamic_cast<const SingleOperation *>(coordoperation->host->iso_obj.get());
     if (!op) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a SingleOperation");
         return -1;
@@ -7348,7 +7348,7 @@ int proj_coordoperation_get_param(
         return false;
     }
     auto op =
-        dynamic_cast<const SingleOperation *>(coordoperation->iso_obj.get());
+        dynamic_cast<const SingleOperation *>(coordoperation->host->iso_obj.get());
     if (!op) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a SingleOperation");
         return false;
@@ -7478,7 +7478,7 @@ int proj_coordoperation_get_towgs84_values(PJ_CONTEXT *ctx,
         return false;
     }
     auto transf =
-        dynamic_cast<const Transformation *>(coordoperation->iso_obj.get());
+        dynamic_cast<const Transformation *>(coordoperation->host->iso_obj.get());
     if (!transf) {
         if (emit_error_if_incompatible) {
             proj_log_error(ctx, __FUNCTION__, "Object is not a Transformation");
@@ -7518,7 +7518,7 @@ int proj_coordoperation_get_grid_used_count(PJ_CONTEXT *ctx,
         return false;
     }
     auto co = dynamic_cast<const CoordinateOperation *>(
-        coordoperation->iso_obj.get());
+        coordoperation->host->iso_obj.get());
     if (!co) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a CoordinateOperation");
@@ -7526,15 +7526,15 @@ int proj_coordoperation_get_grid_used_count(PJ_CONTEXT *ctx,
     }
     auto dbContext = getDBcontextNoException(ctx, __FUNCTION__);
     try {
-        if (!coordoperation->gridsNeededAsked) {
-            coordoperation->gridsNeededAsked = true;
+        if (!coordoperation->host->gridsNeededAsked) {
+            coordoperation->host->gridsNeededAsked = true;
             const auto gridsNeeded = co->gridsNeeded(
                 dbContext, proj_context_is_network_enabled(ctx) != FALSE);
             for (const auto &gridDesc : gridsNeeded) {
-                coordoperation->gridsNeeded.emplace_back(gridDesc);
+                coordoperation->host->gridsNeeded.emplace_back(gridDesc);
             }
         }
-        return static_cast<int>(coordoperation->gridsNeeded.size());
+        return static_cast<int>(coordoperation->host->gridsNeeded.size());
     } catch (const std::exception &e) {
         proj_log_error(ctx, __FUNCTION__, e.what());
         return 0;
@@ -7580,7 +7580,7 @@ int proj_coordoperation_get_grid_used(
         return false;
     }
 
-    const auto &gridDesc = coordoperation->gridsNeeded[index];
+    const auto &gridDesc = coordoperation->host->gridsNeeded[index];
     if (out_short_name) {
         *out_short_name = gridDesc.shortName.c_str();
     }
@@ -8139,12 +8139,12 @@ proj_create_operations(PJ_CONTEXT *ctx, const PJ *source_crs,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto sourceCRS = std::dynamic_pointer_cast<CRS>(source_crs->iso_obj);
+    auto sourceCRS = std::dynamic_pointer_cast<CRS>(source_crs->host->iso_obj);
     if (!sourceCRS) {
         proj_log_error(ctx, __FUNCTION__, "source_crs is not a CRS");
         return nullptr;
     }
-    auto targetCRS = std::dynamic_pointer_cast<CRS>(target_crs->iso_obj);
+    auto targetCRS = std::dynamic_pointer_cast<CRS>(target_crs->host->iso_obj);
     if (!targetCRS) {
         proj_log_error(ctx, __FUNCTION__, "target_crs is not a CRS");
         return nullptr;
@@ -8286,7 +8286,7 @@ double proj_coordoperation_get_accuracy(PJ_CONTEXT *ctx,
         return -1;
     }
     auto co = dynamic_cast<const CoordinateOperation *>(
-        coordoperation->iso_obj.get());
+        coordoperation->host->iso_obj.get());
     if (!co) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a CoordinateOperation");
@@ -8326,7 +8326,7 @@ PJ *proj_crs_get_datum(PJ_CONTEXT *ctx, const PJ *crs) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_crs = dynamic_cast<const SingleCRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<const SingleCRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a SingleCRS");
         return nullptr;
@@ -8363,7 +8363,7 @@ PJ *proj_crs_get_datum_ensemble(PJ_CONTEXT *ctx, const PJ *crs) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_crs = dynamic_cast<const SingleCRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<const SingleCRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a SingleCRS");
         return nullptr;
@@ -8393,7 +8393,7 @@ int proj_datum_ensemble_get_member_count(PJ_CONTEXT *ctx,
         return 0;
     }
     auto l_datum_ensemble =
-        dynamic_cast<const DatumEnsemble *>(datum_ensemble->iso_obj.get());
+        dynamic_cast<const DatumEnsemble *>(datum_ensemble->host->iso_obj.get());
     if (!l_datum_ensemble) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a DatumEnsemble");
         return 0;
@@ -8420,7 +8420,7 @@ double proj_datum_ensemble_get_accuracy(PJ_CONTEXT *ctx,
         return -1;
     }
     auto l_datum_ensemble =
-        dynamic_cast<const DatumEnsemble *>(datum_ensemble->iso_obj.get());
+        dynamic_cast<const DatumEnsemble *>(datum_ensemble->host->iso_obj.get());
     if (!l_datum_ensemble) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a DatumEnsemble");
         return -1;
@@ -8459,7 +8459,7 @@ PJ *proj_datum_ensemble_get_member(PJ_CONTEXT *ctx, const PJ *datum_ensemble,
         return nullptr;
     }
     auto l_datum_ensemble =
-        dynamic_cast<const DatumEnsemble *>(datum_ensemble->iso_obj.get());
+        dynamic_cast<const DatumEnsemble *>(datum_ensemble->host->iso_obj.get());
     if (!l_datum_ensemble) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a DatumEnsemble");
         return nullptr;
@@ -8498,7 +8498,7 @@ PJ *proj_crs_get_datum_forced(PJ_CONTEXT *ctx, const PJ *crs) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_crs = dynamic_cast<const SingleCRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<const SingleCRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a SingleCRS");
         return nullptr;
@@ -8539,9 +8539,9 @@ double proj_dynamic_datum_get_frame_reference_epoch(PJ_CONTEXT *ctx,
         return -1;
     }
     auto dgrf = dynamic_cast<const DynamicGeodeticReferenceFrame *>(
-        datum->iso_obj.get());
+        datum->host->iso_obj.get());
     auto dvrf = dynamic_cast<const DynamicVerticalReferenceFrame *>(
-        datum->iso_obj.get());
+        datum->host->iso_obj.get());
     if (!dgrf && !dvrf) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a "
@@ -8574,7 +8574,7 @@ PJ *proj_crs_get_coordinate_system(PJ_CONTEXT *ctx, const PJ *crs) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto l_crs = dynamic_cast<const SingleCRS *>(crs->iso_obj.get());
+    auto l_crs = dynamic_cast<const SingleCRS *>(crs->host->iso_obj.get());
     if (!l_crs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a SingleCRS");
         return nullptr;
@@ -8597,7 +8597,7 @@ PJ_COORDINATE_SYSTEM_TYPE proj_cs_get_type(PJ_CONTEXT *ctx, const PJ *cs) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return PJ_CS_TYPE_UNKNOWN;
     }
-    auto l_cs = dynamic_cast<const CoordinateSystem *>(cs->iso_obj.get());
+    auto l_cs = dynamic_cast<const CoordinateSystem *>(cs->host->iso_obj.get());
     if (!l_cs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a CoordinateSystem");
         return PJ_CS_TYPE_UNKNOWN;
@@ -8647,7 +8647,7 @@ int proj_cs_get_axis_count(PJ_CONTEXT *ctx, const PJ *cs) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return -1;
     }
-    auto l_cs = dynamic_cast<const CoordinateSystem *>(cs->iso_obj.get());
+    auto l_cs = dynamic_cast<const CoordinateSystem *>(cs->host->iso_obj.get());
     if (!l_cs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a CoordinateSystem");
         return -1;
@@ -8691,7 +8691,7 @@ int proj_cs_get_axis_info(PJ_CONTEXT *ctx, const PJ *cs, int index,
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return false;
     }
-    auto l_cs = dynamic_cast<const CoordinateSystem *>(cs->iso_obj.get());
+    auto l_cs = dynamic_cast<const CoordinateSystem *>(cs->host->iso_obj.get());
     if (!l_cs) {
         proj_log_error(ctx, __FUNCTION__, "Object is not a CoordinateSystem");
         return false;
@@ -8750,7 +8750,7 @@ int proj_cs_get_axis_info(PJ_CONTEXT *ctx, const PJ *cs, int index,
 PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
 
     SANITIZE_CTX(ctx);
-    if (!obj->alternativeCoordinateOperations.empty()) {
+    if (!obj->host->alternativeCoordinateOperations.empty()) {
         try {
             auto pjNew = std::unique_ptr<PJ>(pj_new());
             if (!pjNew)
@@ -8760,9 +8760,9 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
             pjNew->left = obj->left;
             pjNew->right = obj->right;
 
-            for (const auto &alt : obj->alternativeCoordinateOperations) {
+            for (const auto &alt : obj->host->alternativeCoordinateOperations) {
                 auto co = dynamic_cast<const CoordinateOperation *>(
-                    alt.pj->iso_obj.get());
+                    alt.pj->host->iso_obj.get());
                 if (co) {
                     double minxSrc = alt.minxSrc;
                     double minySrc = alt.minySrc;
@@ -8791,7 +8791,7 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
                             std::swap(maxxDst, maxyDst);
                         }
                     }
-                    pjNew->alternativeCoordinateOperations.emplace_back(
+                    pjNew->host->alternativeCoordinateOperations.emplace_back(
                         alt.idxInOriginalList, minxSrc, minySrc, maxxSrc,
                         maxySrc, minxDst, minyDst, maxxDst, maxyDst,
                         pj_obj_create(ctx, co->normalizeForVisualization()),
@@ -8805,7 +8805,7 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
         }
     }
 
-    auto crs = dynamic_cast<const CRS *>(obj->iso_obj.get());
+    auto crs = dynamic_cast<const CRS *>(obj->host->iso_obj.get());
     if (crs) {
         try {
             return pj_obj_create(ctx, crs->normalizeForVisualization());
@@ -8815,7 +8815,7 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
         }
     }
 
-    auto co = dynamic_cast<const CoordinateOperation *>(obj->iso_obj.get());
+    auto co = dynamic_cast<const CoordinateOperation *>(obj->host->iso_obj.get());
     if (!co) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a CoordinateOperation "
@@ -8850,7 +8850,7 @@ PJ *proj_coordoperation_create_inverse(PJ_CONTEXT *ctx, const PJ *obj) {
         proj_log_error(ctx, __FUNCTION__, "missing required input");
         return nullptr;
     }
-    auto co = dynamic_cast<const CoordinateOperation *>(obj->iso_obj.get());
+    auto co = dynamic_cast<const CoordinateOperation *>(obj->host->iso_obj.get());
     if (!co) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a CoordinateOperation");
@@ -8883,7 +8883,7 @@ int proj_concatoperation_get_step_count(PJ_CONTEXT *ctx,
         return false;
     }
     auto l_co = dynamic_cast<const ConcatenatedOperation *>(
-        concatoperation->iso_obj.get());
+        concatoperation->host->iso_obj.get());
     if (!l_co) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a ConcatenatedOperation");
@@ -8917,7 +8917,7 @@ PJ *proj_concatoperation_get_step(PJ_CONTEXT *ctx, const PJ *concatoperation,
         return nullptr;
     }
     auto l_co = dynamic_cast<const ConcatenatedOperation *>(
-        concatoperation->iso_obj.get());
+        concatoperation->host->iso_obj.get());
     if (!l_co) {
         proj_log_error(ctx, __FUNCTION__,
                        "Object is not a ConcatenatedOperation");
@@ -9034,7 +9034,7 @@ char *proj_suggests_code_for(PJ_CONTEXT *ctx, const PJ *object,
         return nullptr;
     }
     auto identifiedObject =
-        std::dynamic_pointer_cast<IdentifiedObject>(object->iso_obj);
+        std::dynamic_pointer_cast<IdentifiedObject>(object->host->iso_obj);
     if (!identifiedObject) {
         proj_context_errno_set(ctx, PROJ_ERR_OTHER_API_MISUSE);
         proj_log_error(ctx, __FUNCTION__, "Object is not a IdentifiedObject");
@@ -9151,7 +9151,7 @@ PROJ_STRING_LIST proj_get_insert_statements(
             return nullptr;
         }
         auto identifiedObject =
-            std::dynamic_pointer_cast<IdentifiedObject>(object->iso_obj);
+            std::dynamic_pointer_cast<IdentifiedObject>(object->host->iso_obj);
         if (!identifiedObject) {
             proj_context_errno_set(ctx, PROJ_ERR_OTHER_API_MISUSE);
             proj_log_error(ctx, __FUNCTION__,

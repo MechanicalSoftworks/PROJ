@@ -52,8 +52,8 @@ PJ *PROJECTION(putp5) {
     Q->B = 1.;
 
     P->es = 0.;
-    P->inv = putp5_s_inverse;
-    P->fwd = putp5_s_forward;
+    P->host->inv = putp5_s_inverse;
+    P->host->fwd = putp5_s_forward;
 
     return P;
 }
@@ -69,8 +69,8 @@ PJ *PROJECTION(putp5p) {
     Q->B = 0.5;
 
     P->es = 0.;
-    P->inv = putp5_s_inverse;
-    P->fwd = putp5_s_forward;
+    P->host->inv = putp5_s_inverse;
+    P->host->fwd = putp5_s_forward;
 
     return P;
 }

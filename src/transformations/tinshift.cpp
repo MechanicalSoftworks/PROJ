@@ -114,7 +114,7 @@ PJ *TRANSFORMATION(tinshift, 1) {
 
     auto Q = new tinshiftData();
     P->opaque = (void *)Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     try {
         Q->evaluator.reset(new Evaluator(TINShiftFile::parse(jsonStr)));
@@ -123,9 +123,9 @@ PJ *TRANSFORMATION(tinshift, 1) {
         return destructor(P, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
     }
 
-    P->destructor = destructor;
-    P->fwd4d = tinshift_forward_4d;
-    P->inv4d = tinshift_reverse_4d;
+    P->host->destructor = destructor;
+    P->host->fwd4d = tinshift_forward_4d;
+    P->host->inv4d = tinshift_reverse_4d;
     P->left = PJ_IO_UNITS_WHATEVER;
     P->right = PJ_IO_UNITS_WHATEVER;
 

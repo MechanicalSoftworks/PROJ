@@ -402,14 +402,14 @@ PJ *OPERATION(pipeline,0) {
         return destructor (P, PROJ_ERR_INVALID_OP_WRONG_SYNTAX); /* ERROR: nested pipelines */
     }
 
-    P->fwd4d  =  pipeline_forward_4d;
-    P->inv4d  =  pipeline_reverse_4d;
-    P->fwd3d  =  pipeline_forward_3d;
-    P->inv3d  =  pipeline_reverse_3d;
-    P->fwd    =  pipeline_forward;
-    P->inv    =  pipeline_reverse;
-    P->destructor  =  destructor;
-    P->reassign_context = pipeline_reassign_context;
+    P->host->fwd4d  =  pipeline_forward_4d;
+    P->host->inv4d  =  pipeline_reverse_4d;
+    P->host->fwd3d  =  pipeline_forward_3d;
+    P->host->inv3d  =  pipeline_reverse_3d;
+    P->host->fwd    =  pipeline_forward;
+    P->host->inv    =  pipeline_reverse;
+    P->host->destructor  =  destructor;
+    P->host->reassign_context = pipeline_reassign_context;
 
     /* Currently, the pipeline driver is a raw bit mover, enabling other operations */
     /* to collaborate efficiently. All prep/fin stuff is done at the step levels. */
@@ -526,8 +526,8 @@ PJ *OPERATION(pipeline,0) {
     /* Require a forward path through the pipeline */
     for( auto& step: pipeline->steps) {
         PJ *Q = step.pj;
-        if ( ( Q->inverted && (Q->inv || Q->inv3d || Q->fwd4d) ) ||
-             (!Q->inverted && (Q->fwd || Q->fwd3d || Q->fwd4d) ) ) {
+        if ( ( Q->inverted && (Q->host->inv || Q->host->inv3d || Q->host->fwd4d) ) ||
+             (!Q->inverted && (Q->host->fwd || Q->host->fwd3d || Q->host->fwd4d) ) ) {
             continue;
         } else {
             proj_log_error (P, _("Pipeline: A forward operation couldn't be constructed"));
@@ -541,9 +541,9 @@ PJ *OPERATION(pipeline,0) {
         if ( pj_has_inverse(Q) ) {
             continue;
         } else {
-            P->inv   = nullptr;
-            P->inv3d = nullptr;
-            P->inv4d = nullptr;
+            P->host->inv   = nullptr;
+            P->host->inv3d = nullptr;
+            P->host->inv4d = nullptr;
             break;
         }
     }
@@ -684,15 +684,15 @@ static PJ *setup_pushpop(PJ *P) {
 
 
 PJ *OPERATION(push, 0) {
-    P->fwd4d = push;
-    P->inv4d = pop;
+    P->host->fwd4d = push;
+    P->host->inv4d = pop;
 
     return setup_pushpop(P);
 }
 
 PJ *OPERATION(pop, 0) {
-    P->inv4d = push;
-    P->fwd4d = pop;
+    P->host->inv4d = push;
+    P->host->fwd4d = pop;
 
     return setup_pushpop(P);
 }

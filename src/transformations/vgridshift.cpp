@@ -158,8 +158,8 @@ static void reassign_context( PJ* P, PJ_CONTEXT* ctx )
 PJ *TRANSFORMATION(vgridshift,0) {
     auto Q = new vgridshiftData;
     P->opaque = (void *) Q;
-    P->destructor = destructor;
-    P->reassign_context = reassign_context;
+    P->host->destructor = destructor;
+    P->host->reassign_context = reassign_context;
 
    if (!pj_param(P->ctx, P->params, "tgrids").i) {
         proj_log_error(P, _("+grids parameter missing."));
@@ -220,12 +220,12 @@ PJ *TRANSFORMATION(vgridshift,0) {
         }
     }
 
-    P->fwd4d = forward_4d;
-    P->inv4d = reverse_4d;
-    P->fwd3d  = forward_3d;
-    P->inv3d  = reverse_3d;
-    P->fwd    = nullptr;
-    P->inv    = nullptr;
+    P->host->fwd4d = forward_4d;
+    P->host->inv4d = reverse_4d;
+    P->host->fwd3d  = forward_3d;
+    P->host->inv3d  = reverse_3d;
+    P->host->fwd    = nullptr;
+    P->host->inv    = nullptr;
 
     P->left  = PJ_IO_UNITS_RADIANS;
     P->right = PJ_IO_UNITS_RADIANS;

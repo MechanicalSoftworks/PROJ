@@ -150,18 +150,18 @@ PJ_LP pj_inv(PJ_XY xy, PJ *P) {
         return proj_coord_error ().lp;
 
     /* Do the transformation, using the lowest dimensional transformer available */
-    if (P->inv)
+    if (P->host->inv)
     {
-        const auto lp = P->inv(coo.xy, P);
+        const auto lp = P->host->inv(coo.xy, P);
         coo.lp = lp;
     }
-    else if (P->inv3d)
+    else if (P->host->inv3d)
     {
-        const auto lpz = P->inv3d (coo.xyz, P);
+        const auto lpz = P->host->inv3d (coo.xyz, P);
         coo.lpz = lpz;
     }
-    else if (P->inv4d)
-        coo = P->inv4d (coo, P);
+    else if (P->host->inv4d)
+        coo = P->host->inv4d (coo, P);
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
         return proj_coord_error ().lp;
@@ -190,16 +190,16 @@ PJ_LPZ pj_inv3d (PJ_XYZ xyz, PJ *P) {
         return proj_coord_error ().lpz;
 
     /* Do the transformation, using the lowest dimensional transformer feasible */
-    if (P->inv3d)
+    if (P->host->inv3d)
     {
-        const auto lpz = P->inv3d (coo.xyz, P);
+        const auto lpz = P->host->inv3d (coo.xyz, P);
         coo.lpz = lpz;
     }
-    else if (P->inv4d)
-        coo = P->inv4d (coo, P);
-    else if (P->inv)
+    else if (P->host->inv4d)
+        coo = P->host->inv4d (coo, P);
+    else if (P->host->inv)
     {
-        const auto lp = P->inv (coo.xy, P);
+        const auto lp = P->host->inv (coo.xy, P);
         coo.lp = lp;
     }
     else {
@@ -228,16 +228,16 @@ PJ_COORD pj_inv4d (PJ_COORD coo, PJ *P) {
         return proj_coord_error ();
 
     /* Call the highest dimensional converter available */
-    if (P->inv4d)
-        coo = P->inv4d (coo, P);
-    else if (P->inv3d)
+    if (P->host->inv4d)
+        coo = P->host->inv4d (coo, P);
+    else if (P->host->inv3d)
     {
-        const auto lpz = P->inv3d (coo.xyz, P);
+        const auto lpz = P->host->inv3d (coo.xyz, P);
         coo.lpz = lpz;
     }
-    else if (P->inv)
+    else if (P->host->inv)
     {
-        const auto lp = P->inv (coo.xy, P);
+        const auto lp = P->host->inv (coo.xy, P);
         coo.lp = lp;
     }
     else {

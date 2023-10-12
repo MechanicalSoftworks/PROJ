@@ -37,7 +37,7 @@ static PJ_XY o_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     /* Formula (5-7) */
     lp.phi = aasin(P->ctx,Q->sphip * sinphi - Q->cphip * cosphi * coslam);
 
-    return Q->link->fwd(lp, Q->link);
+    return Q->link->host->fwd(lp, Q->link);
 }
 
 
@@ -50,7 +50,7 @@ static PJ_XY t_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     lp.lam = adjlon(aatan2(cosphi * sin(lp.lam), sin(lp.phi)) + Q->lamp);
     lp.phi = aasin(P->ctx, - cosphi * coslam);
 
-    return Q->link->fwd(lp, Q->link);
+    return Q->link->host->fwd(lp, Q->link);
 }
 
 
@@ -59,7 +59,7 @@ static PJ_LP o_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double coslam, sinphi, cosphi;
 
-    PJ_LP lp = Q->link->inv(xy, Q->link);
+    PJ_LP lp = Q->link->host->inv(xy, Q->link);
     if (lp.lam != HUGE_VAL) {
         lp.lam -= Q->lamp;
         coslam = cos(lp.lam);
@@ -80,7 +80,7 @@ static PJ_LP t_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double cosphi, t;
 
-    PJ_LP lp = Q->link->inv(xy, Q->link);
+    PJ_LP lp = Q->link->host->inv(xy, Q->link);
     if (lp.lam != HUGE_VAL) {
         cosphi = cos(lp.phi);
         t = lp.lam - Q->lamp;
@@ -98,7 +98,7 @@ static PJ *destructor(PJ *P, int errlev) {
         return pj_default_destructor (P, errlev);
 
     if (static_cast<struct pj_opaque*>(P->opaque)->link)
-        static_cast<struct pj_opaque*>(P->opaque)->link->destructor (static_cast<struct pj_opaque*>(P->opaque)->link, errlev);
+        static_cast<struct pj_opaque*>(P->opaque)->link->host->destructor (static_cast<struct pj_opaque*>(P->opaque)->link, errlev);
 
     return pj_default_destructor(P, errlev);
 }
@@ -183,7 +183,7 @@ PJ *PROJECTION(ob_tran) {
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     /* get name of projection to be translated */
     if (pj_param(P->ctx, P->params, "so_proj").s == nullptr)
@@ -267,11 +267,11 @@ PJ *PROJECTION(ob_tran) {
     if (fabs(phip) > TOL) { /* oblique */
         Q->cphip = cos(phip);
         Q->sphip = sin(phip);
-        P->fwd = Q->link->fwd ? o_forward : nullptr;
-        P->inv = Q->link->inv ? o_inverse : nullptr;
+        P->host->fwd = Q->link->host->fwd ? o_forward : nullptr;
+        P->host->inv = Q->link->host->inv ? o_inverse : nullptr;
     } else { /* transverse */
-        P->fwd = Q->link->fwd ? t_forward : nullptr;
-        P->inv = Q->link->inv ? t_inverse : nullptr;
+        P->host->fwd = Q->link->host->fwd ? t_forward : nullptr;
+        P->host->inv = Q->link->host->inv ? t_inverse : nullptr;
     }
 
     /* Support some rather speculative test cases, where the rotated projection */

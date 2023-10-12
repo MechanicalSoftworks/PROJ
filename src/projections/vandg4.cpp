@@ -51,7 +51,7 @@ static PJ_XY vandg4_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwa
 
 PJ *PROJECTION(vandg4) {
     P->es = 0.;
-    P->fwd = vandg4_s_forward;
+    P->host->fwd = vandg4_s_forward;
 
     return P;
 }

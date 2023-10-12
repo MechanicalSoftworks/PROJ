@@ -69,11 +69,11 @@ void proj_assign_context( PJ* pj, PJ_CONTEXT *ctx )
     if (pj==nullptr)
         return;
     pj->ctx = ctx;
-    if( pj->reassign_context )
+    if( pj->host->reassign_context )
     {
-        pj->reassign_context(pj, ctx);
+        pj->host->reassign_context(pj, ctx);
     }
-    for( const auto &alt: pj->alternativeCoordinateOperations )
+    for( const auto &alt: pj->host->alternativeCoordinateOperations )
     {
         proj_assign_context(alt.pj, ctx);
     }

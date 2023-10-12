@@ -47,8 +47,8 @@ static PJ_COORD inverse(PJ_COORD coo, PJ *P) {
 
 
 static PJ *CONVERSION(geoc, 1) {
-    P->inv4d = inverse;
-    P->fwd4d = forward;
+    P->host->inv4d = inverse;
+    P->host->fwd4d = forward;
 
     P->left   =  PJ_IO_UNITS_RADIANS;
     P->right  =  PJ_IO_UNITS_RADIANS;

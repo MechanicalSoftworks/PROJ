@@ -249,7 +249,7 @@ struct EvaluatorIface : public EvaluatorIfacePrototype<Grid, GridSet> {
 
     ~EvaluatorIface() {
         if (cart)
-            cart->destructor(cart, 0);
+            cart->host->destructor(cart, 0);
     }
 
     std::unique_ptr<GridSet> open(const std::string &filename) {
@@ -285,7 +285,7 @@ struct EvaluatorIface : public EvaluatorIfacePrototype<Grid, GridSet> {
         lpz.lam = lam;
         lpz.phi = phi;
         lpz.z = height;
-        PJ_XYZ xyz = cart->fwd3d(lpz, cart);
+        PJ_XYZ xyz = cart->host->fwd3d(lpz, cart);
         X = xyz.x;
         Y = xyz.y;
         Z = xyz.z;
@@ -302,7 +302,7 @@ struct EvaluatorIface : public EvaluatorIfacePrototype<Grid, GridSet> {
         xyz.x = X;
         xyz.y = Y;
         xyz.z = Z;
-        PJ_LPZ lpz = cart->inv3d(xyz, cart);
+        PJ_LPZ lpz = cart->host->inv3d(xyz, cart);
         lam = lpz.lam;
         phi = lpz.phi;
         height = lpz.z;
@@ -395,8 +395,8 @@ PJ *TRANSFORMATION(defmodel, 1) {
 
     auto Q = new defmodelData(P->ctx, cart);
     P->opaque = (void *)Q;
-    P->destructor = destructor;
-    P->reassign_context = reassign_context;
+    P->host->destructor = destructor;
+    P->host->reassign_context = reassign_context;
 
     const char *model = pj_param(P->ctx, P->params, "smodel").s;
     if (!model) {
@@ -434,8 +434,8 @@ PJ *TRANSFORMATION(defmodel, 1) {
         return destructor(P, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
     }
 
-    P->fwd4d = forward_4d;
-    P->inv4d = reverse_4d;
+    P->host->fwd4d = forward_4d;
+    P->host->inv4d = reverse_4d;
 
     if (Q->evaluator->isGeographicCRS()) {
         P->left = PJ_IO_UNITS_RADIANS;

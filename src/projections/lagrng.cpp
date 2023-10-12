@@ -99,8 +99,8 @@ PJ *PROJECTION(lagrng) {
     Q->a2 = Q->a1 * Q->a1;
 
     P->es = 0.;
-    P->inv = lagrng_s_inverse;
-    P->fwd = lagrng_s_forward;
+    P->host->inv = lagrng_s_inverse;
+    P->host->fwd = lagrng_s_forward;
 
     return P;
 }

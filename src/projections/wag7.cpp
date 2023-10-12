@@ -27,8 +27,8 @@ static PJ_XY wag7_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 
 
 PJ *PROJECTION(wag7) {
-    P->fwd = wag7_s_forward;
-    P->inv = nullptr;
+    P->host->fwd = wag7_s_forward;
+    P->host->inv = nullptr;
     P->es = 0.;
     return P;
 }

@@ -31,8 +31,8 @@ static PJ_XY august_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwa
 
 
 PJ *PROJECTION(august) {
-    P->inv = nullptr;
-    P->fwd = august_s_forward;
+    P->host->inv = nullptr;
+    P->host->fwd = august_s_forward;
     P->es = 0.;
     return P;
 }

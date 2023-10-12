@@ -367,8 +367,8 @@ PJ *PROJECTION(s2) {
     P->right = PJ_IO_UNITS_PROJECTED;
     P->from_greenwich = -P->lam0;
 
-    P->inv = s2_inverse;
-    P->fwd = s2_forward;
+    P->host->inv = s2_inverse;
+    P->host->fwd = s2_forward;
 
     /* Determine the cube face from the center of projection. */
     if (P->phi0 >= M_HALFPI - M_FORTPI / 2.0) {

@@ -119,8 +119,8 @@ static PJ_LP vandg_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 
 PJ *PROJECTION(vandg) {
     P->es = 0.;
-    P->inv = vandg_s_inverse;
-    P->fwd = vandg_s_forward;
+    P->host->inv = vandg_s_inverse;
+    P->host->fwd = vandg_s_forward;
 
     return P;
 }

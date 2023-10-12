@@ -271,20 +271,20 @@ PJ *CONVERSION(axisswap,0) {
 
     /* only map fwd/inv functions that are possible with the given axis setup */
     if (n == 4) {
-        P->fwd4d = forward_4d;
-        P->inv4d = reverse_4d;
+        P->host->fwd4d = forward_4d;
+        P->host->inv4d = reverse_4d;
     }
     if (n == 3 && Q->axis[0] < 3 && Q->axis[1] < 3 && Q->axis[2] < 3) {
-        P->fwd3d  = forward_3d;
-        P->inv3d  = reverse_3d;
+        P->host->fwd3d  = forward_3d;
+        P->host->inv3d  = reverse_3d;
     }
     if (n == 2 && Q->axis[0] < 2 && Q->axis[1] < 2) {
-        P->fwd    = forward_2d;
-        P->inv    = reverse_2d;
+        P->host->fwd    = forward_2d;
+        P->host->inv    = reverse_2d;
     }
 
 
-    if (P->fwd4d == nullptr && P->fwd3d == nullptr && P->fwd == nullptr) {
+    if (P->host->fwd4d == nullptr && P->host->fwd3d == nullptr && P->host->fwd == nullptr) {
         proj_log_error(P, _("swapaxis: bad axis order"));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }

@@ -60,8 +60,8 @@ PJ *PROJECTION(urm5) {
     Q->rmn = 1. / (Q->m * Q->n);
 
     P->es = 0.;
-    P->inv = nullptr;
-    P->fwd = urm5_s_forward;
+    P->host->inv = nullptr;
+    P->host->fwd = urm5_s_forward;
 
     return P;
 }

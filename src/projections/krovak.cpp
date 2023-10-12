@@ -234,8 +234,8 @@ PJ *PROJECTION(krovak) {
     Q->rho0 = P->k0 * n0 / tan(S0);
     Q->ad = M_PI_2 - UQ;
 
-    P->inv = krovak_e_inverse;
-    P->fwd = krovak_e_forward;
+    P->host->inv = krovak_e_inverse;
+    P->host->fwd = krovak_e_forward;
 
     return P;
 }

@@ -601,18 +601,18 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
     {
         case TMercAlgo::EVENDEN_SNYDER:
         {
-            P->destructor = destructor;
+            P->host->destructor = destructor;
             if( !setup_approx(P) )
                 return nullptr;
             if( P->es == 0 )
             {
-                P->inv = tmerc_spherical_inv;
-                P->fwd = tmerc_spherical_fwd;
+                P->host->inv = tmerc_spherical_inv;
+                P->host->fwd = tmerc_spherical_fwd;
             }
             else
             {
-                P->inv = approx_e_inv;
-                P->fwd = approx_e_fwd;
+                P->host->inv = approx_e_inv;
+                P->host->fwd = approx_e_fwd;
             }
             break;
         }
@@ -620,20 +620,20 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
         case TMercAlgo::PODER_ENGSAGER:
         {
             setup_exact(P);
-            P->inv = exact_e_inv;
-            P->fwd = exact_e_fwd;
+            P->host->inv = exact_e_inv;
+            P->host->fwd = exact_e_fwd;
             break;
         }
 
         case TMercAlgo::AUTO:
         {
-            P->destructor = destructor;
+            P->host->destructor = destructor;
             if( !setup_approx(P) )
                 return nullptr;
             setup_exact(P);
 
-            P->inv = auto_e_inv;
-            P->fwd = auto_e_fwd;
+            P->host->inv = auto_e_inv;
+            P->host->fwd = auto_e_fwd;
             break;
         }
     }

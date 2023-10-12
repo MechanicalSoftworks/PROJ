@@ -69,8 +69,8 @@ PJ *PROJECTION(col_urban) {
     Q->C = 1 + Q->h0;
     Q->D = Q->rho0 * (1 + Q->h0 / (1 - P->es));
 
-    P->fwd = col_urban_forward;
-    P->inv = col_urban_inverse;
+    P->host->fwd = col_urban_forward;
+    P->host->inv = col_urban_inverse;
 
     return P;
 }

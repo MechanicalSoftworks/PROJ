@@ -117,7 +117,7 @@ PJ *PROJECTION(bonne) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->phi1 = pj_param(P->ctx, P->params, "rlat_1").f;
     if (fabs(Q->phi1) < EPS10)
@@ -134,15 +134,15 @@ PJ *PROJECTION(bonne) {
         c = cos(Q->phi1);
         Q->m1 = pj_mlfn(Q->phi1, Q->am1, c, Q->en);
         Q->am1 = c / (sqrt(1. - P->es * Q->am1 * Q->am1) * Q->am1);
-        P->inv = bonne_e_inverse;
-        P->fwd = bonne_e_forward;
+        P->host->inv = bonne_e_inverse;
+        P->host->fwd = bonne_e_forward;
     } else {
         if (fabs(Q->phi1) + EPS10 >= M_HALFPI)
             Q->cphi1 = 0.;
         else
             Q->cphi1 = 1. / tan(Q->phi1);
-        P->inv = bonne_s_inverse;
-        P->fwd = bonne_s_forward;
+        P->host->inv = bonne_s_inverse;
+        P->host->fwd = bonne_s_forward;
     }
     return P;
 }

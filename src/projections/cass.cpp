@@ -119,8 +119,8 @@ PJ *PROJECTION(cass) {
 
     /* Spheroidal? */
     if (0==P->es) {
-        P->inv = cass_s_inverse;
-        P->fwd = cass_s_forward;
+        P->host->inv = cass_s_inverse;
+        P->host->fwd = cass_s_forward;
         return P;
     }
 
@@ -129,7 +129,7 @@ PJ *PROJECTION(cass) {
     P->opaque = Q;
     if (nullptr==P->opaque)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->en = pj_enfn (P->es);
     if (nullptr==Q->en)
@@ -138,8 +138,8 @@ PJ *PROJECTION(cass) {
     Q->m0 = pj_mlfn (P->phi0,  sin (P->phi0),  cos (P->phi0), Q->en);
     if (pj_param_exists(P->params, "hyperbolic"))
         Q->hyperbolic = true;
-    P->inv = cass_e_inverse;
-    P->fwd = cass_e_forward;
+    P->host->inv = cass_e_inverse;
+    P->host->fwd = cass_e_forward;
 
     return P;
 }

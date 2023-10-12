@@ -617,7 +617,7 @@ PJ *PROJECTION(healpix) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     double angle = pj_param(P->ctx, P->params,"drot_xy").f;
     Q->rot_xy = PJ_TORAD(angle);
@@ -629,11 +629,11 @@ PJ *PROJECTION(healpix) {
         Q->qp = pj_qsfn(1.0, P->e, P->one_es);  /* For auth_lat(). */
         P->a = P->a*sqrt(0.5*Q->qp);            /* Set P->a to authalic radius. */
         pj_calc_ellipsoid_params (P, P->a, P->es);  /* Ensure we have a consistent parameter set */
-        P->fwd = e_healpix_forward;
-        P->inv = e_healpix_inverse;
+        P->host->fwd = e_healpix_forward;
+        P->host->inv = e_healpix_inverse;
     } else {
-        P->fwd = s_healpix_forward;
-        P->inv = s_healpix_inverse;
+        P->host->fwd = s_healpix_forward;
+        P->host->inv = s_healpix_inverse;
     }
 
     return P;
@@ -645,7 +645,7 @@ PJ *PROJECTION(rhealpix) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->north_square = pj_param(P->ctx, P->params,"inorth_square").i;
     Q->south_square = pj_param(P->ctx, P->params,"isouth_square").i;
@@ -668,11 +668,11 @@ PJ *PROJECTION(rhealpix) {
         Q->qp = pj_qsfn(1.0, P->e, P->one_es); /* For auth_lat(). */
         P->a = P->a*sqrt(0.5*Q->qp); /* Set P->a to authalic radius. */
         P->ra = 1.0/P->a;
-        P->fwd = e_rhealpix_forward;
-        P->inv = e_rhealpix_inverse;
+        P->host->fwd = e_rhealpix_forward;
+        P->host->inv = e_rhealpix_inverse;
     } else {
-        P->fwd = s_rhealpix_forward;
-        P->inv = s_rhealpix_inverse;
+        P->host->fwd = s_rhealpix_forward;
+        P->host->inv = s_rhealpix_inverse;
     }
 
     return P;

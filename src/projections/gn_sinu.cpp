@@ -112,8 +112,8 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
 static void setup(PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     P->es = 0;
-    P->inv = gn_sinu_s_inverse;
-    P->fwd = gn_sinu_s_forward;
+    P->host->inv = gn_sinu_s_inverse;
+    P->host->fwd = gn_sinu_s_forward;
 
     Q->C_y = sqrt((Q->m + 1.) / Q->n);
     Q->C_x = Q->C_y/(Q->m + 1.);
@@ -125,14 +125,14 @@ PJ *PROJECTION(sinu) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     if (!(Q->en = pj_enfn(P->es)))
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     if (P->es != 0.0) {
-        P->inv = gn_sinu_e_inverse;
-        P->fwd = gn_sinu_e_forward;
+        P->host->inv = gn_sinu_e_inverse;
+        P->host->fwd = gn_sinu_e_forward;
     } else {
         Q->n = 1.;
         Q->m = 0.;
@@ -147,7 +147,7 @@ PJ *PROJECTION(eck6) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->m = 1.;
     Q->n = 2.570796326794896619231321691;
@@ -162,7 +162,7 @@ PJ *PROJECTION(mbtfps) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->m = 0.5;
     Q->n = 1.785398163397448309615660845;
@@ -177,7 +177,7 @@ PJ *PROJECTION(gn_sinu) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     if (!pj_param(P->ctx, P->params, "tn").i )
     {

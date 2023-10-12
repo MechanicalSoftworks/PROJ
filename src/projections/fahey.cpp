@@ -35,8 +35,8 @@ static PJ_LP fahey_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 
 PJ *PROJECTION(fahey) {
     P->es = 0.;
-    P->inv = fahey_s_inverse;
-    P->fwd = fahey_s_forward;
+    P->host->inv = fahey_s_inverse;
+    P->host->fwd = fahey_s_forward;
 
     return P;
 }

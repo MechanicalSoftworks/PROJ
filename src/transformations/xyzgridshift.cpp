@@ -221,7 +221,7 @@ static PJ *destructor (PJ *P, int errlev) {
     if( Q )
     {
         if (Q->cart)
-            Q->cart->destructor (Q->cart, errlev);
+            Q->cart->host->destructor (Q->cart, errlev);
         delete Q;
     }
     P->opaque = nullptr;
@@ -241,15 +241,15 @@ static void reassign_context( PJ* P, PJ_CONTEXT* ctx )
 PJ *TRANSFORMATION(xyzgridshift,0) {
     auto Q = new xyzgridshiftData;
     P->opaque = (void *) Q;
-    P->destructor = destructor;
-    P->reassign_context = reassign_context;
+    P->host->destructor = destructor;
+    P->host->reassign_context = reassign_context;
 
-    P->fwd4d  = nullptr;
-    P->inv4d  = nullptr;
-    P->fwd3d  = forward_3d;
-    P->inv3d  = reverse_3d;
-    P->fwd    = nullptr;
-    P->inv    = nullptr;
+    P->host->fwd4d  = nullptr;
+    P->host->inv4d  = nullptr;
+    P->host->fwd3d  = forward_3d;
+    P->host->inv3d  = reverse_3d;
+    P->host->fwd    = nullptr;
+    P->host->inv    = nullptr;
 
     P->left  = PJ_IO_UNITS_CARTESIAN;
     P->right = PJ_IO_UNITS_CARTESIAN;

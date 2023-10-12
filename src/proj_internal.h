@@ -370,6 +370,63 @@ enum class TMercAlgo
     PODER_ENGSAGER,
 };
 
+struct PJhost
+{
+    /*************************************************************************************
+
+                          F U N C T I O N    P O I N T E R S
+
+    **************************************************************************************
+
+        For projection xxx, these are pointers to functions in the corresponding
+        PJ_xxx.c file.
+
+        pj_init() delegates the setup of these to pj_projection_specific_setup_xxx(),
+        a name which is currently hidden behind the magic curtain of the PROJECTION
+        macro.
+
+    **************************************************************************************/
+
+
+    PJ_XY  (*fwd)(PJ_LP,    PJ *) = nullptr;
+    PJ_LP  (*inv)(PJ_XY,    PJ *) = nullptr;
+    PJ_XYZ (*fwd3d)(PJ_LPZ, PJ *) = nullptr;
+    PJ_LPZ (*inv3d)(PJ_XYZ, PJ *) = nullptr;
+    PJ_OPERATOR fwd4d = nullptr;
+    PJ_OPERATOR inv4d = nullptr;
+
+    PJ_DESTRUCTOR destructor = nullptr;
+    void   (*reassign_context)(PJ*, PJ_CONTEXT*) = nullptr;
+
+    /*************************************************************************************
+     ISO-19111 interface
+    **************************************************************************************/
+
+    NS_PROJ::common::IdentifiedObjectPtr iso_obj{};
+
+    // cached results
+    mutable std::string lastWKT{};
+    mutable std::string lastPROJString{};
+    mutable std::string lastJSONString{};
+    mutable bool gridsNeededAsked = false;
+    mutable std::vector<NS_PROJ::operation::GridDescription> gridsNeeded{};
+
+    /*************************************************************************************
+     proj_create_crs_to_crs() alternative coordinate operations
+    **************************************************************************************/
+    std::vector<PJCoordOperation> alternativeCoordinateOperations{};
+
+    /*************************************************************************************
+
+                 E N D   O F    G E N E R A L   P A R A M E T E R   S T R U C T
+
+    **************************************************************************************/
+
+    PJhost();
+    PJhost(const PJhost&) = delete;
+    PJhost&operator=(const PJhost&) = delete;
+};
+
 /* base projection data structure */
 struct PJconsts {
 
@@ -401,32 +458,8 @@ struct PJconsts {
     void *opaque = nullptr;                  /* Projection specific parameters, Defined in PJ_*.c */
     int inverted = 0;                        /* Tell high level API functions to swap inv/fwd */
 
-
-    /*************************************************************************************
-
-                          F U N C T I O N    P O I N T E R S
-
-    **************************************************************************************
-
-        For projection xxx, these are pointers to functions in the corresponding
-        PJ_xxx.c file.
-
-        pj_init() delegates the setup of these to pj_projection_specific_setup_xxx(),
-        a name which is currently hidden behind the magic curtain of the PROJECTION
-        macro.
-
-    **************************************************************************************/
-
-
-    PJ_XY  (*fwd)(PJ_LP,    PJ *) = nullptr;
-    PJ_LP  (*inv)(PJ_XY,    PJ *) = nullptr;
-    PJ_XYZ (*fwd3d)(PJ_LPZ, PJ *) = nullptr;
-    PJ_LPZ (*inv3d)(PJ_XYZ, PJ *) = nullptr;
-    PJ_OPERATOR fwd4d = nullptr;
-    PJ_OPERATOR inv4d = nullptr;
-
-    PJ_DESTRUCTOR destructor = nullptr;
-    void   (*reassign_context)(PJ*, PJ_CONTEXT*) = nullptr;
+    /* !!! THIS ISN'T SVM - DON'T USE IT FROM THE OPENCL DEVICE !!! */
+    struct PJhost *host = nullptr;
 
 
     /*************************************************************************************
@@ -564,22 +597,12 @@ struct PJconsts {
      ISO-19111 interface
     **************************************************************************************/
 
-    NS_PROJ::common::IdentifiedObjectPtr iso_obj{};
-
-    // cached results
-    mutable std::string lastWKT{};
-    mutable std::string lastPROJString{};
-    mutable std::string lastJSONString{};
-    mutable bool gridsNeededAsked = false;
-    mutable std::vector<NS_PROJ::operation::GridDescription> gridsNeeded{};
-
     // cache pj_get_type() result to help for repeated calls to proj_factors()
     mutable PJ_TYPE type = PJ_TYPE_UNKNOWN;
 
     /*************************************************************************************
      proj_create_crs_to_crs() alternative coordinate operations
     **************************************************************************************/
-    std::vector<PJCoordOperation> alternativeCoordinateOperations{};
     int iCurCoordOp = -1;
 
     /*************************************************************************************

@@ -50,8 +50,8 @@ static PJ_LP mbt_fps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inve
 PJ *PROJECTION(mbt_fps) {
 
     P->es = 0;
-    P->inv = mbt_fps_s_inverse;
-    P->fwd = mbt_fps_s_forward;
+    P->host->inv = mbt_fps_s_inverse;
+    P->host->fwd = mbt_fps_s_forward;
 
     return P;
 }

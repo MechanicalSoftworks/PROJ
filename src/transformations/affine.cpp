@@ -156,9 +156,9 @@ static void computeReverseParameters(PJ* P)
         if (proj_log_level(P->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
             proj_log_debug(P, "matrix non invertible");
         }
-        P->inv4d = nullptr;
-        P->inv3d = nullptr;
-        P->inv = nullptr;
+        P->host->inv4d = nullptr;
+        P->host->inv3d = nullptr;
+        P->host->inv = nullptr;
     } else {
         Q->reverse.s11 = A / det;
         Q->reverse.s12 = D / det;
@@ -179,12 +179,12 @@ PJ *TRANSFORMATION(affine,0 /* no need for ellipsoid */) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
 
-    P->fwd4d = forward_4d;
-    P->inv4d = reverse_4d;
-    P->fwd3d  = forward_3d;
-    P->inv3d  = reverse_3d;
-    P->fwd    = forward_2d;
-    P->inv    = reverse_2d;
+    P->host->fwd4d = forward_4d;
+    P->host->inv4d = reverse_4d;
+    P->host->fwd3d  = forward_3d;
+    P->host->inv3d  = reverse_3d;
+    P->host->fwd    = forward_2d;
+    P->host->inv    = reverse_2d;
 
     P->left   = PJ_IO_UNITS_WHATEVER;
     P->right  = PJ_IO_UNITS_WHATEVER;
@@ -230,12 +230,12 @@ PJ *TRANSFORMATION(geogoffset,0 /* no need for ellipsoid */) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
 
-    P->fwd4d = forward_4d;
-    P->inv4d = reverse_4d;
-    P->fwd3d  = forward_3d;
-    P->inv3d  = reverse_3d;
-    P->fwd    = forward_2d;
-    P->inv    = reverse_2d;
+    P->host->fwd4d = forward_4d;
+    P->host->inv4d = reverse_4d;
+    P->host->fwd3d  = forward_3d;
+    P->host->inv3d  = reverse_3d;
+    P->host->fwd    = forward_2d;
+    P->host->inv    = reverse_2d;
 
     P->left   = PJ_IO_UNITS_RADIANS;
     P->right  = PJ_IO_UNITS_RADIANS;

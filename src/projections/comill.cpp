@@ -79,8 +79,8 @@ static PJ_LP comill_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 PJ *PROJECTION(comill) {
     P->es = 0;
 
-    P->inv = comill_s_inverse;
-    P->fwd = comill_s_forward;
+    P->host->inv = comill_s_inverse;
+    P->host->fwd = comill_s_forward;
 
     return P;
 }

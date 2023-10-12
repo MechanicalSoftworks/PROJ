@@ -233,10 +233,10 @@ static PJ_LP cart_reverse (PJ_XY xy, PJ *P) {
 /*********************************************************************/
 PJ *CONVERSION(cart,1) {
 /*********************************************************************/
-    P->fwd3d  =  cartesian;
-    P->inv3d  =  geodetic;
-    P->fwd    =  cart_forward;
-    P->inv    =  cart_reverse;
+    P->host->fwd3d  =  cartesian;
+    P->host->inv3d  =  geodetic;
+    P->host->fwd    =  cart_forward;
+    P->host->inv    =  cart_reverse;
     P->left   =  PJ_IO_UNITS_RADIANS;
     P->right  =  PJ_IO_UNITS_CARTESIAN;
     return P;

@@ -34,8 +34,8 @@ static PJ_LP cc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse *
 PJ *PROJECTION(cc) {
     P->es = 0.;
 
-    P->inv = cc_s_inverse;
-    P->fwd = cc_s_forward;
+    P->host->inv = cc_s_inverse;
+    P->host->fwd = cc_s_forward;
 
     return P;
 }

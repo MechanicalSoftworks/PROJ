@@ -1,4 +1,4 @@
-/* dervative of (*P->fwd) projection */
+/* dervative of (*P->host->fwd) projection */
 #define PJ_LIB__
 
 #include <math.h>
@@ -10,7 +10,7 @@ int pj_deriv(PJ_LP lp, double h, const PJ *P, struct DERIVS *der) {
     PJ_XY t;
     /* get rid of constness until we can do it for real */
     PJ *Q = (PJ *) P;
-    if (nullptr==Q->fwd)
+    if (nullptr==Q->host->fwd)
         return 1;
 
     lp.lam += h;
@@ -19,7 +19,7 @@ int pj_deriv(PJ_LP lp, double h, const PJ *P, struct DERIVS *der) {
         return 1;
 
     h += h;
-    t = (*Q->fwd)(lp, Q);
+    t = (*Q->host->fwd)(lp, Q);
     if (t.x == HUGE_VAL)
         return 1;
 
@@ -32,7 +32,7 @@ int pj_deriv(PJ_LP lp, double h, const PJ *P, struct DERIVS *der) {
     if (fabs(lp.phi) > M_HALFPI)
         return 1;
 
-    t = (*Q->fwd)(lp, Q);
+    t = (*Q->host->fwd)(lp, Q);
     if (t.x == HUGE_VAL)
         return 1;
 
@@ -42,7 +42,7 @@ int pj_deriv(PJ_LP lp, double h, const PJ *P, struct DERIVS *der) {
     der->y_l += t.y;
 
     lp.lam -= h;
-    t = (*Q->fwd)(lp, Q);
+    t = (*Q->host->fwd)(lp, Q);
     if (t.x == HUGE_VAL)
         return 1;
 
@@ -52,7 +52,7 @@ int pj_deriv(PJ_LP lp, double h, const PJ *P, struct DERIVS *der) {
     der->y_l -= t.y;
 
     lp.phi += h;
-    t = (*Q->fwd)(lp, Q);
+    t = (*Q->host->fwd)(lp, Q);
     if (t.x == HUGE_VAL)
         return 1;
 

@@ -150,9 +150,9 @@ PJ *PROJECTION(rouss) {
     Q->D10 = R_R0_4 * t * (29. + t2 * (86. + t2 * 48.))/(96. * N0);
     Q->D11 = R_R0_4 * t * (37. + t2 * 44.)/(96. * N0);
 
-    P->fwd = rouss_e_forward;
-    P->inv = rouss_e_inverse;
-    P->destructor = destructor;
+    P->host->fwd = rouss_e_forward;
+    P->host->inv = rouss_e_inverse;
+    P->host->destructor = destructor;
 
     return P;
 }

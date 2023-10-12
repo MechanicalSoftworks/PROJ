@@ -254,7 +254,7 @@ PJ *PROJECTION(laea) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     t = fabs(P->phi0);
     if (t > M_HALFPI + EPS10 ) {
@@ -297,15 +297,15 @@ PJ *PROJECTION(laea) {
             Q->xmf *= Q->dd;
             break;
         }
-        P->inv = laea_e_inverse;
-        P->fwd = laea_e_forward;
+        P->host->inv = laea_e_inverse;
+        P->host->fwd = laea_e_forward;
     } else {
         if (Q->mode == OBLIQ) {
             Q->sinb1 = sin(P->phi0);
             Q->cosb1 = cos(P->phi0);
         }
-        P->inv = laea_s_inverse;
-        P->fwd = laea_s_forward;
+        P->host->inv = laea_s_inverse;
+        P->host->fwd = laea_s_forward;
     }
 
     return P;

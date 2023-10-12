@@ -71,8 +71,8 @@ PJ *PROJECTION(loxim) {
 
     Q->tanphi1 = tan(M_FORTPI + 0.5 * Q->phi1);
 
-    P->inv = loxim_s_inverse;
-    P->fwd = loxim_s_forward;
+    P->host->inv = loxim_s_inverse;
+    P->host->fwd = loxim_s_forward;
     P->es = 0.;
 
    return P;

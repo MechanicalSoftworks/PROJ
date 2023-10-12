@@ -106,8 +106,8 @@ PJ *PROJECTION(ocea) {
     P->lam0 = lam_p + M_HALFPI;
     Q->cosphi = cos(phi_p);
     Q->sinphi = sin(phi_p);
-    P->inv = ocea_s_inverse;
-    P->fwd = ocea_s_forward;
+    P->host->inv = ocea_s_inverse;
+    P->host->fwd = ocea_s_forward;
     P->es = 0.;
 
     return P;

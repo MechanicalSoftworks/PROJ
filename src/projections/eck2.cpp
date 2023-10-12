@@ -50,8 +50,8 @@ static PJ_LP eck2_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 
 PJ *PROJECTION(eck2) {
     P->es = 0.;
-    P->inv = eck2_s_inverse;
-    P->fwd = eck2_s_forward;
+    P->host->inv = eck2_s_inverse;
+    P->host->fwd = eck2_s_forward;
 
     return P;
 }

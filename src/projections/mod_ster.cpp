@@ -119,8 +119,8 @@ static PJ *setup(PJ *P) { /* general initialization */
         chio = P->phi0;
     Q->schio = sin(chio);
     Q->cchio = cos(chio);
-    P->inv = mod_ster_e_inverse;
-    P->fwd = mod_ster_e_forward;
+    P->host->inv = mod_ster_e_inverse;
+    P->host->fwd = mod_ster_e_forward;
 
     return P;
 }

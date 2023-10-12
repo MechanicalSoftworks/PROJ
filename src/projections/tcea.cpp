@@ -30,8 +30,8 @@ static PJ_LP tcea_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 
 
 PJ *PROJECTION(tcea) {
-    P->inv = tcea_s_inverse;
-    P->fwd = tcea_s_forward;
+    P->host->inv = tcea_s_inverse;
+    P->host->fwd = tcea_s_forward;
     P->es = 0.;
     return P;
 }

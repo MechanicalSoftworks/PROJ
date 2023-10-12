@@ -60,8 +60,8 @@ PJ *PROJECTION(wink2) {
 
     static_cast<struct pj_opaque*>(P->opaque)->cosphi1 = cos(pj_param(P->ctx, P->params, "rlat_1").f);
     P->es  = 0.;
-    P->fwd = wink2_s_forward;
-    P->inv = wink2_s_inverse;
+    P->host->fwd = wink2_s_forward;
+    P->host->inv = wink2_s_inverse;
 
     return P;
 }

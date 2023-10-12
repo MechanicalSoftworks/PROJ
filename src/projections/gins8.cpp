@@ -26,8 +26,8 @@ static PJ_XY gins8_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 
 PJ *PROJECTION(gins8) {
     P->es = 0.0;
-    P->inv = nullptr;
-    P->fwd = gins8_s_forward;
+    P->host->inv = nullptr;
+    P->host->fwd = gins8_s_forward;
 
     return P;
 }

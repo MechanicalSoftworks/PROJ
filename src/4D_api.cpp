@@ -276,12 +276,12 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
     if (P->inverted)
         direction = opposite_direction(direction);
 
-    if( !P->alternativeCoordinateOperations.empty() ) {
+    if( !P->host->alternativeCoordinateOperations.empty() ) {
         constexpr int N_MAX_RETRY = 2;
         int iExcluded[N_MAX_RETRY] = {-1, -1};
 
         const int nOperations = static_cast<int>(
-            P->alternativeCoordinateOperations.size());
+            P->host->alternativeCoordinateOperations.size());
 
         // We may need several attempts. For example the point at
         // lon=-111.5 lat=45.26 falls into the bounding box of the Canadian
@@ -293,7 +293,7 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
             // Do a first pass and select the operations that match the area of use
             // and has the best accuracy.
             int iBest = pj_get_suggested_operation(P->ctx,
-                                                   P->alternativeCoordinateOperations,
+                                                   P->host->alternativeCoordinateOperations,
                                                    iExcluded,
                                                    direction,
                                                    coord);
@@ -310,7 +310,7 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
                     "Attempting a retry with another operation.");
             }
 
-            const auto& alt = P->alternativeCoordinateOperations[iBest];
+            const auto& alt = P->host->alternativeCoordinateOperations[iBest];
             if( P->iCurCoordOp != iBest ) {
                 if (proj_log_level(P->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
                     std::string msg("Using coordinate operation ");
@@ -345,9 +345,9 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
         }
         catch( const std::exception& ) {}
         for( int i = 0; i < nOperations; i++ ) {
-            const auto &alt = P->alternativeCoordinateOperations[i];
+            const auto &alt = P->host->alternativeCoordinateOperations[i];
             auto coordOperation = dynamic_cast<
-            NS_PROJ::operation::CoordinateOperation*>(alt.pj->iso_obj.get());
+            NS_PROJ::operation::CoordinateOperation*>(alt.pj->host->iso_obj.get());
             if( coordOperation ) {
                 if( coordOperation->gridsNeeded(dbContext, true).empty() ) {
                     if( P->iCurCoordOp != i ) {
@@ -1942,16 +1942,16 @@ PJ  *proj_create_crs_to_crs_from_pj (PJ_CONTEXT *ctx, const PJ *source_crs, cons
         return retP;
     }
 
-    P->alternativeCoordinateOperations = std::move(preparedOpList);
+    P->host->alternativeCoordinateOperations = std::move(preparedOpList);
     // The returned P is rather dummy
     P->descr = "Set of coordinate operations";
-    P->iso_obj = nullptr;
-    P->fwd = nullptr;
-    P->inv = nullptr;
-    P->fwd3d = nullptr;
-    P->inv3d = nullptr;
-    P->fwd4d = nullptr;
-    P->inv4d = nullptr;
+    P->host->iso_obj = nullptr;
+    P->host->fwd = nullptr;
+    P->host->inv = nullptr;
+    P->host->fwd3d = nullptr;
+    P->host->inv3d = nullptr;
+    P->host->fwd4d = nullptr;
+    P->host->inv4d = nullptr;
 
     return P;
 }
@@ -2189,8 +2189,8 @@ PJ_PROJ_INFO proj_pj_info(PJ *P) {
 
     /* coordinate operation description */
     if( P->iCurCoordOp >= 0 ) {
-        P = P->alternativeCoordinateOperations[P->iCurCoordOp].pj;
-    } else if( !P->alternativeCoordinateOperations.empty() ) {
+        P = P->host->alternativeCoordinateOperations[P->iCurCoordOp].pj;
+    } else if( !P->host->alternativeCoordinateOperations.empty() ) {
         pjinfo.id = "unknown";
         pjinfo.description = "unavailable until proj_trans is called";
         pjinfo.definition = "unavailable until proj_trans is called";
@@ -2201,19 +2201,19 @@ PJ_PROJ_INFO proj_pj_info(PJ *P) {
     if (pj_param(P->ctx, P->params, "tproj").i)
         pjinfo.id = pj_param(P->ctx, P->params, "sproj").s;
 
-    if( P->iso_obj ) {
-        pjinfo.description = P->iso_obj->nameStr().c_str();
+    if( P->host->iso_obj ) {
+        pjinfo.description = P->host->iso_obj->nameStr().c_str();
     } else {
         pjinfo.description = P->descr;
     }
 
     // accuracy
-    if( P->iso_obj ) {
-        auto conv = dynamic_cast<const NS_PROJ::operation::Conversion*>(P->iso_obj.get());
+    if( P->host->iso_obj ) {
+        auto conv = dynamic_cast<const NS_PROJ::operation::Conversion*>(P->host->iso_obj.get());
         if( conv ) {
             pjinfo.accuracy = 0.0;
         } else {
-            auto op = dynamic_cast<const NS_PROJ::operation::CoordinateOperation*>(P->iso_obj.get());
+            auto op = dynamic_cast<const NS_PROJ::operation::CoordinateOperation*>(P->host->iso_obj.get());
             if( op ) {
                 const auto& accuracies = op->coordinateOperationAccuracies();
                 if( !accuracies.empty() ) {

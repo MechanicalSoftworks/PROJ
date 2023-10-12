@@ -138,8 +138,8 @@ int pj_has_inverse(PJ *P) {
 /***************************************************************************************
 Check if a a PJ has an inverse.
 ***************************************************************************************/
-    return ( (P->inverted && (P->fwd || P->fwd3d || P->fwd4d) ) ||
-             ( P->inv || P->inv3d || P->inv4d) );
+    return ( (P->inverted && (P->host->fwd || P->host->fwd3d || P->host->fwd4d) ) ||
+             ( P->host->inv || P->host->inv3d || P->host->inv4d) );
 }
 
 

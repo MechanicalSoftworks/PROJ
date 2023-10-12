@@ -164,8 +164,8 @@ static PJ_LP aea_e_inverse (PJ_XY xy, PJ *P) {   /* Ellipsoid/spheroid, inverse 
 static PJ *setup(PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
-    P->inv = aea_e_inverse;
-    P->fwd = aea_e_forward;
+    P->host->inv = aea_e_inverse;
+    P->host->fwd = aea_e_forward;
 
     if (fabs(Q->phi1) > M_HALFPI)
     {
@@ -235,7 +235,7 @@ PJ *PROJECTION(aea) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->phi1 = pj_param(P->ctx, P->params, "rlat_1").f;
     Q->phi2 = pj_param(P->ctx, P->params, "rlat_2").f;
@@ -248,7 +248,7 @@ PJ *PROJECTION(leac) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->phi2 = pj_param(P->ctx, P->params, "rlat_1").f;
     Q->phi1 = pj_param(P->ctx, P->params, "bsouth").i ? - M_HALFPI: M_HALFPI;

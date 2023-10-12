@@ -444,14 +444,14 @@ PJ *PROJECTION(horner) {
 /*********************************************************************/
     int   degree = 0, n, complex_polynomia = 0;
     HORNER *Q;
-    P->fwd4d  = horner_forward_4d;
-    P->inv4d  = horner_reverse_4d;
-    P->fwd3d  =  nullptr;
-    P->inv3d  =  nullptr;
-    P->fwd    =  nullptr;
-    P->inv    =  nullptr;
+    P->host->fwd4d  = horner_forward_4d;
+    P->host->inv4d  = horner_reverse_4d;
+    P->host->fwd3d  =  nullptr;
+    P->host->inv3d  =  nullptr;
+    P->host->fwd    =  nullptr;
+    P->host->inv    =  nullptr;
     P->left   =  P->right  =  PJ_IO_UNITS_PROJECTED;
-    P->destructor = horner_freeup;
+    P->host->destructor = horner_freeup;
 
     /* Polynomial degree specified? */
     if (pj_param (P->ctx, P->params, "tdeg").i) { /* degree specified? */
@@ -490,8 +490,8 @@ PJ *PROJECTION(horner) {
             proj_log_error (P, _("missing inv_c"));
             return horner_freeup (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
         }
-        P->fwd4d = complex_horner_forward_4d;
-        P->inv4d = complex_horner_reverse_4d;
+        P->host->fwd4d = complex_horner_forward_4d;
+        P->host->inv4d = complex_horner_reverse_4d;
     }
 
     else {

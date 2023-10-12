@@ -235,12 +235,12 @@ PJ *PROJECTION(geos) {
         Q->radius_p      = sqrt (P->one_es);
         Q->radius_p2     = P->one_es;
         Q->radius_p_inv2 = P->rone_es;
-        P->inv = geos_e_inverse;
-        P->fwd = geos_e_forward;
+        P->host->inv = geos_e_inverse;
+        P->host->fwd = geos_e_forward;
     } else {
         Q->radius_p = Q->radius_p2 = Q->radius_p_inv2 = 1.0;
-        P->inv = geos_s_inverse;
-        P->fwd = geos_s_forward;
+        P->host->inv = geos_s_inverse;
+        P->host->fwd = geos_s_forward;
     }
 
     return P;

@@ -98,25 +98,30 @@ void *free_params (PJ_CONTEXT *ctx, paralist *start, int errlev) {
 /*      This is the application callable entry point for destroying     */
 /*      a projection definition.  It does work generic to all           */
 /*      projection types, and then calls the projection specific        */
-/*      free function, P->destructor(), to do local work.               */
-/*      In most cases P->destructor()==pj_default_destructor.           */
+/*      free function, P->host->destructor(), to do local work.               */
+/*      In most cases P->host->destructor()==pj_default_destructor.           */
 /************************************************************************/
 
 PJ *proj_destroy(PJ *P) {
-    if (nullptr==P || !P->destructor)
+    if (nullptr==P || !P->host->destructor)
         return nullptr;
     /* free projection parameters - all the hard work is done by */
     /* pj_default_destructor, which is supposed */
     /* to be called as the last step of the local destructor     */
-    /* pointed to by P->destructor. In most cases,               */
+    /* pointed to by P->host->destructor. In most cases,               */
     /* pj_default_destructor actually *is* what is pointed to    */
-    P->destructor (P, proj_errno(P));
+    P->host->destructor (P, proj_errno(P));
     return nullptr;
 }
 
 /*****************************************************************************/
 // cppcheck-suppress uninitMemberVar
-PJconsts::PJconsts(): destructor(pj_default_destructor) {}
+PJhost::PJhost() : destructor(pj_default_destructor) {}
+/*****************************************************************************/
+
+/*****************************************************************************/
+// cppcheck-suppress uninitMemberVar
+PJconsts::PJconsts() : host(new PJhost) {}
 /*****************************************************************************/
 
 /*****************************************************************************/
@@ -143,6 +148,7 @@ PJ *pj_default_destructor (PJ *P, int errlev) {   /* Destructor */
     if (nullptr==P)
         return nullptr;
 
+    delete P->host;
 
     free(P->def_size);
     free(P->def_shape);

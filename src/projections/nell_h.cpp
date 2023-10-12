@@ -47,8 +47,8 @@ static PJ_LP nell_h_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
 PJ *PROJECTION(nell_h) {
     P->es = 0.;
-    P->inv = nell_h_s_inverse;
-    P->fwd = nell_h_s_forward;
+    P->host->inv = nell_h_s_inverse;
+    P->host->fwd = nell_h_s_forward;
 
     return P;
 }

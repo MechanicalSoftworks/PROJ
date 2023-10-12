@@ -68,8 +68,8 @@ PJ *PROJECTION(gstmerc) {
     Q->XS = 0;
     Q->YS = -Q->n2 * Q->phic;
 
-    P->inv = gstmerc_s_inverse;
-    P->fwd = gstmerc_s_forward;
+    P->host->inv = gstmerc_s_inverse;
+    P->host->fwd = gstmerc_s_forward;
 
     return P;
 }

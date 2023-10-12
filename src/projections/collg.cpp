@@ -49,8 +49,8 @@ static PJ_LP collg_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 
 PJ *PROJECTION(collg) {
     P->es = 0.0;
-    P->inv = collg_s_inverse;
-    P->fwd = collg_s_forward;
+    P->host->inv = collg_s_inverse;
+    P->host->fwd = collg_s_forward;
 
     return P;
 }

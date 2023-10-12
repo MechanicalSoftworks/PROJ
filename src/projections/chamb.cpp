@@ -142,7 +142,7 @@ PJ *PROJECTION(chamb) {
     Q->p.x = Q->c[2].p.x;
 
     P->es = 0.;
-    P->fwd = chamb_s_forward;
+    P->host->fwd = chamb_s_forward;
 
     return P;
 }

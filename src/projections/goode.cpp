@@ -26,9 +26,9 @@ static PJ_XY goode_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     if (fabs(lp.phi) <= PHI_LIM)
-        xy = Q->sinu->fwd(lp, Q->sinu);
+        xy = Q->sinu->host->fwd(lp, Q->sinu);
     else {
-        xy = Q->moll->fwd(lp, Q->moll);
+        xy = Q->moll->host->fwd(lp, Q->moll);
         xy.y -= lp.phi >= 0.0 ? Y_COR : -Y_COR;
     }
     return xy;
@@ -40,10 +40,10 @@ static PJ_LP goode_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     if (fabs(xy.y) <= PHI_LIM)
-        lp = Q->sinu->inv(xy, Q->sinu);
+        lp = Q->sinu->host->inv(xy, Q->sinu);
     else {
         xy.y += xy.y >= 0.0 ? Y_COR : -Y_COR;
-        lp = Q->moll->inv(xy, Q->moll);
+        lp = Q->moll->host->inv(xy, Q->moll);
     }
     return lp;
 }
@@ -66,7 +66,7 @@ PJ *PROJECTION(goode) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     P->es = 0.;
     Q->sinu = pj_sinu(nullptr);
@@ -81,8 +81,8 @@ PJ *PROJECTION(goode) {
     if (Q->sinu == nullptr || Q->moll == nullptr)
         return destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
-    P->fwd = goode_s_forward;
-    P->inv = goode_s_inverse;
+    P->host->fwd = goode_s_forward;
+    P->host->inv = goode_s_inverse;
 
     return P;
 }

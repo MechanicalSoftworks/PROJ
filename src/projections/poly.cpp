@@ -159,18 +159,18 @@ PJ *PROJECTION(poly) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     if (P->es != 0.0) {
         if (!(Q->en = pj_enfn(P->es)))
             return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
         Q->ml0 = pj_mlfn(P->phi0, sin(P->phi0), cos(P->phi0), Q->en);
-        P->inv = poly_e_inverse;
-        P->fwd = poly_e_forward;
+        P->host->inv = poly_e_inverse;
+        P->host->fwd = poly_e_forward;
     } else {
         Q->ml0 = -P->phi0;
-        P->inv = poly_s_inverse;
-        P->fwd = poly_s_forward;
+        P->host->inv = poly_s_inverse;
+        P->host->fwd = poly_s_forward;
     }
 
     return P;

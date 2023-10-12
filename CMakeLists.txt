@@ -44,6 +44,11 @@ if(APPLE)
     set(MACOSX_RPATH ON)
 endif()
 
+# Allow multithreaded builds.
+if(MSVC)
+  add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP64>)
+endif()
+
 # Set global -fvisibility=hidden
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)

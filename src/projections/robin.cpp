@@ -153,8 +153,8 @@ static PJ_LP robin_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 
 PJ *PROJECTION(robin) {
     P->es = 0.;
-    P->inv = robin_s_inverse;
-    P->fwd = robin_s_forward;
+    P->host->inv = robin_s_inverse;
+    P->host->fwd = robin_s_forward;
 
     return P;
 }

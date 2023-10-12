@@ -86,7 +86,7 @@ PJ *PROJECTION(ccon) {
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
-    P->destructor = destructor;
+    P->host->destructor = destructor;
 
     Q->phi1 = pj_param(P->ctx, P->params, "rlat_1").f;
     if (fabs(Q->phi1) < EPS10)
@@ -102,8 +102,8 @@ PJ *PROJECTION(ccon) {
     Q->ctgphi1 = Q->cosphi1/Q->sinphi1;
 
 
-    P->inv = ccon_inverse;
-    P->fwd = ccon_forward;
+    P->host->inv = ccon_inverse;
+    P->host->fwd = ccon_forward;
 
     return P;
 }

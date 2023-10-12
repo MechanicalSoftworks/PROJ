@@ -82,7 +82,7 @@ static PJ_XY igh_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward 
     }
 
     lp.lam -= Q->pj[z-1]->lam0;
-    xy = Q->pj[z-1]->fwd(lp, Q->pj[z-1]);
+    xy = Q->pj[z-1]->host->fwd(lp, Q->pj[z-1]);
     xy.x += Q->pj[z-1]->x0;
     xy.y += Q->pj[z-1]->y0;
 
@@ -120,7 +120,7 @@ static PJ_LP igh_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse 
 
         xy.x -= Q->pj[z-1]->x0;
         xy.y -= Q->pj[z-1]->y0;
-        lp = Q->pj[z-1]->inv(xy, Q->pj[z-1]);
+        lp = Q->pj[z-1]->host->inv(xy, Q->pj[z-1]);
         lp.lam += Q->pj[z-1]->lam0;
 
         switch (z) {
@@ -165,7 +165,7 @@ static PJ *destructor (PJ *P, int errlev) {
 
     for (i = 0; i < 12; ++i) {
         if (Q->pj[i])
-            Q->pj[i]->destructor(Q->pj[i], errlev);
+            Q->pj[i]->host->destructor(Q->pj[i], errlev);
     }
 
     return pj_default_destructor(P, errlev);
@@ -232,8 +232,8 @@ PJ *PROJECTION(igh) {
     }
 
     /* y0 ? */
-    xy1 = Q->pj[0]->fwd(lp, Q->pj[0]); /* zone 1 */
-    xy3 = Q->pj[2]->fwd(lp, Q->pj[2]); /* zone 3 */
+    xy1 = Q->pj[0]->host->fwd(lp, Q->pj[0]); /* zone 1 */
+    xy3 = Q->pj[2]->host->fwd(lp, Q->pj[2]); /* zone 3 */
     /* y0 + xy1.y = xy3.y for lt = 40d44'11.8" */
     Q->dy0 = xy3.y - xy1.y;
 
@@ -249,9 +249,9 @@ PJ *PROJECTION(igh) {
        return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     }
 
-    P->inv = igh_s_inverse;
-    P->fwd = igh_s_forward;
-    P->destructor = destructor;
+    P->host->inv = igh_s_inverse;
+    P->host->fwd = igh_s_forward;
+    P->host->destructor = destructor;
     P->es = 0.;
 
     return P;
