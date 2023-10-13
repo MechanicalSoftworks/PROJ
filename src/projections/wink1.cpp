@@ -38,7 +38,7 @@ PJ *PROJECTION(wink1) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-	static_cast<struct pj_opaque*>(P->opaque)->cosphi1 = cos (pj_param(P->ctx, P->host->params, "rlat_ts").f);
+	static_cast<struct pj_opaque*>(P->opaque)->cosphi1 = cos (pj_param(P->host->ctx, P->host->params, "rlat_ts").f);
 	P->es = 0.;
     P->host->inv = wink1_s_inverse;
     P->host->fwd = wink1_s_forward;

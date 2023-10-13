@@ -128,7 +128,7 @@ void *free_params (PJ_CONTEXT *ctx, paralist *start, int errlev) {
         n = t->next;
         free(t);
     }
-    proj_context_errno_set (ctx, errlev);
+    proj_context_errno_set (ctx->shared, errlev);
     return (void *) nullptr;
 }
 
@@ -186,7 +186,7 @@ PJ *pj_default_destructor (PJ *P, int errlev) {   /* Destructor */
     /* Note that both, in the multithreaded case, may then contain undefined */
     /* values. This is expected behavior. For MT have one ctx per thread    */
     if (0!=errlev)
-        proj_context_errno_set (pj_get_ctx(P), errlev);
+        proj_context_errno_set (pj_get_ctx(P)->shared, errlev);
 
     if (nullptr==P)
         return nullptr;

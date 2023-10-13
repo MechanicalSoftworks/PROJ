@@ -55,7 +55,7 @@ bool pj_log_active( PJ_CONTEXT *ctx, int level )
     int shutup_unless_errno_set = debug_level < 0;
 
     /* For negative debug levels, we first start logging when errno is set */
-    if (ctx->last_errno==0 && shutup_unless_errno_set)
+    if (ctx->shared->last_errno==0 && shutup_unless_errno_set)
         return false;
 
     if (debug_level < 0)

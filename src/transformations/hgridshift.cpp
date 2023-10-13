@@ -41,7 +41,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
     if (!Q->grids.empty()) {
         /* Only try the gridshift if at least one grid is loaded,
          * otherwise just pass the coordinate through unchanged. */
-        point.lp = pj_hgrid_apply(P->ctx, Q->grids, point.lp, PJ_FWD);
+        point.lp = pj_hgrid_apply(P->host->ctx, Q->grids, point.lp, PJ_FWD);
     }
 
     return point.xyz;
@@ -64,7 +64,7 @@ static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
     if (!Q->grids.empty()) {
         /* Only try the gridshift if at least one grid is loaded,
          * otherwise just pass the coordinate through unchanged. */
-        point.lp = pj_hgrid_apply(P->ctx, Q->grids, point.lp, PJ_INV);
+        point.lp = pj_hgrid_apply(P->host->ctx, Q->grids, point.lp, PJ_INV);
     }
 
     return point.lpz;
@@ -139,19 +139,19 @@ PJ *TRANSFORMATION(hgridshift,0) {
     P->left  = PJ_IO_UNITS_RADIANS;
     P->right = PJ_IO_UNITS_RADIANS;
 
-    if (0==pj_param(P->ctx, P->host->params, "tgrids").i) {
+    if (0==pj_param(P->host->ctx, P->host->params, "tgrids").i) {
         proj_log_error(P, _("+grids parameter missing."));
         return destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* TODO: Refactor into shared function that can be used  */
     /*       by both vgridshift and hgridshift               */
-    if (pj_param(P->ctx, P->host->params, "tt_final").i) {
-        Q->t_final = pj_param (P->ctx, P->host->params, "dt_final").f;
+    if (pj_param(P->host->ctx, P->host->params, "tt_final").i) {
+        Q->t_final = pj_param (P->host->ctx, P->host->params, "dt_final").f;
         if (Q->t_final == 0) {
             /* a number wasn't passed to +t_final, let's see if it was "now" */
             /* and set the time accordingly.                                 */
-            if (!strcmp("now", pj_param(P->ctx, P->host->params, "st_final").s)) {
+            if (!strcmp("now", pj_param(P->host->ctx, P->host->params, "st_final").s)) {
                     time_t now;
                     struct tm *date;
                     time(&now);
@@ -161,14 +161,14 @@ PJ *TRANSFORMATION(hgridshift,0) {
         }
     }
 
-    if (pj_param(P->ctx, P->host->params, "tt_epoch").i)
-        Q->t_epoch = pj_param (P->ctx, P->host->params, "dt_epoch").f;
+    if (pj_param(P->host->ctx, P->host->params, "tt_epoch").i)
+        Q->t_epoch = pj_param (P->host->ctx, P->host->params, "dt_epoch").f;
 
-    if( P->ctx->defer_grid_opening ) {
+    if( P->host->ctx->defer_grid_opening ) {
         Q->defer_grid_opening = true;
     }
     else {
-        const char *gridnames = pj_param(P->ctx, P->host->params, "sgrids").s;
+        const char *gridnames = pj_param(P->host->ctx, P->host->params, "sgrids").s;
         gMutex.lock();
         const bool isKnownGrid = gKnownGrids.find(gridnames) != gKnownGrids.end();
         gMutex.unlock();

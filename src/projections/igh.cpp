@@ -198,7 +198,7 @@ static bool setup_zone(PJ *P, struct pj_opaque *Q, int n,
                        double y_0, double lon_0) {
     if (!(Q->pj[n-1] = proj_ptr(nullptr))) return false;
     if (!(Q->pj[n-1] = proj_ptr(Q->pj[n-1]))) return false;
-    Q->pj[n-1]->ctx = P->ctx;
+    Q->pj[n-1]->host->ctx = P->host->ctx;
     Q->pj[n-1]->x0 = x_0;
     Q->pj[n-1]->y0 = y_0;
     Q->pj[n-1]->lam0 = lon_0;

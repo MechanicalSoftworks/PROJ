@@ -80,8 +80,8 @@ PJ *PROJECTION(cea) {
     P->host->destructor = destructor;
 
 
-    if (pj_param(P->ctx, P->host->params, "tlat_ts").i) {
-        t = pj_param(P->ctx, P->host->params, "rlat_ts").f;
+    if (pj_param(P->host->ctx, P->host->params, "tlat_ts").i) {
+        t = pj_param(P->host->ctx, P->host->params, "rlat_ts").f;
         P->k0 = cos(t);
         if (P->k0 < 0.)
         {

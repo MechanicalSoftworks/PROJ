@@ -44,7 +44,7 @@ PJ *PROJECTION(eqc) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    if ((Q->rc = cos(pj_param(P->ctx, P->host->params, "rlat_ts").f)) <= 0.)
+    if ((Q->rc = cos(pj_param(P->host->ctx, P->host->params, "rlat_ts").f)) <= 0.)
     {
         proj_log_error(P, _("Invalid value for lat_ts: |lat_ts| should be <= 90°"));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);

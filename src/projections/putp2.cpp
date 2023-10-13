@@ -44,10 +44,10 @@ static PJ_XY putp2_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 static PJ_LP putp2_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
 
-    lp.phi = aasin(P->ctx,xy.y / C_y);
+    lp.phi = aasin(P->shared_ctx,xy.y / C_y);
     const double c = cos(lp.phi);
     lp.lam = xy.x / (C_x * (c - 0.5));
-    lp.phi = aasin(P->ctx,(lp.phi + sin(lp.phi) * (c - 1.)) / C_p);
+    lp.phi = aasin(P->shared_ctx,(lp.phi + sin(lp.phi) * (c - 1.)) / C_p);
 
     return lp;
 }

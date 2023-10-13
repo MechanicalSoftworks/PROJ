@@ -174,9 +174,35 @@ enum pj_io_units {
 enum pj_io_units pj_left (PJ *P);
 enum pj_io_units pj_right (PJ *P);
 
+void* svm_malloc(size_t sz);
+void* svm_calloc(size_t n, size_t sz);
+void svm_free(void* ptr);
+
+template<typename T>
+T* svm_new()
+{
+    auto* p = svm_malloc(sizeof(T));
+    if (p)
+    {
+        new (p) T;
+    }
+    return reinterpret_cast<T*>(p);
+}
+
+template<typename T>
+void svm_delete(T* p)
+{
+    if (p)
+    {
+        p->~T();
+    }
+
+    svm_free(p);
+}
+
 PJ_COORD PROJ_DLL proj_coord_error (void);
 
-void proj_context_errno_set (PJ_CONTEXT *ctx, int err);
+void proj_context_errno_set (struct pj_ctx_shared *ctx, int err);
 void PROJ_DLL proj_context_set (PJ *P, PJ_CONTEXT *ctx);
 void proj_context_inherit (PJ *parent, PJ *child);
 
@@ -379,6 +405,8 @@ struct PJhost
 
     **************************************************************************************/
 
+    PJ_CONTEXT *ctx = nullptr;
+    
     const char *short_name = nullptr; /* From pj_list.h */
     const char *descr = nullptr;   /* From pj_list.h or individual PJ_*.c file */
     paralist *params = nullptr;    /* Parameter list */
@@ -459,9 +487,9 @@ struct PJconsts {
 
     **************************************************************************************/
 
-    /* !!! THESE ARE BOTH HOST SPECIFIC !!! */
     struct PJhost* host = nullptr;
-    PJ_CONTEXT *ctx = nullptr;
+
+    struct pj_ctx_shared* shared_ctx = nullptr;
 
     PJconsts *parent = nullptr;    /* Parent PJ of pipeline steps - nullptr if not a pipeline step */
 
@@ -708,10 +736,16 @@ struct projFileApiCallbackAndData
     void*            user_data = nullptr;
 };
 
+/* Context data that's shared between the OpenCL host and evice */
+struct pj_ctx_shared {
+    int     last_errno = 0;
+};
+
 /* proj thread context */
 struct pj_ctx{
+    pj_ctx_shared *shared = svm_new<pj_ctx_shared>();
+
     std::string lastFullErrorMessage{}; // used by proj_context_errno_string
-    int     last_errno = 0;
     int     debug_level = PJ_LOG_ERROR;
     void    (*logger)(void *, int, const char *) = nullptr;
     void    *logger_app_data = nullptr;
@@ -809,8 +843,8 @@ double dmstor_ctx(PJ_CONTEXT *ctx, const char *, char **);
 void   PROJ_DLL set_rtodms(int, int);
 char  PROJ_DLL *rtodms(char *, double, int, int);
 double PROJ_DLL adjlon(double);
-double aacos(PJ_CONTEXT *,double);
-double aasin(PJ_CONTEXT *,double);
+double aacos(pj_ctx_shared*,double);
+double aasin(pj_ctx_shared *,double);
 double asqrt(double);
 double aatan2(double, double);
 
@@ -835,12 +869,12 @@ void     *free_params (PJ_CONTEXT *ctx, paralist *start, int errlev);
 double *pj_enfn(double);
 void    pj_free_en(double* en);
 double  pj_mlfn(double, double, double, const double *);
-double  pj_inv_mlfn(PJ_CONTEXT *, double, double, const double *);
+double  pj_inv_mlfn(pj_ctx_shared *, double, double, const double *);
 double  pj_qsfn(double, double, double);
 double  pj_tsfn(double, double, double);
 double  pj_msfn(double, double, double);
-double  PROJ_DLL pj_phi2(PJ_CONTEXT *, const double, const double);
-double  pj_sinhpsi2tanphi(PJ_CONTEXT *, const double, const double);
+double  pj_phi2(pj_ctx_shared *, const double, const double);
+double  pj_sinhpsi2tanphi(pj_ctx_shared *, const double, const double);
 double  pj_qsfn_(double, PJ *);
 double *pj_authset(double);
 void    pj_free_authset(double* apa);
@@ -854,38 +888,12 @@ int pj_factors(PJ_LP, const PJ *, double, struct FACTORS *);
 
 void  *proj_mdist_ini(double);
 double proj_mdist(double, double, double, const void *);
-double proj_inv_mdist(PJ_CONTEXT *ctx, double, const void *);
+double proj_inv_mdist(pj_ctx_shared *ctx, double, const void *);
 void  *pj_gauss_ini(double, double, double *,double *);
-PJ_LP     pj_gauss(PJ_CONTEXT *, PJ_LP, const void *);
-PJ_LP     pj_inv_gauss(PJ_CONTEXT *, PJ_LP, const void *);
+PJ_LP     pj_gauss(pj_ctx_shared*, PJ_LP, const void *);
+PJ_LP     pj_inv_gauss(pj_ctx_shared*, PJ_LP, const void *);
 
 struct PJ_DATUMS           PROJ_DLL *pj_get_datums_ref( void );
-
-void* svm_malloc(size_t sz);
-void* svm_calloc(size_t n, size_t sz);
-void svm_free(void* ptr);
-
-template<typename T>
-T* svm_new()
-{
-    auto* p = svm_malloc(sizeof(T));
-    if (p)
-    {
-        new (p) T;
-    }
-    return reinterpret_cast<T*>(p);
-}
-
-template<typename T>
-void svm_delete(T* p)
-{
-    if (p)
-    {
-        p->~T();
-    }
-
-    svm_free(p);
-}
 
 PJ *pj_new(void);
 PJ *pj_default_destructor (PJ *P, int errlev);

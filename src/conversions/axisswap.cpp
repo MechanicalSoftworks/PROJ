@@ -194,7 +194,7 @@ PJ *CONVERSION(axisswap,0) {
     /* if the "order" parameter is used */
     if ( pj_param_exists(P->host->params, "order") ) {
         /* read axis order */
-        char *order = pj_param(P->ctx, P->host->params, "sorder").s;
+        char *order = pj_param(P->host->ctx, P->host->params, "sorder").s;
 
         /* check that all characters are valid */
         for (i=0; i<strlen(order); i++)
@@ -289,7 +289,7 @@ PJ *CONVERSION(axisswap,0) {
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    if (pj_param(P->ctx, P->host->params, "tangularunits").i) {
+    if (pj_param(P->host->ctx, P->host->params, "tangularunits").i) {
         P->left  = PJ_IO_UNITS_RADIANS;
         P->right = PJ_IO_UNITS_RADIANS;
     } else {

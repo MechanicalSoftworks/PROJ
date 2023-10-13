@@ -153,7 +153,7 @@ static PJ_LP nsper_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 static PJ *setup(PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
-    Q->height = pj_param(P->ctx, P->host->params, "dh").f;
+    Q->height = pj_param(P->host->ctx, P->host->params, "dh").f;
 
     if (fabs(fabs(P->phi0) - M_HALFPI) < EPS10)
         Q->mode = P->phi0 < 0. ? S_POLE : N_POLE;
@@ -202,8 +202,8 @@ PJ *PROJECTION(tpers) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    omega = pj_param(P->ctx, P->host->params, "rtilt").f;
-    gamma = pj_param(P->ctx, P->host->params, "razi").f;
+    omega = pj_param(P->host->ctx, P->host->params, "rtilt").f;
+    gamma = pj_param(P->host->ctx, P->host->params, "razi").f;
     Q->tilt = 1;
     Q->cg = cos(gamma);
     Q->sg = sin(gamma);

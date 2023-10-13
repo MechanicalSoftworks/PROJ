@@ -124,7 +124,7 @@ static bool get_grid_values(PJ* P,
     }
 
     bool must_retry = false;
-    if( !pj_bilinear_interpolation_three_samples(P->ctx, grid, lp,
+    if( !pj_bilinear_interpolation_three_samples(P->host->ctx, grid, lp,
                                                  sampleE, sampleN, sampleU,
                                                  vx, vy, vz,
                                                  must_retry) )
@@ -356,16 +356,16 @@ PJ *TRANSFORMATION(deformation,1) {
     P->host->destructor = destructor;
 
     // Pass a dummy ellipsoid definition that will be overridden just afterwards
-    Q->cart = proj_create(P->ctx, "+proj=cart +a=1");
+    Q->cart = proj_create(P->host->ctx, "+proj=cart +a=1");
     if (Q->cart == nullptr)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     /* inherit ellipsoid definition from P to Q->cart */
     pj_inherit_ellipsoid_def (P, Q->cart);
 
-    int has_xy_grids = pj_param(P->ctx, P->host->params, "txy_grids").i;
-    int has_z_grids  = pj_param(P->ctx, P->host->params, "tz_grids").i;
-    int has_grids  = pj_param(P->ctx, P->host->params, "tgrids").i;
+    int has_xy_grids = pj_param(P->host->ctx, P->host->params, "txy_grids").i;
+    int has_z_grids  = pj_param(P->host->ctx, P->host->params, "tz_grids").i;
+    int has_grids  = pj_param(P->host->ctx, P->host->params, "tgrids").i;
 
     /* Build gridlists. Both horizontal and vertical grids are mandatory. */
     if ( !has_grids && (!has_xy_grids || !has_z_grids)) {
@@ -398,8 +398,8 @@ PJ *TRANSFORMATION(deformation,1) {
     }
 
     Q->dt = HUGE_VAL;
-    if (pj_param(P->ctx, P->host->params, "tdt").i) {
-       Q->dt = pj_param(P->ctx, P->host->params, "ddt").f;
+    if (pj_param(P->host->ctx, P->host->params, "tdt").i) {
+       Q->dt = pj_param(P->host->ctx, P->host->params, "ddt").f;
     }
 
     if (pj_param_exists(P->host->params, "t_obs")) {
@@ -408,8 +408,8 @@ PJ *TRANSFORMATION(deformation,1) {
     }
 
     Q->t_epoch = HUGE_VAL;
-    if (pj_param(P->ctx, P->host->params, "tt_epoch").i) {
-        Q->t_epoch = pj_param(P->ctx, P->host->params, "dt_epoch").f;
+    if (pj_param(P->host->ctx, P->host->params, "tt_epoch").i) {
+        Q->t_epoch = pj_param(P->host->ctx, P->host->params, "dt_epoch").f;
     }
 
     if (Q->dt == HUGE_VAL && Q->t_epoch == HUGE_VAL) {

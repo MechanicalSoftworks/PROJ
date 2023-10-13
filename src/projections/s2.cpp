@@ -351,7 +351,7 @@ PJ *PROJECTION(s2) {
     P->opaque = Q;
 
     /* Determine which UVtoST function is to be used */
-    PROJVALUE maybeUVtoST = pj_param(P->ctx, P->host->params, "sUVtoST");
+    PROJVALUE maybeUVtoST = pj_param(P->host->ctx, P->host->params, "sUVtoST");
     if (nullptr != maybeUVtoST.s) {
         try {
             Q->UVtoST = stringToS2ProjectionType.at(maybeUVtoST.s);

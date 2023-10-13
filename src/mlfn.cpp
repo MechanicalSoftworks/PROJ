@@ -50,7 +50,7 @@ pj_mlfn(double phi, double sphi, double cphi, const double *en) {
 }
 
 double
-pj_inv_mlfn(PJ_CONTEXT *ctx, double arg, double es, const double *en) {
+pj_inv_mlfn(pj_ctx_shared *ctx, double arg, double es, const double *en) {
     double sinphi_ignored;
     double cosphi_ignored;
     return inline_pj_inv_mlfn(ctx, arg, es, en, &sinphi_ignored, &cosphi_ignored);

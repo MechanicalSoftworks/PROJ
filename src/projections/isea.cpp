@@ -1052,7 +1052,7 @@ PJ *PROJECTION(isea) {
 /*      P->dgg.radius = P->a; / * otherwise defaults to 1 */
     /* calling library will scale, I think */
 
-    opt = pj_param(P->ctx,P->host->params, "sorient").s;
+    opt = pj_param(P->host->ctx,P->host->params, "sorient").s;
     if (opt) {
         if (!strcmp(opt, "isea")) {
             isea_orient_isea(&Q->dgg);
@@ -1064,19 +1064,19 @@ PJ *PROJECTION(isea) {
         }
     }
 
-    if (pj_param(P->ctx,P->host->params, "tazi").i) {
-        Q->dgg.o_az = pj_param(P->ctx,P->host->params, "razi").f;
+    if (pj_param(P->host->ctx,P->host->params, "tazi").i) {
+        Q->dgg.o_az = pj_param(P->host->ctx,P->host->params, "razi").f;
     }
 
-    if (pj_param(P->ctx,P->host->params, "tlon_0").i) {
-        Q->dgg.o_lon = pj_param(P->ctx,P->host->params, "rlon_0").f;
+    if (pj_param(P->host->ctx,P->host->params, "tlon_0").i) {
+        Q->dgg.o_lon = pj_param(P->host->ctx,P->host->params, "rlon_0").f;
     }
 
-    if (pj_param(P->ctx,P->host->params, "tlat_0").i) {
-        Q->dgg.o_lat = pj_param(P->ctx,P->host->params, "rlat_0").f;
+    if (pj_param(P->host->ctx,P->host->params, "tlat_0").i) {
+        Q->dgg.o_lat = pj_param(P->host->ctx,P->host->params, "rlat_0").f;
     }
 
-    opt = pj_param(P->ctx,P->host->params, "smode").s;
+    opt = pj_param(P->host->ctx,P->host->params, "smode").s;
     if (opt) {
         if (!strcmp(opt, "plane")) {
             Q->dgg.output = ISEA_PLANE;
@@ -1095,18 +1095,18 @@ PJ *PROJECTION(isea) {
         }
     }
 
-    if (pj_param(P->ctx,P->host->params, "trescale").i) {
+    if (pj_param(P->host->ctx,P->host->params, "trescale").i) {
         Q->dgg.radius = ISEA_SCALE;
     }
 
-    if (pj_param(P->ctx,P->host->params, "tresolution").i) {
-        Q->dgg.resolution = pj_param(P->ctx,P->host->params, "iresolution").i;
+    if (pj_param(P->host->ctx,P->host->params, "tresolution").i) {
+        Q->dgg.resolution = pj_param(P->host->ctx,P->host->params, "iresolution").i;
     } else {
         Q->dgg.resolution = 4;
     }
 
-    if (pj_param(P->ctx,P->host->params, "taperture").i) {
-        Q->dgg.aperture = pj_param(P->ctx,P->host->params, "iaperture").i;
+    if (pj_param(P->host->ctx,P->host->params, "taperture").i) {
+        Q->dgg.aperture = pj_param(P->host->ctx,P->host->params, "iaperture").i;
     } else {
         Q->dgg.aperture = 3;
     }

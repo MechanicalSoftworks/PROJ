@@ -32,7 +32,7 @@ static PJ_XY merc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 
 static PJ_LP merc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
-    lp.phi = atan(pj_sinhpsi2tanphi(P->ctx, sinh(xy.y / P->k0), P->e));
+    lp.phi = atan(pj_sinhpsi2tanphi(P->shared_ctx, sinh(xy.y / P->k0), P->e));
     lp.lam = xy.x / P->k0;
     return lp;
 }
@@ -50,8 +50,8 @@ PJ *PROJECTION(merc) {
     double phits=0.0;
     int is_phits;
 
-    if( (is_phits = pj_param(P->ctx, P->host->params, "tlat_ts").i) ) {
-        phits = fabs(pj_param(P->ctx, P->host->params, "rlat_ts").f);
+    if( (is_phits = pj_param(P->host->ctx, P->host->params, "tlat_ts").i) ) {
+        phits = fabs(pj_param(P->host->ctx, P->host->params, "rlat_ts").f);
         if (phits >= M_HALFPI)
         {
             proj_log_error(P, _("Invalid value for lat_ts: |lat_ts| should be <= 90°"));

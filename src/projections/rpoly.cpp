@@ -49,7 +49,7 @@ PJ *PROJECTION(rpoly) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->phi1 = fabs(pj_param(P->ctx, P->host->params, "rlat_ts").f);
+    Q->phi1 = fabs(pj_param(P->host->ctx, P->host->params, "rlat_ts").f);
     Q->mode = Q->phi1 > EPS;
     if (Q->mode) {
         Q->fxb = 0.5 * sin(Q->phi1);

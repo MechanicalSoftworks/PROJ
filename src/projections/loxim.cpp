@@ -61,7 +61,7 @@ PJ *PROJECTION(loxim) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+    Q->phi1 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
     Q->cosphi1 = cos(Q->phi1);
     if (Q->cosphi1 < EPS)
     {

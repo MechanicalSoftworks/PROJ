@@ -85,7 +85,7 @@ static PJ_LP mod_ster_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inv
             lp.phi = P->phi0;
             return lp;
         }
-        chi = aasin(P->ctx, cosz * Q->schio + p.i * sinz * Q->cchio / rh);
+        chi = aasin(P->shared_ctx, cosz * Q->schio + p.i * sinz * Q->cchio / rh);
         phi = chi;
         for (nn = 20; nn ;--nn) {
             double dphi;

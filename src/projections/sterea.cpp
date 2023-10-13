@@ -49,7 +49,7 @@ static PJ_XY sterea_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forwa
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double cosc, sinc, cosl, k;
 
-    lp = pj_gauss(P->ctx, lp, Q->en);
+    lp = pj_gauss(P->shared_ctx, lp, Q->en);
     sinc = sin(lp.phi);
     cosc = cos(lp.phi);
     cosl = cos(lp.lam);
@@ -82,7 +82,7 @@ static PJ_LP sterea_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inver
         lp.phi = Q->phic0;
         lp.lam = 0.;
     }
-    return pj_inv_gauss(P->ctx, lp, Q->en);
+    return pj_inv_gauss(P->shared_ctx, lp, Q->en);
 }
 
 

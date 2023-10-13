@@ -38,7 +38,7 @@ static PJ_LP gn_sinu_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inve
     PJ_LP lp = {0.0,0.0};
     double s;
 
-    lp.phi = pj_inv_mlfn(P->ctx, xy.y, P->es, static_cast<struct pj_opaque*>(P->opaque)->en);
+    lp.phi = pj_inv_mlfn(P->shared_ctx, xy.y, P->es, static_cast<struct pj_opaque*>(P->opaque)->en);
     s = fabs(lp.phi);
     if (s < M_HALFPI) {
         s = sin(lp.phi);
@@ -58,7 +58,7 @@ static PJ_XY gn_sinu_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forw
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     if (Q->m == 0.0)
-        lp.phi = Q->n != 1. ? aasin(P->ctx,Q->n * sin(lp.phi)): lp.phi;
+        lp.phi = Q->n != 1. ? aasin(P->shared_ctx,Q->n * sin(lp.phi)): lp.phi;
     else {
         int i;
 
@@ -88,8 +88,8 @@ static PJ_LP gn_sinu_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inve
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     xy.y /= Q->C_y;
-    lp.phi = (Q->m != 0.0) ? aasin(P->ctx,(Q->m * xy.y + sin(xy.y)) / Q->n) :
-        ( Q->n != 1. ? aasin(P->ctx,sin(xy.y) / Q->n) : xy.y );
+    lp.phi = (Q->m != 0.0) ? aasin(P->shared_ctx,(Q->m * xy.y + sin(xy.y)) / Q->n) :
+        ( Q->n != 1. ? aasin(P->shared_ctx,sin(xy.y) / Q->n) : xy.y );
     lp.lam = xy.x / (Q->C_x * (Q->m + cos(xy.y)));
     return lp;
 }
@@ -179,19 +179,19 @@ PJ *PROJECTION(gn_sinu) {
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    if (!pj_param(P->ctx, P->host->params, "tn").i )
+    if (!pj_param(P->host->ctx, P->host->params, "tn").i )
     {
         proj_log_error(P, _("Missing parameter n."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    if (!pj_param(P->ctx, P->host->params, "tm").i )
+    if (!pj_param(P->host->ctx, P->host->params, "tm").i )
     {
         proj_log_error(P, _("Missing parameter m."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
-    Q->n = pj_param(P->ctx, P->host->params, "dn").f;
-    Q->m = pj_param(P->ctx, P->host->params, "dm").f;
+    Q->n = pj_param(P->host->ctx, P->host->params, "dn").f;
+    Q->m = pj_param(P->host->ctx, P->host->params, "dm").f;
     if (Q->n <= 0)
     {
         proj_log_error(P, _("Invalid value for n: it should be > 0."));

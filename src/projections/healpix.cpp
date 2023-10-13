@@ -524,7 +524,7 @@ static PJ_LP s_healpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
         PJ_LP lp;
         lp.lam = HUGE_VAL;
         lp.phi = HUGE_VAL;
-        proj_context_errno_set(P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
+        proj_context_errno_set(P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
         return lp;
     }
     return healpix_spherhealpix_e_inverse(xy);
@@ -540,7 +540,7 @@ static PJ_LP e_healpix_inverse(PJ_XY xy, PJ *P) { /* ellipsoid */
     if (in_image(xy.x, xy.y, 0, 0, 0) == 0) {
         lp.lam = HUGE_VAL;
         lp.phi = HUGE_VAL;
-        proj_context_errno_set(P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
+        proj_context_errno_set(P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
         return lp;
     }
     lp = healpix_spherhealpix_e_inverse(xy);
@@ -574,7 +574,7 @@ static PJ_LP s_rhealpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
         PJ_LP lp;
         lp.lam = HUGE_VAL;
         lp.phi = HUGE_VAL;
-        proj_context_errno_set(P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
+        proj_context_errno_set(P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
         return lp;
     }
     xy = combine_caps(xy.x, xy.y, Q->north_square, Q->south_square, 1);
@@ -590,7 +590,7 @@ static PJ_LP e_rhealpix_inverse(PJ_XY xy, PJ *P) { /* ellipsoid */
     if (in_image(xy.x, xy.y, 1, Q->north_square, Q->south_square) == 0) {
         lp.lam = HUGE_VAL;
         lp.phi = HUGE_VAL;
-        proj_context_errno_set(P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
+        proj_context_errno_set(P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
         return lp;
     }
     xy = combine_caps(xy.x, xy.y, Q->north_square, Q->south_square, 1);
@@ -619,7 +619,7 @@ PJ *PROJECTION(healpix) {
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    double angle = pj_param(P->ctx, P->host->params,"drot_xy").f;
+    double angle = pj_param(P->host->ctx, P->host->params,"drot_xy").f;
     Q->rot_xy = PJ_TORAD(angle);
 
     if (P->es != 0.0) {
@@ -647,8 +647,8 @@ PJ *PROJECTION(rhealpix) {
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    Q->north_square = pj_param(P->ctx, P->host->params,"inorth_square").i;
-    Q->south_square = pj_param(P->ctx, P->host->params,"isouth_square").i;
+    Q->north_square = pj_param(P->host->ctx, P->host->params,"inorth_square").i;
+    Q->south_square = pj_param(P->host->ctx, P->host->params,"isouth_square").i;
 
     /* Check for valid north_square and south_square inputs. */
     if (Q->north_square < 0 || Q->north_square > 3)

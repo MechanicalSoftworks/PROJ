@@ -23,8 +23,8 @@ static PJ_XY tpeqd_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 
     sp = sin(lp.phi);
     cp = cos(lp.phi);
-    z1 = aacos(P->ctx, Q->sp1 * sp + Q->cp1 * cp * cos (dl1 = lp.lam + Q->dlam2));
-    z2 = aacos(P->ctx, Q->sp2 * sp + Q->cp2 * cp * cos (dl2 = lp.lam - Q->dlam2));
+    z1 = aacos(P->shared_ctx, Q->sp1 * sp + Q->cp1 * cp * cos (dl1 = lp.lam + Q->dlam2));
+    z2 = aacos(P->shared_ctx, Q->sp2 * sp + Q->cp2 * cp * cos (dl2 = lp.lam - Q->dlam2));
     z1 *= z1;
     z2 *= z2;
 
@@ -48,7 +48,7 @@ static PJ_LP tpeqd_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
     s = cz1 + cz2;
     d = cz1 - cz2;
     lp.lam = - atan2(d, (s * Q->thz0));
-    lp.phi = aacos(P->ctx, hypot (Q->thz0 * s, d) * Q->rhshz0);
+    lp.phi = aacos(P->shared_ctx, hypot (Q->thz0 * s, d) * Q->rhshz0);
     if ( xy.y < 0. )
         lp.phi = - lp.phi;
     /* lam--phi now in system relative to P1--P2 base equator */
@@ -56,7 +56,7 @@ static PJ_LP tpeqd_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
     cp = cos (lp.phi);
     lp.lam -= Q->lp;
     s = cos(lp.lam);
-    lp.phi = aasin (P->ctx, Q->sa * sp + Q->ca * cp * s);
+    lp.phi = aasin (P->shared_ctx, Q->sa * sp + Q->ca * cp * s);
     lp.lam = atan2 (cp * sin(lp.lam), Q->sa * cp * s - Q->ca * sp) + Q->lamc;
     return lp;
 }
@@ -71,10 +71,10 @@ PJ *PROJECTION(tpeqd) {
 
 
     /* get control point locations */
-    phi_1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
-    lam_1 = pj_param(P->ctx, P->host->params, "rlon_1").f;
-    phi_2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
-    lam_2 = pj_param(P->ctx, P->host->params, "rlon_2").f;
+    phi_1 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
+    lam_1 = pj_param(P->host->ctx, P->host->params, "rlon_1").f;
+    phi_2 = pj_param(P->host->ctx, P->host->params, "rlat_2").f;
+    lam_2 = pj_param(P->host->ctx, P->host->params, "rlon_2").f;
 
     if (phi_1 == phi_2 && lam_1 == lam_2)
     {
@@ -92,7 +92,7 @@ PJ *PROJECTION(tpeqd) {
     Q->cs = Q->cp1 * Q->sp2;
     Q->sc = Q->sp1 * Q->cp2;
     Q->ccs = Q->cp1 * Q->cp2 * sin(Q->dlam2);
-    Q->z02 = aacos(P->ctx, Q->sp1 * Q->sp2 + Q->cp1 * Q->cp2 * cos (Q->dlam2));
+    Q->z02 = aacos(P->shared_ctx, Q->sp1 * Q->sp2 + Q->cp1 * Q->cp2 * cos (Q->dlam2));
     if( Q->z02 == 0.0 ) {
         // Actually happens when both lat_1 = lat_2 and |lat_1| = 90
         proj_log_error(P, _("Invalid value for lat_1 and lat_2: their absolute value should be < 90°."));
@@ -101,7 +101,7 @@ PJ *PROJECTION(tpeqd) {
     Q->hz0 = .5 * Q->z02;
     A12 = atan2(Q->cp2 * sin (Q->dlam2),
         Q->cp1 * Q->sp2 - Q->sp1 * Q->cp2 * cos (Q->dlam2));
-    const double pp = aasin(P->ctx, Q->cp1 * sin(A12));
+    const double pp = aasin(P->shared_ctx, Q->cp1 * sin(A12));
     Q->ca = cos(pp);
     Q->sa = sin(pp);
     Q->lp = adjlon ( atan2 (Q->cp1 * cos(A12), Q->sp1) - Q->hz0);

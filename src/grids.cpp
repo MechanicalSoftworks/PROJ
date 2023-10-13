@@ -206,7 +206,7 @@ GTXVerticalShiftGrid *GTXVerticalShiftGrid::open(PJ_CONTEXT *ctx,
     /* -------------------------------------------------------------------- */
     if (fp->read(header, sizeof(header)) != sizeof(header)) {
         pj_log(ctx, PJ_LOG_ERROR, _("Cannot read grid header"));
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -233,7 +233,7 @@ GTXVerticalShiftGrid *GTXVerticalShiftGrid::open(PJ_CONTEXT *ctx,
     if (xorigin < -360 || xorigin > 360 || yorigin < -90 || yorigin > 90) {
         pj_log(ctx, PJ_LOG_ERROR,
                _("gtx file header has invalid extents, corrupt?"));
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -270,7 +270,7 @@ bool GTXVerticalShiftGrid::valueAt(int x, int y, float &out) const {
 
     m_fp->seek(40 + sizeof(float) * (y * m_width + x));
     if (m_fp->read(&out, sizeof(out)) != sizeof(out)) {
-        proj_context_errno_set(m_ctx,
+        proj_context_errno_set(m_ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return false;
     }
@@ -1394,7 +1394,7 @@ VerticalShiftGridSet::open(PJ_CONTEXT *ctx, const std::string &filename) {
             GTiffVGridShiftSet::open(ctx, std::move(fp), actualName));
         if (!set)
             proj_context_errno_set(
-                ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return set;
 #else
         pj_log(ctx, PJ_LOG_ERROR,
@@ -1577,7 +1577,7 @@ NTv1Grid *NTv1Grid::open(PJ_CONTEXT *ctx, std::unique_ptr<File> fp,
     /*      Read the header.                                                */
     /* -------------------------------------------------------------------- */
     if (fp->read(header, sizeof(header)) != sizeof(header)) {
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1598,7 +1598,7 @@ NTv1Grid *NTv1Grid::open(PJ_CONTEXT *ctx, std::unique_ptr<File> fp,
     if (*((int *)(header + 8)) != 12) {
         pj_log(ctx, PJ_LOG_ERROR,
                _("NTv1 grid shift file has wrong record count, corrupt?"));
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1620,7 +1620,7 @@ NTv1Grid *NTv1Grid::open(PJ_CONTEXT *ctx, std::unique_ptr<File> fp,
           extent.resY > 1e-10)) {
         pj_log(ctx, PJ_LOG_ERROR, _("Inconsistent georeferencing for %s"),
                filename.c_str());
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1643,7 +1643,7 @@ bool NTv1Grid::valueAt(int x, int y, bool compensateNTConvention,
     m_fp->seek(192 + 2 * sizeof(double) * (y * m_width + m_width - 1 - x));
     if (m_fp->read(&two_doubles[0], sizeof(two_doubles)) !=
         sizeof(two_doubles)) {
-        proj_context_errno_set(m_ctx,
+        proj_context_errno_set(m_ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return false;
     }
@@ -1705,7 +1705,7 @@ CTable2Grid *CTable2Grid::open(PJ_CONTEXT *ctx, std::unique_ptr<File> fp,
     /*      Read the header.                                                */
     /* -------------------------------------------------------------------- */
     if (fp->read(header, sizeof(header)) != sizeof(header)) {
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1732,7 +1732,7 @@ CTable2Grid *CTable2Grid::open(PJ_CONTEXT *ctx, std::unique_ptr<File> fp,
           extent.resX > 1e-10 && extent.resY > 1e-10)) {
         pj_log(ctx, PJ_LOG_ERROR, _("Inconsistent georeferencing for %s"),
                filename.c_str());
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1741,7 +1741,7 @@ CTable2Grid *CTable2Grid::open(PJ_CONTEXT *ctx, std::unique_ptr<File> fp,
     memcpy(&width, header + 128, 4);
     memcpy(&height, header + 132, 4);
     if (width <= 0 || height <= 0) {
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1760,7 +1760,7 @@ bool CTable2Grid::valueAt(int x, int y, bool compensateNTConvention,
     float two_floats[2];
     m_fp->seek(160 + 2 * sizeof(float) * (y * m_width + x));
     if (m_fp->read(&two_floats[0], sizeof(two_floats)) != sizeof(two_floats)) {
-        proj_context_errno_set(m_ctx,
+        proj_context_errno_set(m_ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return false;
     }
@@ -1842,7 +1842,7 @@ bool NTv2Grid::valueAt(int x, int y, bool compensateNTConvention,
                               (static_cast<unsigned long long>(y) * m_width +
                                m_width - 1 - x));
     if (m_fp->read(&two_float[0], sizeof(two_float)) != sizeof(two_float)) {
-        proj_context_errno_set(m_ctx,
+        proj_context_errno_set(m_ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return false;
     }
@@ -1877,7 +1877,7 @@ std::unique_ptr<NTv2GridSet> NTv2GridSet::open(PJ_CONTEXT *ctx,
     /*      Read the header.                                                */
     /* -------------------------------------------------------------------- */
     if (fpRaw->read(header, sizeof(header)) != sizeof(header)) {
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1885,7 +1885,7 @@ std::unique_ptr<NTv2GridSet> NTv2GridSet::open(PJ_CONTEXT *ctx,
     constexpr int OFFSET_GS_TYPE = 56;
     if (memcmp(header + OFFSET_GS_TYPE, "SECONDS", 7) != 0) {
         pj_log(ctx, PJ_LOG_ERROR, _("Only GS_TYPE=SECONDS is supported"));
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return nullptr;
     }
@@ -1917,13 +1917,13 @@ std::unique_ptr<NTv2GridSet> NTv2GridSet::open(PJ_CONTEXT *ctx,
         // Read header
         if (fpRaw->read(header, sizeof(header)) != sizeof(header)) {
             proj_context_errno_set(
-                ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
             return nullptr;
         }
 
         if (strncmp(header, "SUB_NAME", 8) != 0) {
             proj_context_errno_set(
-                ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
             return nullptr;
         }
 
@@ -1967,7 +1967,7 @@ std::unique_ptr<NTv2GridSet> NTv2GridSet::open(PJ_CONTEXT *ctx,
             pj_log(ctx, PJ_LOG_ERROR, _("Inconsistent georeferencing for %s"),
                    filename.c_str());
             proj_context_errno_set(
-                ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
             return nullptr;
         }
         const int columns = static_cast<int>(
@@ -1988,7 +1988,7 @@ std::unique_ptr<NTv2GridSet> NTv2GridSet::open(PJ_CONTEXT *ctx,
                    _("GS_COUNT(%u) does not match expected cells (%dx%d)"),
                    gs_count, columns, rows);
             proj_context_errno_set(
-                ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
             return nullptr;
         }
 
@@ -2347,7 +2347,7 @@ HorizontalShiftGridSet::open(PJ_CONTEXT *ctx, const std::string &filename) {
     size_t header_size = fp->read(header, sizeof(header));
     if (header_size != sizeof(header)) {
         /* some files may be smaller that sizeof(header), eg 160, so */
-        ctx->last_errno = 0; /* don't treat as a persistent error */
+        ctx->shared->last_errno = 0; /* don't treat as a persistent error */
         pj_log(ctx, PJ_LOG_DEBUG,
                "pj_gridinfo_init: short header read of %d bytes",
                (int)header_size);
@@ -2392,7 +2392,7 @@ HorizontalShiftGridSet::open(PJ_CONTEXT *ctx, const std::string &filename) {
             GTiffHGridShiftSet::open(ctx, std::move(fp), actualName));
         if (!set)
             proj_context_errno_set(
-                ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return set;
 #else
         pj_log(ctx, PJ_LOG_ERROR,
@@ -2730,7 +2730,7 @@ GenericShiftGridSet::open(PJ_CONTEXT *ctx, const std::string &filename) {
             GTiffGenericGridShiftSet::open(ctx, std::move(fp), actualName));
         if (!set)
             proj_context_errno_set(
-                ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return set;
 #else
         pj_log(ctx, PJ_LOG_ERROR,
@@ -2798,7 +2798,7 @@ void GenericShiftGridSet::reassign_context(PJ_CONTEXT *ctx) {
 ListOfGenericGrids pj_generic_grid_init(PJ *P, const char *gridkey) {
     std::string key("s");
     key += gridkey;
-    const char *gridnames = pj_param(P->ctx, P->host->params, key.c_str()).s;
+    const char *gridnames = pj_param(P->host->ctx, P->host->params, key.c_str()).s;
     if (gridnames == nullptr)
         return {};
 
@@ -2811,17 +2811,17 @@ ListOfGenericGrids pj_generic_grid_init(PJ *P, const char *gridkey) {
             canFail = true;
             gridname++;
         }
-        auto gridSet = GenericShiftGridSet::open(P->ctx, gridname);
+        auto gridSet = GenericShiftGridSet::open(P->host->ctx, gridname);
         if (!gridSet) {
             if (!canFail) {
-                if (proj_context_errno(P->ctx) !=
+                if (proj_context_errno(P->host->ctx) !=
                     PROJ_ERR_OTHER_NETWORK_ERROR) {
                     proj_context_errno_set(
-                        P->ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                        P->shared_ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
                 }
                 return {};
             }
-            proj_context_errno_set(P->ctx,
+            proj_context_errno_set(P->shared_ctx,
                                    0); // don't treat as a persistent error
         } else {
             grids.emplace_back(std::move(gridSet));
@@ -2863,11 +2863,11 @@ static ListOfHGrids getListOfGridSets(PJ_CONTEXT *ctx, const char *grids) {
             if (!canFail) {
                 if (proj_context_errno(ctx) != PROJ_ERR_OTHER_NETWORK_ERROR) {
                     proj_context_errno_set(
-                        ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                        ctx->shared, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
                 }
                 return {};
             }
-            proj_context_errno_set(ctx, 0); // don't treat as a persistent error
+            proj_context_errno_set(ctx->shared, 0); // don't treat as a persistent error
         } else {
             list.emplace_back(std::move(gridSet));
         }
@@ -2893,11 +2893,11 @@ ListOfHGrids pj_hgrid_init(PJ *P, const char *gridkey) {
 
     std::string key("s");
     key += gridkey;
-    const char *grids = pj_param(P->ctx, P->host->params, key.c_str()).s;
+    const char *grids = pj_param(P->host->ctx, P->host->params, key.c_str()).s;
     if (grids == nullptr)
         return {};
 
-    return getListOfGridSets(P->ctx, grids);
+    return getListOfGridSets(P->host->ctx, grids);
 }
 
 // ---------------------------------------------------------------------------
@@ -3101,7 +3101,7 @@ PJ_LP pj_hgrid_apply(PJ_CONTEXT *ctx, const ListOfHGrids &grids, PJ_LP lp,
         HorizontalShiftGridSet *gridset = nullptr;
         const auto grid = findGrid(grids, lp, gridset);
         if (!grid) {
-            proj_context_errno_set(ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
+            proj_context_errno_set(ctx->shared, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
             return out;
         }
         if (grid->isNullGrid()) {
@@ -3117,7 +3117,7 @@ PJ_LP pj_hgrid_apply(PJ_CONTEXT *ctx, const ListOfHGrids &grids, PJ_LP lp,
     }
 
     if (out.lam == HUGE_VAL || out.phi == HUGE_VAL)
-        proj_context_errno_set(ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
 
     return out;
 }
@@ -3133,16 +3133,16 @@ PJ_LP pj_hgrid_value(PJ *P, const ListOfHGrids &grids, PJ_LP lp) {
     HorizontalShiftGridSet *gridset = nullptr;
     const auto grid = findGrid(grids, lp, gridset);
     if (!grid) {
-        proj_context_errno_set(P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
+        proj_context_errno_set(P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
         return out;
     }
 
     /* normalize input to ll origin */
     const auto &extent = grid->extentAndRes();
     if (!extent.isGeographic) {
-        pj_log(P->ctx, PJ_LOG_ERROR,
+        pj_log(P->host->ctx, PJ_LOG_ERROR,
                _("Can only handle grids referenced in a geographic CRS"));
-        proj_context_errno_set(P->ctx,
+        proj_context_errno_set(P->shared_ctx,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return out;
     }
@@ -3158,7 +3158,7 @@ PJ_LP pj_hgrid_value(PJ *P, const ListOfHGrids &grids, PJ_LP lp) {
 
     out = pj_hgrid_interpolate(lp, grid, false);
     if (grid->hasChanged()) {
-        if (gridset->reopen(P->ctx)) {
+        if (gridset->reopen(P->host->ctx)) {
             return pj_hgrid_value(P, grids, lp);
         }
         out.lam = HUGE_VAL;
@@ -3166,7 +3166,7 @@ PJ_LP pj_hgrid_value(PJ *P, const ListOfHGrids &grids, PJ_LP lp) {
     }
 
     if (out.lam == HUGE_VAL || out.phi == HUGE_VAL) {
-        proj_context_errno_set(P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
+        proj_context_errno_set(P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
     }
 
     return out;
@@ -3193,7 +3193,7 @@ static double read_vgrid_value(PJ_CONTEXT *ctx, const ListOfVGrids &grids,
         }
     }
     if (!grid) {
-        proj_context_errno_set(ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
         return HUGE_VAL;
     }
     if (grid->isNullGrid()) {
@@ -3204,7 +3204,7 @@ static double read_vgrid_value(PJ_CONTEXT *ctx, const ListOfVGrids &grids,
     if (!extent.isGeographic) {
         pj_log(ctx, PJ_LOG_ERROR,
                _("Can only handle grids referenced in a geographic CRS"));
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return HUGE_VAL;
     }
@@ -3237,7 +3237,7 @@ static double read_vgrid_value(PJ_CONTEXT *ctx, const ListOfVGrids &grids,
     if (!(grid_ix >= 0 && grid_ix < grid->width())) {
         // in the unlikely case we end up here...
         pj_log(ctx, PJ_LOG_ERROR, _("grid_ix not in grid"));
-        proj_context_errno_set(ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_COORD_TRANSFM_OUTSIDE_GRID);
         return HUGE_VAL;
     }
     int grid_iy = static_cast<int>(lround(floor(grid_y)));
@@ -3304,7 +3304,7 @@ static double read_vgrid_value(PJ_CONTEXT *ctx, const ListOfVGrids &grids,
             value += value_d * weight;
         }
     } else if (countValid == 0) {
-        proj_context_errno_set(ctx, PROJ_ERR_COORD_TRANSFM_GRID_AT_NODATA);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_COORD_TRANSFM_GRID_AT_NODATA);
         value = HUGE_VAL;
     } else {
         double total_weight = 0.0;
@@ -3351,7 +3351,7 @@ ListOfVGrids pj_vgrid_init(PJ *P, const char *gridkey) {
 
     std::string key("s");
     key += gridkey;
-    const char *gridnames = pj_param(P->ctx, P->host->params, key.c_str()).s;
+    const char *gridnames = pj_param(P->host->ctx, P->host->params, key.c_str()).s;
     if (gridnames == nullptr)
         return {};
 
@@ -3364,17 +3364,17 @@ ListOfVGrids pj_vgrid_init(PJ *P, const char *gridkey) {
             canFail = true;
             gridname++;
         }
-        auto gridSet = VerticalShiftGridSet::open(P->ctx, gridname);
+        auto gridSet = VerticalShiftGridSet::open(P->host->ctx, gridname);
         if (!gridSet) {
             if (!canFail) {
-                if (proj_context_errno(P->ctx) !=
+                if (proj_context_errno(P->host->ctx) !=
                     PROJ_ERR_OTHER_NETWORK_ERROR) {
                     proj_context_errno_set(
-                        P->ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
+                        P->shared_ctx, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
                 }
                 return {};
             }
-            proj_context_errno_set(P->ctx,
+            proj_context_errno_set(P->shared_ctx,
                                    0); // don't treat as a persistent error
         } else {
             grids.emplace_back(std::move(gridSet));
@@ -3398,8 +3398,8 @@ double pj_vgrid_value(PJ *P, const ListOfVGrids &grids, PJ_LP lp,
 
     double value;
 
-    value = read_vgrid_value(P->ctx, grids, lp, vmultiplier);
-    if (pj_log_active(P->ctx, PJ_LOG_TRACE)) {
+    value = read_vgrid_value(P->host->ctx, grids, lp, vmultiplier);
+    if (pj_log_active(P->host->ctx, PJ_LOG_TRACE)) {
         proj_log_trace(P, "proj_vgrid_value: (%f, %f) = %f",
                        lp.lam * RAD_TO_DEG, lp.phi * RAD_TO_DEG, value);
     }
@@ -3441,7 +3441,7 @@ bool pj_bilinear_interpolation_three_samples(
     if (!extent.isGeographic) {
         pj_log(ctx, PJ_LOG_ERROR,
                "Can only handle grids referenced in a geographic CRS");
-        proj_context_errno_set(ctx,
+        proj_context_errno_set(ctx->shared,
                                PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
         return false;
     }

@@ -21,7 +21,7 @@ struct pj_opaque {
 
 static PJ_XY urmfps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0, 0.0};
-    lp.phi = aasin (P->ctx,static_cast<struct pj_opaque*>(P->opaque)->n * sin (lp.phi));
+    lp.phi = aasin (P->shared_ctx,static_cast<struct pj_opaque*>(P->opaque)->n * sin (lp.phi));
     xy.x = C_x * lp.lam * cos (lp.phi);
     xy.y = static_cast<struct pj_opaque*>(P->opaque)->C_y * lp.phi;
     return xy;
@@ -31,7 +31,7 @@ static PJ_XY urmfps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwa
 static PJ_LP urmfps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0, 0.0};
     xy.y /= static_cast<struct pj_opaque*>(P->opaque)->C_y;
-    lp.phi = aasin(P->ctx, sin (xy.y) / static_cast<struct pj_opaque*>(P->opaque)->n);
+    lp.phi = aasin(P->shared_ctx, sin (xy.y) / static_cast<struct pj_opaque*>(P->opaque)->n);
     lp.lam = xy.x / (C_x * cos (xy.y));
     return lp;
 }
@@ -53,13 +53,13 @@ PJ *PROJECTION(urmfps) {
 
     P->opaque = Q;
 
-    if (!pj_param(P->ctx, P->host->params, "tn").i )
+    if (!pj_param(P->host->ctx, P->host->params, "tn").i )
     {
         proj_log_error(P, _("Missing parameter n."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
-    Q->n = pj_param(P->ctx, P->host->params, "dn").f;
+    Q->n = pj_param(P->host->ctx, P->host->params, "dn").f;
     if (Q->n <= 0. || Q->n > 1.)
     {
         proj_log_error(P, _("Invalid value for n: it should be in ]0,1] range."));

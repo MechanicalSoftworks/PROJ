@@ -29,8 +29,8 @@ static PJ_XY somerc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forwa
         + Q->K)) - M_HALFPI;
     lamp = Q->c * lp.lam;
     cp = cos(phip);
-    phipp = aasin (P->ctx, Q->cosp0 * sin (phip) - Q->sinp0 * cp * cos (lamp));
-    lampp = aasin (P->ctx, cp * sin (lamp) / cos (phipp));
+    phipp = aasin (P->shared_ctx, Q->cosp0 * sin (phip) - Q->sinp0 * cp * cos (lamp));
+    lampp = aasin (P->shared_ctx, cp * sin (lamp) / cos (phipp));
     xy.x = Q->kR * lampp;
     xy.y = Q->kR * log (tan (M_FORTPI + 0.5 * phipp));
     return xy;
@@ -46,8 +46,8 @@ static PJ_LP somerc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inver
     phipp = 2. * (atan (exp (xy.y / Q->kR)) - M_FORTPI);
     lampp = xy.x / Q->kR;
     cp = cos (phipp);
-    phip = aasin (P->ctx, Q->cosp0 * sin (phipp) + Q->sinp0 * cp * cos (lampp));
-    lamp = aasin (P->ctx, cp * sin (lampp) / cos (phip));
+    phip = aasin (P->shared_ctx, Q->cosp0 * sin (phipp) + Q->sinp0 * cp * cos (lampp));
+    lamp = aasin (P->shared_ctx, cp * sin (lampp) / cos (phip));
     con = (Q->K - log (tan (M_FORTPI + 0.5 * phip)))/Q->c;
     for (i = NITER; i ; --i) {
         esp = P->e * sin(phip);
@@ -83,7 +83,7 @@ PJ *PROJECTION(somerc) {
     Q->c = sqrt (1 + P->es * cp * cp * P->rone_es);
     sp = sin (P->phi0);
     Q->sinp0 = sp / Q->c;
-    phip0 = aasin (P->ctx, Q->sinp0);
+    phip0 = aasin (P->shared_ctx, Q->sinp0);
     Q->cosp0 = cos(phip0);
     sp *= P->e;
     Q->K = log (tan (M_FORTPI + 0.5 * phip0)) - Q->c * (

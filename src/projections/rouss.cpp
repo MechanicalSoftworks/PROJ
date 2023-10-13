@@ -77,7 +77,7 @@ static PJ_LP rouss_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, invers
     s = Q->s0 + y*(1.+y2*(-Q->D2+Q->D8*y2))+
         x2*(-Q->D1+y*(-Q->D3+y*(-Q->D5+y*(-Q->D7+y*Q->D11)))+
         x2*(Q->D4+y*(Q->D6+y*Q->D10)-x2*Q->D9));
-    lp.phi=proj_inv_mdist(P->ctx, s, Q->en);
+    lp.phi=proj_inv_mdist(P->shared_ctx, s, Q->en);
     s = sin(lp.phi);
     lp.lam=al * sqrt(1. - P->es * s * s)/cos(lp.phi);
 

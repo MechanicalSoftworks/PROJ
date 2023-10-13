@@ -83,7 +83,7 @@ static PJ_LP bonne_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, invers
 
     xy.y = Q->am1 - xy.y;
     rh = hypot(xy.x, xy.y);
-    lp.phi = pj_inv_mlfn(P->ctx, Q->am1 + Q->m1 - rh, P->es, Q->en);
+    lp.phi = pj_inv_mlfn(P->shared_ctx, Q->am1 + Q->m1 - rh, P->es, Q->en);
     if ((s = fabs(lp.phi)) < M_HALFPI) {
         s = sin(lp.phi);
         lp.lam = rh * atan2(xy.x, xy.y) *
@@ -119,7 +119,7 @@ PJ *PROJECTION(bonne) {
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    Q->phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+    Q->phi1 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
     if (fabs(Q->phi1) < EPS10)
     {
         proj_log_error(P, _("Invalid value for lat_1: |lat_1| should be > 0"));

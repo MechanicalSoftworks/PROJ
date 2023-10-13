@@ -626,7 +626,7 @@ int pj_ell_set (PJ_CONTEXT *ctx, paralist *pl, double *a, double *es) {
     PJ B;
     int ret;
 
-    B.ctx = ctx;
+    B.host->ctx = ctx;
     B.host->params = pl;
 
     ret = pj_ellipsoid (&B);

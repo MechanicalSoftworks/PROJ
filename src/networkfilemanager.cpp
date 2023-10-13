@@ -1301,7 +1301,7 @@ std::unique_ptr<File> NetworkFile::open(PJ_CONTEXT *ctx, const char *filename) {
             errorBuffer.resize(strlen(errorBuffer.data()));
             pj_log(ctx, PJ_LOG_ERROR, "Cannot open %s: %s", filename,
                    errorBuffer.c_str());
-            proj_context_errno_set(ctx, PROJ_ERR_OTHER_NETWORK_ERROR);
+            proj_context_errno_set(ctx->shared, PROJ_ERR_OTHER_NETWORK_ERROR);
         }
 
         bool ok = false;
@@ -1390,7 +1390,7 @@ size_t NetworkFile::read(void *buffer, size_t sizeBytes) {
                     &nRead, errorBuffer.size(), &errorBuffer[0],
                     m_ctx->networking.user_data);
                 if (!m_handle) {
-                    proj_context_errno_set(m_ctx, PROJ_ERR_OTHER_NETWORK_ERROR);
+                    proj_context_errno_set(m_ctx->shared, PROJ_ERR_OTHER_NETWORK_ERROR);
                     return 0;
                 }
             } else {
@@ -1406,7 +1406,7 @@ size_t NetworkFile::read(void *buffer, size_t sizeBytes) {
                     pj_log(m_ctx, PJ_LOG_ERROR, "Cannot read in %s: %s",
                            m_url.c_str(), errorBuffer.c_str());
                 }
-                proj_context_errno_set(m_ctx, PROJ_ERR_OTHER_NETWORK_ERROR);
+                proj_context_errno_set(m_ctx->shared, PROJ_ERR_OTHER_NETWORK_ERROR);
                 return 0;
             }
 

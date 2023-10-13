@@ -84,7 +84,7 @@ dmstor_ctx(PJ_CONTEXT *ctx, const char *is, char **rs) {
 			adv = 2;
 		} else if (*s == 'r' || *s == 'R') {
 			if (nl) {
-				proj_context_errno_set( ctx, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE );
+				proj_context_errno_set( ctx->shared, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE );
 				return HUGE_VAL;
 			}
 			++s;
@@ -98,7 +98,7 @@ dmstor_ctx(PJ_CONTEXT *ctx, const char *is, char **rs) {
 		}
 
 		if (n < nl) {
-			proj_context_errno_set( ctx, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE );
+			proj_context_errno_set( ctx->shared, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE );
 			return HUGE_VAL;
 		}
 		v += tv * vm[n];

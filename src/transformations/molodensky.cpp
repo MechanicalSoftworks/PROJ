@@ -317,42 +317,42 @@ PJ *TRANSFORMATION(molodensky,1) {
     P->right  = PJ_IO_UNITS_RADIANS;
 
     /* read args */
-    if (!pj_param(P->ctx, P->host->params, "tdx").i)
+    if (!pj_param(P->host->ctx, P->host->params, "tdx").i)
     {
         proj_log_error (P, _("missing dx"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->dx = pj_param(P->ctx, P->host->params, "ddx").f;
+    Q->dx = pj_param(P->host->ctx, P->host->params, "ddx").f;
 
-    if (!pj_param(P->ctx, P->host->params, "tdy").i)
+    if (!pj_param(P->host->ctx, P->host->params, "tdy").i)
     {
         proj_log_error (P, _("missing dy"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->dy = pj_param(P->ctx, P->host->params, "ddy").f;
+    Q->dy = pj_param(P->host->ctx, P->host->params, "ddy").f;
 
-    if (!pj_param(P->ctx, P->host->params, "tdz").i)
+    if (!pj_param(P->host->ctx, P->host->params, "tdz").i)
     {
         proj_log_error (P, _("missing dz"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->dz = pj_param(P->ctx, P->host->params, "ddz").f;
+    Q->dz = pj_param(P->host->ctx, P->host->params, "ddz").f;
 
-    if (!pj_param(P->ctx, P->host->params, "tda").i)
+    if (!pj_param(P->host->ctx, P->host->params, "tda").i)
     {
         proj_log_error (P, _("missing da"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->da = pj_param(P->ctx, P->host->params, "dda").f;
+    Q->da = pj_param(P->host->ctx, P->host->params, "dda").f;
 
-    if (!pj_param(P->ctx, P->host->params, "tdf").i)
+    if (!pj_param(P->host->ctx, P->host->params, "tdf").i)
     {
         proj_log_error (P, _("missing df"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    Q->df = pj_param(P->ctx, P->host->params, "ddf").f;
+    Q->df = pj_param(P->host->ctx, P->host->params, "ddf").f;
 
-    Q->abridged = pj_param(P->ctx, P->host->params, "tabridged").i;
+    Q->abridged = pj_param(P->host->ctx, P->host->params, "tabridged").i;
 
     return P;
 }

@@ -29,7 +29,7 @@ PROJ_HEAD(chamb, "Chamberlin Trimetric") "\n\tMisc Sph, no inv"
 #define TOL 1e-9
 
 /* distance and azimuth from point 1 to point 2 */
-static VECT vect(PJ_CONTEXT *ctx, double dphi, double c1, double s1, double c2, double s2, double dlam) {
+static VECT vect(pj_ctx_shared *ctx, double dphi, double c1, double s1, double c2, double s2, double dlam) {
     VECT v;
     double cdl, dp, dl;
 
@@ -49,7 +49,7 @@ static VECT vect(PJ_CONTEXT *ctx, double dphi, double c1, double s1, double c2, 
 }
 
 /* law of cosines */
-static double lc(PJ_CONTEXT *ctx, double b,double c,double a) {
+static double lc(pj_ctx_shared *ctx, double b,double c,double a) {
     return aacos(ctx, .5 * (b * b + c * c - a * a) / (b * c));
 }
 
@@ -64,7 +64,7 @@ static PJ_XY chamb_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
     sinphi = sin(lp.phi);
     cosphi = cos(lp.phi);
     for (i = 0; i < 3; ++i) { /* dist/azimiths from control */
-        v[i] = vect(P->ctx, lp.phi - Q->c[i].phi, Q->c[i].cosphi, Q->c[i].sinphi,
+        v[i] = vect(P->shared_ctx, lp.phi - Q->c[i].phi, Q->c[i].cosphi, Q->c[i].sinphi,
             cosphi, sinphi, lp.lam - Q->c[i].lam);
         if (v[i].r == 0.0)
             break;
@@ -76,7 +76,7 @@ static PJ_XY chamb_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
         xy = Q->p;
         for (i = 0; i < 3; ++i) {
             j = i == 2 ? 0 : i + 1;
-            a = lc(P->ctx,Q->c[i].v.r, v[i].r, v[j].r);
+            a = lc(P->shared_ctx,Q->c[i].v.r, v[i].r, v[j].r);
             if (v[i].Az < 0.)
                 a = -a;
             if (! i) { /* coord comp unique to each arc */
@@ -111,16 +111,16 @@ PJ *PROJECTION(chamb) {
 
     for (i = 0; i < 3; ++i) { /* get control point locations */
         (void)sprintf(line, "rlat_%d", i+1);
-        Q->c[i].phi = pj_param(P->ctx, P->host->params, line).f;
+        Q->c[i].phi = pj_param(P->host->ctx, P->host->params, line).f;
         (void)sprintf(line, "rlon_%d", i+1);
-        Q->c[i].lam = pj_param(P->ctx, P->host->params, line).f;
+        Q->c[i].lam = pj_param(P->host->ctx, P->host->params, line).f;
         Q->c[i].lam = adjlon(Q->c[i].lam - P->lam0);
         Q->c[i].cosphi = cos(Q->c[i].phi);
         Q->c[i].sinphi = sin(Q->c[i].phi);
     }
     for (i = 0; i < 3; ++i) { /* inter ctl pt. distances and azimuths */
         j = i == 2 ? 0 : i + 1;
-        Q->c[i].v = vect(P->ctx,Q->c[j].phi - Q->c[i].phi, Q->c[i].cosphi, Q->c[i].sinphi,
+        Q->c[i].v = vect(P->shared_ctx,Q->c[j].phi - Q->c[i].phi, Q->c[i].cosphi, Q->c[i].sinphi,
             Q->c[j].cosphi, Q->c[j].sinphi, Q->c[j].lam - Q->c[i].lam);
         if (Q->c[i].v.r == 0.0)
         {
@@ -129,8 +129,8 @@ PJ *PROJECTION(chamb) {
         }
         /* co-linearity problem ignored for now */
     }
-    Q->beta_0 = lc(P->ctx,Q->c[0].v.r, Q->c[2].v.r, Q->c[1].v.r);
-    Q->beta_1 = lc(P->ctx,Q->c[0].v.r, Q->c[1].v.r, Q->c[2].v.r);
+    Q->beta_0 = lc(P->shared_ctx,Q->c[0].v.r, Q->c[2].v.r, Q->c[1].v.r);
+    Q->beta_1 = lc(P->shared_ctx,Q->c[0].v.r, Q->c[1].v.r, Q->c[2].v.r);
     Q->beta_2 = M_PI - Q->beta_0;
     Q->c[0].p.y = Q->c[2].v.r * sin(Q->beta_0);
     Q->c[1].p.y = Q->c[0].p.y;

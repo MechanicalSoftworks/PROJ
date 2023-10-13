@@ -467,13 +467,13 @@ PJ *CONVERSION(unitconvert,0) {
     Q->xy_factor = 1.0;
     Q->z_factor  = 1.0;
 
-    if ((name = pj_param (P->ctx, P->host->params, "sxy_in").s) != nullptr) {
+    if ((name = pj_param (P->host->ctx, P->host->params, "sxy_in").s) != nullptr) {
         const char* normalized_name = nullptr;
         f = get_unit_conversion_factor(name, &xy_in_is_linear, &normalized_name);
         if (f != 0.0) {
             proj_log_trace(P, "xy_in unit: %s", normalized_name);
         } else {
-            f = pj_param (P->ctx, P->host->params, "dxy_in").f;
+            f = pj_param (P->host->ctx, P->host->params, "dxy_in").f;
             if (f == 0.0 || 1.0 / f == 0.0)
             {
                 proj_log_error(P, _("unknown xy_in unit"));
@@ -489,13 +489,13 @@ PJ *CONVERSION(unitconvert,0) {
         }
     }
 
-    if ((name = pj_param (P->ctx, P->host->params, "sxy_out").s) != nullptr) {
+    if ((name = pj_param (P->host->ctx, P->host->params, "sxy_out").s) != nullptr) {
         const char* normalized_name = nullptr;
         f = get_unit_conversion_factor(name, &xy_out_is_linear, &normalized_name);
         if (f != 0.0) {
             proj_log_trace(P, "xy_out unit: %s", normalized_name);
         } else {
-            f = pj_param (P->ctx, P->host->params, "dxy_out").f;
+            f = pj_param (P->host->ctx, P->host->params, "dxy_out").f;
             if (f == 0.0 || 1.0 / f == 0.0)
             {
                 proj_log_error(P, _("unknown xy_out unit"));
@@ -517,13 +517,13 @@ PJ *CONVERSION(unitconvert,0) {
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    if ((name = pj_param (P->ctx, P->host->params, "sz_in").s) != nullptr) {
+    if ((name = pj_param (P->host->ctx, P->host->params, "sz_in").s) != nullptr) {
         const char* normalized_name = nullptr;
         f = get_unit_conversion_factor(name, &z_in_is_linear, &normalized_name);
         if (f != 0.0) {
             proj_log_trace(P, "z_in unit: %s", normalized_name);
         } else {
-            f = pj_param (P->ctx, P->host->params, "dz_in").f;
+            f = pj_param (P->host->ctx, P->host->params, "dz_in").f;
             if (f == 0.0 || 1.0 / f == 0.0)
             {
                 proj_log_error(P, _("unknown z_in unit"));
@@ -533,13 +533,13 @@ PJ *CONVERSION(unitconvert,0) {
         Q->z_factor = f;
     }
 
-    if ((name = pj_param (P->ctx, P->host->params, "sz_out").s) != nullptr) {
+    if ((name = pj_param (P->host->ctx, P->host->params, "sz_out").s) != nullptr) {
         const char* normalized_name = nullptr;
         f = get_unit_conversion_factor(name, &z_out_is_linear, &normalized_name);
         if (f != 0.0) {
             proj_log_trace(P, "z_out unit: %s", normalized_name);
         } else {
-            f = pj_param (P->ctx, P->host->params, "dz_out").f;
+            f = pj_param (P->host->ctx, P->host->params, "dz_out").f;
             if (f == 0.0 || 1.0 / f == 0.0)
             {
                 proj_log_error(P, _("unknown z_out unit"));
@@ -555,7 +555,7 @@ PJ *CONVERSION(unitconvert,0) {
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    if ((name = pj_param (P->ctx, P->host->params, "st_in").s) != nullptr) {
+    if ((name = pj_param (P->host->ctx, P->host->params, "st_in").s) != nullptr) {
         for (i = 0; (s = time_units[i].id) && strcmp(name, s) ; ++i);
 
         if (!s)
@@ -569,7 +569,7 @@ PJ *CONVERSION(unitconvert,0) {
     }
 
     s = nullptr;
-    if ((name = pj_param (P->ctx, P->host->params, "st_out").s) != nullptr) {
+    if ((name = pj_param (P->host->ctx, P->host->params, "st_out").s) != nullptr) {
         for (i = 0; (s = time_units[i].id) && strcmp(name, s) ; ++i);
 
         if (!s)

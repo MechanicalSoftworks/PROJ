@@ -47,25 +47,25 @@ PJ *OPERATION(set, 0) {
     if (pj_param_exists(P->host->params, "v_1"))
     {
         set->v1 = true;
-        set->v1_val = pj_param (P->ctx, P->host->params, "dv_1").f;
+        set->v1_val = pj_param (P->host->ctx, P->host->params, "dv_1").f;
     }
 
     if (pj_param_exists(P->host->params, "v_2"))
     {
         set->v2 = true;
-        set->v2_val = pj_param (P->ctx, P->host->params, "dv_2").f;
+        set->v2_val = pj_param (P->host->ctx, P->host->params, "dv_2").f;
     }
 
     if (pj_param_exists(P->host->params, "v_3"))
     {
         set->v3 = true;
-        set->v3_val = pj_param (P->ctx, P->host->params, "dv_3").f;
+        set->v3_val = pj_param (P->host->ctx, P->host->params, "dv_3").f;
     }
 
     if (pj_param_exists(P->host->params, "v_4"))
     {
         set->v4 = true;
-        set->v4_val = pj_param (P->ctx, P->host->params, "dv_4").f;
+        set->v4_val = pj_param (P->host->ctx, P->host->params, "dv_4").f;
     }
 
     P->left  = PJ_IO_UNITS_WHATEVER;

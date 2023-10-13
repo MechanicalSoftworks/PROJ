@@ -170,7 +170,7 @@ static PJ_LP aitoff_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
     if (iter == MAXITER && round == MAXROUND)
     {
-        proj_context_errno_set( P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN );
+        proj_context_errno_set( P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN );
         /* fprintf(stderr, "Warning: Accuracy of 1e-12 not reached. Last increments: dlat=%e and dlon=%e\n", dp, dl); */
     }
 
@@ -204,8 +204,8 @@ PJ *PROJECTION(wintri) {
     P->opaque = Q;
 
     Q->mode = WINKEL_TRIPEL;
-    if (pj_param(P->ctx, P->host->params, "tlat_1").i) {
-        if ((Q->cosphi1 = cos(pj_param(P->ctx, P->host->params, "rlat_1").f)) == 0.)
+    if (pj_param(P->host->ctx, P->host->params, "tlat_1").i) {
+        if ((Q->cosphi1 = cos(pj_param(P->host->ctx, P->host->params, "rlat_1").f)) == 0.)
         {
             proj_log_error(P, _("Invalid value for lat_1: |lat_1| should be < 90°"));
             return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);

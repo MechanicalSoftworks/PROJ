@@ -191,7 +191,7 @@ static PJ_LP e_guam_inv(PJ_XY xy, PJ *P) { /* Guam elliptical */
     for (i = 0; i < 3; ++i) {
         t = P->e * sin(lp.phi);
         t = sqrt(1. - t * t);
-        lp.phi = pj_inv_mlfn(P->ctx, Q->M1 + xy.y -
+        lp.phi = pj_inv_mlfn(P->shared_ctx, Q->M1 + xy.y -
             x2 * tan(lp.phi) * t, P->es, Q->en);
     }
     lp.lam = xy.x * t / cos(lp.phi);
@@ -223,7 +223,7 @@ static PJ_LP aeqd_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse
         lp.lam = lon2 * DEG_TO_RAD;
         lp.lam -= P->lam0;
     } else { /* Polar */
-        lp.phi = pj_inv_mlfn(P->ctx, Q->mode == N_POLE ? Q->Mp - c : Q->Mp + c,
+        lp.phi = pj_inv_mlfn(P->shared_ctx, Q->mode == N_POLE ? Q->Mp - c : Q->Mp + c,
             P->es, Q->en);
         lp.lam = atan2(xy.x, Q->mode == N_POLE ? -xy.y : xy.y);
     }
@@ -252,11 +252,11 @@ static PJ_LP aeqd_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
         sinc = sin(c_rh);
         cosc = cos(c_rh);
         if (Q->mode == EQUIT) {
-            lp.phi = aasin(P->ctx, xy.y * sinc / c_rh);
+            lp.phi = aasin(P->shared_ctx, xy.y * sinc / c_rh);
             xy.x *= sinc;
             xy.y = cosc * c_rh;
         } else {
-            lp.phi = aasin(P->ctx,cosc * Q->sinph0 + xy.y * sinc * Q->cosph0 /
+            lp.phi = aasin(P->shared_ctx,cosc * Q->sinph0 + xy.y * sinc * Q->cosph0 /
                 c_rh);
             xy.y = (cosc - Q->sinph0 * sin(lp.phi)) * c_rh;
             xy.x *= sinc * Q->cosph0;
@@ -301,7 +301,7 @@ PJ *PROJECTION(aeqd) {
     } else {
         if (!(Q->en = pj_enfn(P->es)))
             return pj_default_destructor (P, 0);
-        if (pj_param(P->ctx, P->host->params, "bguam").i) {
+        if (pj_param(P->host->ctx, P->host->params, "bguam").i) {
             Q->M1 = pj_mlfn(P->phi0, Q->sinph0, Q->cosph0, Q->en);
             P->host->inv = e_guam_inv;
             P->host->fwd = e_guam_fwd;

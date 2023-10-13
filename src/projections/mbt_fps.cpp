@@ -39,10 +39,10 @@ static PJ_XY mbt_fps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forw
 static PJ_LP mbt_fps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
 
-    const double t = aasin(P->ctx,xy.y / C_y);
+    const double t = aasin(P->shared_ctx,xy.y / C_y);
     lp.phi = C2 * t;
     lp.lam = xy.x / (C_x * (1. + 3. * cos(lp.phi)/cos(t)));
-    lp.phi = aasin(P->ctx,(C1 * sin(t) + sin(lp.phi)) / C3);
+    lp.phi = aasin(P->shared_ctx,(C1 * sin(t) + sin(lp.phi)) / C3);
     return (lp);
 }
 

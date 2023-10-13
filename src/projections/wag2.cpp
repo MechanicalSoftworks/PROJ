@@ -15,7 +15,7 @@ PROJ_HEAD(wag2, "Wagner II") "\n\tPCyl, Sph";
 
 static PJ_XY wag2_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
-	lp.phi = aasin (P->ctx,C_p1 * sin (C_p2 * lp.phi));
+	lp.phi = aasin (P->shared_ctx,C_p1 * sin (C_p2 * lp.phi));
 	xy.x = C_x * lp.lam * cos (lp.phi);
 	xy.y = C_y * lp.phi;
 	return (xy);
@@ -26,7 +26,7 @@ static PJ_LP wag2_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
     PJ_LP lp = {0.0,0.0};
 	lp.phi = xy.y / C_y;
 	lp.lam = xy.x / (C_x * cos(lp.phi));
-	lp.phi = aasin (P->ctx,sin(lp.phi) / C_p1) / C_p2;
+	lp.phi = aasin (P->shared_ctx,sin(lp.phi) / C_p1) / C_p2;
 	return (lp);
 }
 

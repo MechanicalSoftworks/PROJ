@@ -204,9 +204,9 @@ PJ *PROJECTION(geos) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->h = pj_param(P->ctx, P->host->params, "dh").f;
+    Q->h = pj_param(P->host->ctx, P->host->params, "dh").f;
 
-    sweep_axis = pj_param(P->ctx, P->host->params, "ssweep").s;
+    sweep_axis = pj_param(P->host->ctx, P->host->params, "ssweep").s;
     if (sweep_axis == nullptr)
       Q->flip_axis = 0;
     else {

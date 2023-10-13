@@ -115,7 +115,7 @@ PJ *PROJECTION(labrd) {
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    Az = pj_param(P->ctx, P->host->params, "razi").f;
+    Az = pj_param(P->host->ctx, P->host->params, "razi").f;
     sinp = sin(P->phi0);
     t = 1. - P->es * sinp * sinp;
     N = 1. / sqrt(t);

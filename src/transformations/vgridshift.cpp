@@ -34,7 +34,7 @@ static void deal_with_vertcon_gtx_hack(PJ *P)
     if( Q->forward_multiplier != 0.001 ) {
         return;
     }
-    const char* gridname = pj_param(P->ctx, P->host->params, "sgrids").s;
+    const char* gridname = pj_param(P->host->ctx, P->host->params, "sgrids").s;
     if( !gridname ) {
         return;
     }
@@ -161,19 +161,19 @@ PJ *TRANSFORMATION(vgridshift,0) {
     P->host->destructor = destructor;
     P->host->reassign_context = reassign_context;
 
-   if (!pj_param(P->ctx, P->host->params, "tgrids").i) {
+   if (!pj_param(P->host->ctx, P->host->params, "tgrids").i) {
         proj_log_error(P, _("+grids parameter missing."));
         return destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
    /* TODO: Refactor into shared function that can be used  */
    /* by both vgridshift and hgridshift                     */
-   if (pj_param(P->ctx, P->host->params, "tt_final").i) {
-        Q->t_final = pj_param (P->ctx, P->host->params, "dt_final").f;
+   if (pj_param(P->host->ctx, P->host->params, "tt_final").i) {
+        Q->t_final = pj_param (P->host->ctx, P->host->params, "dt_final").f;
         if (Q->t_final == 0) {
             /* a number wasn't passed to +t_final, let's see if it was "now" */
             /* and set the time accordingly.                                 */
-            if (!strcmp("now", pj_param(P->ctx, P->host->params, "st_final").s)) {
+            if (!strcmp("now", pj_param(P->host->ctx, P->host->params, "st_final").s)) {
                     time_t now;
                     struct tm *date;
                     time(&now);
@@ -183,20 +183,20 @@ PJ *TRANSFORMATION(vgridshift,0) {
         }
     }
 
-   if (pj_param(P->ctx, P->host->params, "tt_epoch").i)
-        Q->t_epoch = pj_param (P->ctx, P->host->params, "dt_epoch").f;
+   if (pj_param(P->host->ctx, P->host->params, "tt_epoch").i)
+        Q->t_epoch = pj_param (P->host->ctx, P->host->params, "dt_epoch").f;
 
     /* historical: the forward direction subtracts the grid offset. */
     Q->forward_multiplier = -1.0;
-    if (pj_param(P->ctx, P->host->params, "tmultiplier").i) {
-        Q->forward_multiplier = pj_param(P->ctx, P->host->params, "dmultiplier").f;
+    if (pj_param(P->host->ctx, P->host->params, "tmultiplier").i) {
+        Q->forward_multiplier = pj_param(P->host->ctx, P->host->params, "dmultiplier").f;
     }
 
-    if( P->ctx->defer_grid_opening ) {
+    if( P->host->ctx->defer_grid_opening ) {
         Q->defer_grid_opening = true;
     }
     else {
-        const char *gridnames = pj_param(P->ctx, P->host->params, "sgrids").s;
+        const char *gridnames = pj_param(P->host->ctx, P->host->params, "sgrids").s;
         gMutex.lock();
         const bool isKnownGrid = gKnownGrids.find(gridnames) != gKnownGrids.end();
         gMutex.unlock();

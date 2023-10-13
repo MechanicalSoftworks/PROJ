@@ -292,7 +292,7 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
         {
             // Do a first pass and select the operations that match the area of use
             // and has the best accuracy.
-            int iBest = pj_get_suggested_operation(P->ctx,
+            int iBest = pj_get_suggested_operation(P->host->ctx,
                                                    P->host->alternativeCoordinateOperations,
                                                    iExcluded,
                                                    direction,
@@ -302,20 +302,20 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
             }
             if( iRetry > 0 ) {
                 const int oldErrno = proj_errno_reset(P);
-                if (proj_log_level(P->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
-                    pj_log(P->ctx, PJ_LOG_DEBUG, proj_context_errno_string(P->ctx, oldErrno));
+                if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
+                    pj_log(P->host->ctx, PJ_LOG_DEBUG, proj_context_errno_string(P->host->ctx, oldErrno));
                 }
-                pj_log(P->ctx, PJ_LOG_DEBUG,
+                pj_log(P->host->ctx, PJ_LOG_DEBUG,
                     "Did not result in valid result. "
                     "Attempting a retry with another operation.");
             }
 
             const auto& alt = P->host->alternativeCoordinateOperations[iBest];
             if( P->iCurCoordOp != iBest ) {
-                if (proj_log_level(P->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
+                if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
                     std::string msg("Using coordinate operation ");
                     msg += alt.name;
-                    pj_log(P->ctx, PJ_LOG_DEBUG, msg.c_str());
+                    pj_log(P->host->ctx, PJ_LOG_DEBUG, msg.c_str());
                 }
                 P->iCurCoordOp = iBest;
             }
@@ -339,8 +339,8 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
         NS_PROJ::io::DatabaseContextPtr dbContext;
         try
         {
-            if( P->ctx->cpp_context ) {
-                dbContext = P->ctx->cpp_context->getDatabaseContext().as_nullable();
+            if( P->host->ctx->cpp_context ) {
+                dbContext = P->host->ctx->cpp_context->getDatabaseContext().as_nullable();
             }
         }
         catch( const std::exception& ) {}
@@ -351,12 +351,12 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
             if( coordOperation ) {
                 if( coordOperation->gridsNeeded(dbContext, true).empty() ) {
                     if( P->iCurCoordOp != i ) {
-                        if (proj_log_level(P->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
+                        if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
                             std::string msg("Using coordinate operation ");
                             msg += alt.name;
                             msg += " as a fallback due to lack of more "
                                    "appropriate operations";
-                            pj_log(P->ctx, PJ_LOG_DEBUG, msg.c_str());
+                            pj_log(P->host->ctx, PJ_LOG_DEBUG, msg.c_str());
                         }
                         P->iCurCoordOp = i;
                     }
@@ -403,7 +403,7 @@ int proj_trans_array (PJ *P, PJ_DIRECTION direction, size_t n, PJ_COORD *coord) 
     bool sameRetErrno = true;
 
     for (i = 0;  i < n;  i++) {
-        proj_context_errno_set(P->ctx, 0);
+        proj_context_errno_set(P->shared_ctx, 0);
         coord[i] = proj_trans (P, direction, coord[i]);
         int thisErrno = proj_errno(P);
         if( thisErrno != 0 )
@@ -421,7 +421,7 @@ int proj_trans_array (PJ *P, PJ_DIRECTION direction, size_t n, PJ_COORD *coord) 
         }
    }
 
-   proj_context_errno_set(P->ctx, retErrno);
+   proj_context_errno_set(P->shared_ctx, retErrno);
 
    return retErrno;
 }
@@ -663,7 +663,7 @@ Returns 1 on success, 0 on failure
         if (nullptr==def)
             return 0;
         sprintf (def, "break_cs2cs_recursion     proj=axisswap  axis=%s", P->axis);
-        Q = pj_create_internal (P->ctx, def);
+        Q = pj_create_internal (P->host->ctx, def);
         free (def);
         if (nullptr==Q)
             return 0;
@@ -679,7 +679,7 @@ Returns 1 on success, 0 on failure
             return 0;
         sprintf (def, "break_cs2cs_recursion     proj=vgridshift  grids=%s",
                  pj_double_quote_string_param_if_needed(gridnames).c_str());
-        Q = pj_create_internal (P->ctx, def);
+        Q = pj_create_internal (P->host->ctx, def);
         free (def);
         if (nullptr==Q)
             return 0;
@@ -695,7 +695,7 @@ Returns 1 on success, 0 on failure
             return 0;
         sprintf (def, "break_cs2cs_recursion     proj=hgridshift  grids=%s",
                  pj_double_quote_string_param_if_needed(gridnames).c_str());
-        Q = pj_create_internal (P->ctx, def);
+        Q = pj_create_internal (P->host->ctx, def);
         free (def);
         if (nullptr==Q)
             return 0;
@@ -727,7 +727,7 @@ Returns 1 on success, 0 on failure
         if (nullptr==def)
             return 0;
         sprintf (def, "break_cs2cs_recursion     proj=helmert exact %s convention=position_vector", s);
-        Q = pj_create_internal (P->ctx, def);
+        Q = pj_create_internal (P->host->ctx, def);
         free(def);
         if (nullptr==Q)
             return 0;
@@ -753,14 +753,14 @@ Returns 1 on success, 0 on failure
                 *next_pos = '.';
             }
         }
-        Q = pj_create_internal (P->ctx, def);
+        Q = pj_create_internal (P->host->ctx, def);
         if (nullptr==Q)
             return 0;
         P->cart = skip_prep_fin (Q);
 
         if (!P->is_geocent) {
             sprintf (def, "break_cs2cs_recursion     proj=cart  ellps=WGS84");
-            Q = pj_create_internal (P->ctx, def);
+            Q = pj_create_internal (P->host->ctx, def);
             if (nullptr==Q)
                 return 0;
             P->cart_wgs84 = skip_prep_fin (Q);
@@ -794,7 +794,7 @@ PJ *pj_create_internal (PJ_CONTEXT *ctx, const char *definition) {
     n = strlen (definition);
     args = (char *) malloc (n + 1);
     if (nullptr==args) {
-        proj_context_errno_set(ctx, PROJ_ERR_OTHER /*ENOMEM*/);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_OTHER /*ENOMEM*/);
         return nullptr;
     }
     strcpy (args, definition);
@@ -802,14 +802,14 @@ PJ *pj_create_internal (PJ_CONTEXT *ctx, const char *definition) {
     argc = pj_trim_argc (args);
     if (argc==0) {
         free (args);
-        proj_context_errno_set(ctx, PROJ_ERR_INVALID_OP_MISSING_ARG);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_INVALID_OP_MISSING_ARG);
         return nullptr;
     }
 
     argv = pj_trim_argv (argc, args);
     if (!argv) {
         free(args);
-        proj_context_errno_set(ctx, PROJ_ERR_OTHER /*ENOMEM*/);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_OTHER /*ENOMEM*/);
         return nullptr;
     }
 
@@ -836,14 +836,14 @@ indicator, as in {"+proj=utm", "+zone=32"}, or leave it out, as in {"proj=utm",
     if (nullptr==ctx)
         ctx = pj_get_default_ctx ();
     if (nullptr==argv) {
-        proj_context_errno_set(ctx, PROJ_ERR_INVALID_OP_MISSING_ARG);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_INVALID_OP_MISSING_ARG);
         return nullptr;
     }
 
     /* We assume that free format is used, and build a full proj_create compatible string */
     c = pj_make_args (argc, argv);
     if (nullptr==c) {
-        proj_context_errno_set(ctx, PROJ_ERR_INVALID_OP /* ENOMEM */);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_INVALID_OP /* ENOMEM */);
         return nullptr;
     }
 
@@ -861,7 +861,7 @@ For use by pipeline init function.
     if (nullptr==ctx)
         ctx = pj_get_default_ctx ();
     if (nullptr==argv) {
-        proj_context_errno_set(ctx, PROJ_ERR_INVALID_OP_MISSING_ARG);
+        proj_context_errno_set(ctx->shared, PROJ_ERR_INVALID_OP_MISSING_ARG);
         return nullptr;
     }
 
@@ -1586,7 +1586,7 @@ static PJ* add_coord_op_to_list(
         const char* c_name = proj_get_name(op);
         std::string name(c_name ? c_name : "");
 
-        const double accuracy = proj_coordoperation_get_accuracy(op->ctx, op);
+        const double accuracy = proj_coordoperation_get_accuracy(op->host->ctx, op);
         altCoordOps.emplace_back(idxInOriginalList,
                                  minxSrc, minySrc, maxxSrc, maxySrc,
                                  minxDst, minyDst, maxxDst, maxyDst,
@@ -1973,7 +1973,7 @@ int proj_context_errno (PJ_CONTEXT *ctx) {
 ******************************************************************************/
     if (nullptr==ctx)
         ctx = pj_get_default_ctx();
-    return ctx->last_errno;
+    return ctx->shared->last_errno;
 }
 
 /*****************************************************************************/
@@ -1986,7 +1986,7 @@ int proj_errno_set (const PJ *P, int err) {
         return 0;
 
     /* For P==0 err goes to the default context */
-    proj_context_errno_set (pj_get_ctx ((PJ *) P), err);
+    proj_context_errno_set (pj_get_ctx ((PJ *) P)->shared, err);
     errno = err;
 
     return err;
@@ -2039,7 +2039,7 @@ int proj_errno_reset (const PJ *P) {
     int last_errno;
     last_errno = proj_errno (P);
 
-    proj_context_errno_set (pj_get_ctx ((PJ *) P), 0);
+    proj_context_errno_set (pj_get_ctx ((PJ *) P)->shared, 0);
     errno = 0;
     return last_errno;
 }
@@ -2198,8 +2198,8 @@ PJ_PROJ_INFO proj_pj_info(PJ *P) {
     }
 
     /* projection id */
-    if (pj_param(P->ctx, P->host->params, "tproj").i)
-        pjinfo.id = pj_param(P->ctx, P->host->params, "sproj").s;
+    if (pj_param(P->host->ctx, P->host->params, "tproj").i)
+        pjinfo.id = pj_param(P->host->ctx, P->host->params, "sproj").s;
 
     if( P->host->iso_obj ) {
         pjinfo.description = P->host->iso_obj->nameStr().c_str();
@@ -2345,7 +2345,7 @@ PJ_INIT_INFO proj_init_info(const char *initname){
         if( strcmp(initname, "epsg") == 0 || strcmp(initname, "EPSG") == 0 ) {
             const char* val;
 
-            proj_context_errno_set( ctx, 0 );
+            proj_context_errno_set( ctx->shared, 0 );
 
             strncpy (ininfo.name, initname, sizeof(ininfo.name) - 1);
             strcpy(ininfo.origin, "EPSG");
@@ -2363,7 +2363,7 @@ PJ_INIT_INFO proj_init_info(const char *initname){
         if( strcmp(initname, "IGNF") == 0 ) {
             const char* val;
 
-            proj_context_errno_set( ctx, 0 );
+            proj_context_errno_set( ctx->shared, 0 );
 
             strncpy (ininfo.name, initname, sizeof(ininfo.name) - 1);
             strcpy(ininfo.origin, "IGNF");
@@ -2443,7 +2443,7 @@ PJ_FACTORS proj_factors(PJ *P, PJ_COORD lp) {
         // input coordinates being in longitude, latitude order in radian,
         // to be consistent with the expectations of the lp input parameter.
 
-        auto ctx = P->ctx;
+        auto ctx = P->host->ctx;
         auto geodetic_crs = proj_get_source_crs(ctx, P);
         assert(geodetic_crs);
         auto datum = proj_crs_get_datum(ctx, geodetic_crs);

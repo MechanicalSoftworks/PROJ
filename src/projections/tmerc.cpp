@@ -89,7 +89,7 @@ static PJ_XY approx_e_fwd (PJ_LP lp, PJ *P)
     if( lp.lam < -M_HALFPI || lp.lam > M_HALFPI ) {
         xy.x = HUGE_VAL;
         xy.y = HUGE_VAL;
-        proj_context_errno_set( P->ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN );
+        proj_context_errno_set( P->shared_ctx, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN );
         return xy;
     }
 
@@ -156,7 +156,7 @@ static PJ_LP approx_e_inv (PJ_XY xy, PJ *P) {
     const auto *Q = &(static_cast<struct tmerc_data*>(P->opaque)->approx);
 
     double sinphi, cosphi;
-    lp.phi = inline_pj_inv_mlfn(P->ctx, Q->ml0 + xy.y / P->k0, P->es, Q->en, &sinphi, &cosphi);
+    lp.phi = inline_pj_inv_mlfn(P->shared_ctx, Q->ml0 + xy.y / P->k0, P->es, Q->en, &sinphi, &cosphi);
     if (fabs(lp.phi) >= M_HALFPI) {
         lp.phi = xy.y < 0. ? -M_HALFPI : M_HALFPI;
         lp.lam = 0.;
@@ -643,13 +643,13 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
 
 static bool getAlgoFromParams(PJ* P, TMercAlgo& algo)
 {
-    if( pj_param (P->ctx, P->host->params, "bapprox").i )
+    if( pj_param (P->host->ctx, P->host->params, "bapprox").i )
     {
         algo = TMercAlgo::EVENDEN_SNYDER;
         return true;
     }
 
-    const char* algStr = pj_param (P->ctx, P->host->params, "salgo").s;
+    const char* algStr = pj_param (P->host->ctx, P->host->params, "salgo").s;
     if( algStr )
     {
         if( strcmp(algStr, "evenden_snyder") == 0 )
@@ -675,9 +675,9 @@ static bool getAlgoFromParams(PJ* P, TMercAlgo& algo)
     }
     else
     {
-        pj_load_ini(P->ctx); // if not already done
-        proj_context_errno_set(P->ctx, 0); // reset error in case proj.ini couldn't be found
-        algo = P->ctx->defaultTmercAlgo;
+        pj_load_ini(P->host->ctx); // if not already done
+        proj_context_errno_set(P->shared_ctx, 0); // reset error in case proj.ini couldn't be found
+        algo = P->host->ctx->defaultTmercAlgo;
     }
 
     // We haven't worked on the criterion on inverse transformation
@@ -736,11 +736,11 @@ PJ *PROJECTION(utm) {
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
 
-    P->y0 = pj_param (P->ctx, P->host->params, "bsouth").i ? 10000000. : 0.;
+    P->y0 = pj_param (P->host->ctx, P->host->params, "bsouth").i ? 10000000. : 0.;
     P->x0 = 500000.;
-    if (pj_param (P->ctx, P->host->params, "tzone").i) /* zone input ? */
+    if (pj_param (P->host->ctx, P->host->params, "tzone").i) /* zone input ? */
     {
-        zone = pj_param(P->ctx, P->host->params, "izone").i;
+        zone = pj_param(P->host->ctx, P->host->params, "izone").i;
         if (zone > 0 && zone <= 60)
             --zone;
         else {

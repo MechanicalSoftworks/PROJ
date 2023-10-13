@@ -103,7 +103,7 @@ static char *get_init_string (PJ_CONTEXT *ctx, const char *name) {
     section = strrchr(fname, ':');
     if (nullptr==section) {
         pj_log(ctx, PJ_LOG_ERROR, _("Missing colon in +init"));
-        proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
+        proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
         free (fname);
         return nullptr;
     }
@@ -117,7 +117,7 @@ static char *get_init_string (PJ_CONTEXT *ctx, const char *name) {
     auto file = NS_PROJ::FileManager::open_resource_file(ctx, fname);
     if (nullptr==file) {
         pj_log(ctx, PJ_LOG_ERROR, _("Cannot open %s"), fname);
-        proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
+        proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
         free (fname);
         return nullptr;
     }
@@ -132,7 +132,7 @@ static char *get_init_string (PJ_CONTEXT *ctx, const char *name) {
         /* End of file? */
         if (maxLenReached || eofReached) {
             pj_log(ctx, PJ_LOG_ERROR, _("Invalid content for %s"), fname);
-            proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
+            proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
             free (fname);
             return nullptr;
         }
@@ -258,7 +258,7 @@ Expand key from buffer or (if not in buffer) from init file
             PJ* src;
             const char* proj_string;
 
-            proj_context_errno_set( ctx, 0 );
+            proj_context_errno_set( ctx->shared, 0 );
 
             if( !allow_init_epsg ) {
                 pj_log (ctx, PJ_LOG_TRACE, "%s expansion disallowed", xkey);
@@ -439,11 +439,11 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
     if (nullptr==ctx)
         ctx = pj_get_default_ctx ();
 
-    ctx->last_errno = 0;
+    ctx->shared->last_errno = 0;
 
     if (argc <= 0) {
         pj_log(ctx, PJ_LOG_ERROR, _("No arguments"));
-        proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_MISSING_ARG);
+        proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_MISSING_ARG);
         return nullptr;
     }
 
@@ -458,14 +458,14 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
     /* can't have nested pipelines directly */
     if (n_pipelines > 1) {
         pj_log(ctx, PJ_LOG_ERROR, _("Nested pipelines are not supported"));
-        proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_WRONG_SYNTAX);
+        proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_WRONG_SYNTAX);
         return nullptr;
     }
 
     /* don't allow more than one +init in non-pipeline operations */
     if (n_pipelines == 0 && n_inits > 1) {
         pj_log(ctx, PJ_LOG_ERROR, _("Too many inits"));
-        proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_WRONG_SYNTAX);
+        proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_WRONG_SYNTAX);
         return nullptr;
     }
 
@@ -499,8 +499,8 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
             return nullptr;
         }
     }
-    if (ctx->last_errno) {
-        free_params (ctx, start, ctx->last_errno);
+    if (ctx->shared->last_errno) {
+        free_params (ctx, start, ctx->shared->last_errno);
         return nullptr;
     }
 
@@ -536,7 +536,7 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
     }
 
 
-    PIN->ctx = ctx;
+    PIN->host->ctx = ctx;
     PIN->host->params = start;
     PIN->is_latlong = 0;
     PIN->is_geocent = 0;

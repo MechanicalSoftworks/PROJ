@@ -35,7 +35,7 @@ static PJ_XY o_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     lp.lam = adjlon(aatan2(cosphi * sin(lp.lam), Q->sphip * cosphi * coslam +
         Q->cphip * sinphi) + Q->lamp);
     /* Formula (5-7) */
-    lp.phi = aasin(P->ctx,Q->sphip * sinphi - Q->cphip * cosphi * coslam);
+    lp.phi = aasin(P->shared_ctx,Q->sphip * sinphi - Q->cphip * cosphi * coslam);
 
     return Q->link->host->fwd(lp, Q->link);
 }
@@ -48,7 +48,7 @@ static PJ_XY t_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     cosphi = cos(lp.phi);
     coslam = cos(lp.lam);
     lp.lam = adjlon(aatan2(cosphi * sin(lp.lam), sin(lp.phi)) + Q->lamp);
-    lp.phi = aasin(P->ctx, - cosphi * coslam);
+    lp.phi = aasin(P->shared_ctx, - cosphi * coslam);
 
     return Q->link->host->fwd(lp, Q->link);
 }
@@ -66,7 +66,7 @@ static PJ_LP o_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
         sinphi = sin(lp.phi);
         cosphi = cos(lp.phi);
         /* Formula (5-9) */
-        lp.phi = aasin(P->ctx,Q->sphip * sinphi + Q->cphip * cosphi * coslam);
+        lp.phi = aasin(P->shared_ctx,Q->sphip * sinphi + Q->cphip * cosphi * coslam);
         /* Formula (5-10b) */
         lp.lam = aatan2(cosphi * sin(lp.lam), Q->sphip * cosphi * coslam -
             Q->cphip * sinphi);
@@ -85,7 +85,7 @@ static PJ_LP t_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
         cosphi = cos(lp.phi);
         t = lp.lam - Q->lamp;
         lp.lam = aatan2(cosphi * sin(t), - sin(lp.phi));
-        lp.phi = aasin(P->ctx,cosphi * cos(t));
+        lp.phi = aasin(P->shared_ctx,cosphi * cos(t));
     }
     return lp;
 }
@@ -186,7 +186,7 @@ PJ *PROJECTION(ob_tran) {
     P->host->destructor = destructor;
 
     /* get name of projection to be translated */
-    if (pj_param(P->ctx, P->host->params, "so_proj").s == nullptr)
+    if (pj_param(P->host->ctx, P->host->params, "so_proj").s == nullptr)
     {
         proj_log_error(P, _("Missing parameter: o_proj"));
         return destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
@@ -199,7 +199,7 @@ PJ *PROJECTION(ob_tran) {
         proj_log_error(P, _("Failed to find projection to be rotated"));
         return destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
-    R = proj_create_argv (P->ctx, args.argc, args.argv);
+    R = proj_create_argv (P->host->ctx, args.argc, args.argv);
     free (args.argv);
 
     if (nullptr==R)
@@ -209,12 +209,12 @@ PJ *PROJECTION(ob_tran) {
     }
     Q->link = R;
 
-    if (pj_param(P->ctx, P->host->params, "to_alpha").i) {
+    if (pj_param(P->host->ctx, P->host->params, "to_alpha").i) {
         double lamc, phic, alpha;
 
-        lamc    = pj_param(P->ctx, P->host->params, "ro_lon_c").f;
-        phic    = pj_param(P->ctx, P->host->params, "ro_lat_c").f;
-        alpha   = pj_param(P->ctx, P->host->params, "ro_alpha").f;
+        lamc    = pj_param(P->host->ctx, P->host->params, "ro_lon_c").f;
+        phic    = pj_param(P->host->ctx, P->host->params, "ro_lat_c").f;
+        alpha   = pj_param(P->host->ctx, P->host->params, "ro_alpha").f;
 
         if (fabs(fabs(phic) - M_HALFPI) <= TOL)
         {
@@ -223,17 +223,17 @@ PJ *PROJECTION(ob_tran) {
         }
 
         Q->lamp = lamc + aatan2(-cos(alpha), -sin(alpha) * sin(phic));
-        phip = aasin(P->ctx,cos(phic) * sin(alpha));
-    } else if (pj_param(P->ctx, P->host->params, "to_lat_p").i) { /* specified new pole */
-        Q->lamp = pj_param(P->ctx, P->host->params, "ro_lon_p").f;
-        phip = pj_param(P->ctx, P->host->params, "ro_lat_p").f;
+        phip = aasin(P->shared_ctx,cos(phic) * sin(alpha));
+    } else if (pj_param(P->host->ctx, P->host->params, "to_lat_p").i) { /* specified new pole */
+        Q->lamp = pj_param(P->host->ctx, P->host->params, "ro_lon_p").f;
+        phip = pj_param(P->host->ctx, P->host->params, "ro_lat_p").f;
     } else { /* specified new "equator" points */
         double lam1, lam2, phi1, phi2, con;
 
-        lam1 = pj_param(P->ctx, P->host->params, "ro_lon_1").f;
-        phi1 = pj_param(P->ctx, P->host->params, "ro_lat_1").f;
-        lam2 = pj_param(P->ctx, P->host->params, "ro_lon_2").f;
-        phi2 = pj_param(P->ctx, P->host->params, "ro_lat_2").f;
+        lam1 = pj_param(P->host->ctx, P->host->params, "ro_lon_1").f;
+        phi1 = pj_param(P->host->ctx, P->host->params, "ro_lat_1").f;
+        lam2 = pj_param(P->host->ctx, P->host->params, "ro_lon_2").f;
+        phi2 = pj_param(P->host->ctx, P->host->params, "ro_lat_2").f;
         con = fabs(phi1);
 
         if (fabs(phi1) > M_HALFPI - TOL)

@@ -9,7 +9,7 @@
 #define ATOL 1e-50
 
         double
-aasin(PJ_CONTEXT *ctx,double v) {
+aasin(pj_ctx_shared *ctx,double v) {
         double av;
 
         if ((av = fabs(v)) >= 1.) {
@@ -21,7 +21,7 @@ aasin(PJ_CONTEXT *ctx,double v) {
 }
 
         double
-aacos(PJ_CONTEXT *ctx, double v) {
+aacos(pj_ctx_shared *ctx, double v) {
         double av;
 
         if ((av = fabs(v)) >= 1.) {

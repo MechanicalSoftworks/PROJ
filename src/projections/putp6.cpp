@@ -52,7 +52,7 @@ static PJ_LP putp6_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
     lp.phi = xy.y / Q->C_y;
     r = sqrt(1. + lp.phi * lp.phi);
     lp.lam = xy.x / (Q->C_x * (Q->D - r));
-    lp.phi = aasin( P->ctx, ( (Q->A - r) * lp.phi - log(lp.phi + r) ) / Q->B);
+    lp.phi = aasin( P->shared_ctx, ( (Q->A - r) * lp.phi - log(lp.phi + r) ) / Q->B);
 
     return lp;
 }

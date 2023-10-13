@@ -129,7 +129,7 @@ static PJ *setup(PJ *P) { /* general initialization */
 
     /* Setup original geocentric system */
     // Pass a dummy ellipsoid definition that will be overridden just afterwards
-    Q->cart = proj_create(P->ctx, "+proj=cart +a=1");
+    Q->cart = proj_create(P->host->ctx, "+proj=cart +a=1");
     if (Q->cart == nullptr)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
@@ -152,7 +152,7 @@ static PJ *setup(PJ *P) { /* general initialization */
     Q->rcurv = Q->h0 + (reast*rnorth)/(reast * chdg * chdg + rnorth * shdg * shdg);
 
     /* Set up local sphere at the given peg point */
-    Q->cart_sph = proj_create(P->ctx, "+proj=cart +a=1");
+    Q->cart_sph = proj_create(P->host->ctx, "+proj=cart +a=1");
     if (Q->cart_sph == nullptr)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     pj_calc_ellipsoid_params(Q->cart_sph, Q->rcurv, 0);
@@ -193,24 +193,24 @@ PJ *PROJECTION(sch) {
     Q->h0 = 0.0;
 
     /* Check if peg latitude was defined */
-    if (pj_param(P->ctx, P->host->params, "tplat_0").i)
-        Q->plat = pj_param(P->ctx, P->host->params, "rplat_0").f;
+    if (pj_param(P->host->ctx, P->host->params, "tplat_0").i)
+        Q->plat = pj_param(P->host->ctx, P->host->params, "rplat_0").f;
     else {
         proj_log_error(P, _("Missing parameter plat_0."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* Check if peg longitude was defined */
-    if (pj_param(P->ctx, P->host->params, "tplon_0").i)
-        Q->plon = pj_param(P->ctx, P->host->params, "rplon_0").f;
+    if (pj_param(P->host->ctx, P->host->params, "tplon_0").i)
+        Q->plon = pj_param(P->host->ctx, P->host->params, "rplon_0").f;
     else {
         proj_log_error(P, _("Missing parameter plon_0."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* Check if peg heading is defined */
-    if (pj_param(P->ctx, P->host->params, "tphdg_0").i)
-        Q->phdg = pj_param(P->ctx, P->host->params, "rphdg_0").f;
+    if (pj_param(P->host->ctx, P->host->params, "tphdg_0").i)
+        Q->phdg = pj_param(P->host->ctx, P->host->params, "rphdg_0").f;
     else {
         proj_log_error(P, _("Missing parameter phdg_0."));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
@@ -218,8 +218,8 @@ PJ *PROJECTION(sch) {
 
 
     /* Check if average height was defined - If so read it in */
-    if (pj_param(P->ctx, P->host->params, "th_0").i)
-        Q->h0 = pj_param(P->ctx, P->host->params, "dh_0").f;
+    if (pj_param(P->host->ctx, P->host->params, "th_0").i)
+        Q->h0 = pj_param(P->host->ctx, P->host->params, "dh_0").f;
 
 
     return setup(P);

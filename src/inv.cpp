@@ -129,10 +129,10 @@ static void inv_finalize (PJ *P, PJ_COORD& coo) {
 }
 
 static inline PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
-    if (P->ctx->last_errno)
+    if (P->shared_ctx->last_errno)
         return proj_coord_error();
 
-    P->ctx->last_errno = last_errno;
+    P->shared_ctx->last_errno = last_errno;
 
     return coord;
 }
@@ -141,8 +141,8 @@ PJ_LP pj_inv(PJ_XY xy, PJ *P) {
     PJ_COORD coo = {{0,0,0,0}};
     coo.xy = xy;
 
-    const int last_errno = P->ctx->last_errno;
-    P->ctx->last_errno = 0;
+    const int last_errno = P->shared_ctx->last_errno;
+    P->shared_ctx->last_errno = 0;
 
     if (!P->skip_inv_prepare)
         inv_prepare (P, coo);
@@ -181,8 +181,8 @@ PJ_LPZ pj_inv3d (PJ_XYZ xyz, PJ *P) {
     PJ_COORD coo = {{0,0,0,0}};
     coo.xyz = xyz;
 
-    const int last_errno = P->ctx->last_errno;
-    P->ctx->last_errno = 0;
+    const int last_errno = P->shared_ctx->last_errno;
+    P->shared_ctx->last_errno = 0;
 
     if (!P->skip_inv_prepare)
          inv_prepare (P, coo);
@@ -219,8 +219,8 @@ PJ_LPZ pj_inv3d (PJ_XYZ xyz, PJ *P) {
 
 PJ_COORD pj_inv4d (PJ_COORD coo, PJ *P) {
 
-    const int last_errno = P->ctx->last_errno;
-    P->ctx->last_errno = 0;
+    const int last_errno = P->shared_ctx->last_errno;
+    P->shared_ctx->last_errno = 0;
 
     if (!P->skip_inv_prepare)
         inv_prepare (P, coo);

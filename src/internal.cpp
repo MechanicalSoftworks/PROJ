@@ -410,13 +410,13 @@ array.
 
 
 /*****************************************************************************/
-void proj_context_errno_set (PJ_CONTEXT *ctx, int err) {
+void proj_context_errno_set (struct pj_ctx_shared *ctx, int err) {
 /******************************************************************************
 Raise an error directly on a context, without going through a PJ belonging
 to that context.
 ******************************************************************************/
     if (nullptr==ctx)
-        ctx = pj_get_default_ctx();
+        ctx = pj_get_default_ctx()->shared;
     ctx->last_errno = err;
     if( err == 0 )
         return;

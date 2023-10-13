@@ -96,7 +96,7 @@ int pj_factors(PJ_LP lp, const PJ *P, double h, struct FACTORS *fac) {
     fac->s = (fac->der.y_p * fac->der.x_l - fac->der.x_p * fac->der.y_l) * r / cosphi;
 
     /* Meridian-parallel angle (theta prime) */
-    fac->thetap = aasin(P->ctx,fac->s / (fac->h * fac->k));
+    fac->thetap = aasin(P->shared_ctx,fac->s / (fac->h * fac->k));
 
     /* Tissot ellipse axis */
     t = fac->k * fac->k + fac->h * fac->h;
@@ -107,7 +107,7 @@ int pj_factors(PJ_LP lp, const PJ *P, double h, struct FACTORS *fac) {
     fac->a = 0.5 * (fac->a + t);
 
     /* Angular distortion */
-    fac->omega = 2. * aasin(P->ctx, (fac->a - fac->b) / (fac->a + fac->b) );
+    fac->omega = 2. * aasin(P->shared_ctx, (fac->a - fac->b) / (fac->a + fac->b) );
 
     proj_errno_restore (P, err);
     return 0;

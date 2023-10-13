@@ -60,7 +60,7 @@ static PJ_LP lcc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse 
             xy.y = -xy.y;
         }
         if (P->es != 0.) {
-            lp.phi = pj_phi2(P->ctx, pow(rho / Q->c, 1./Q->n), P->e);
+            lp.phi = pj_phi2(P->shared_ctx, pow(rho / Q->c, 1./Q->n), P->e);
             if (lp.phi == HUGE_VAL) {
                 proj_errno_set(P, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
                 return lp;
@@ -86,12 +86,12 @@ PJ *PROJECTION(lcc) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
-    if (pj_param(P->ctx, P->host->params, "tlat_2").i)
-        Q->phi2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
+    Q->phi1 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
+    if (pj_param(P->host->ctx, P->host->params, "tlat_2").i)
+        Q->phi2 = pj_param(P->host->ctx, P->host->params, "rlat_2").f;
     else {
         Q->phi2 = Q->phi1;
-        if (!pj_param(P->ctx, P->host->params, "tlat_0").i)
+        if (!pj_param(P->host->ctx, P->host->params, "tlat_0").i)
             P->phi0 = Q->phi1;
     }
 

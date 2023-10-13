@@ -47,7 +47,7 @@ static PJ_LP fouc_s_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
         if (!i)
             lp.phi = xy.y < 0. ? -M_HALFPI : M_HALFPI;
     } else
-        lp.phi = aasin(P->ctx,xy.y);
+        lp.phi = aasin(P->shared_ctx,xy.y);
     const double V = cos(lp.phi);
     lp.lam = xy.x * (Q->n + Q->n1 * V) / V;
     return lp;
@@ -60,7 +60,7 @@ PJ *PROJECTION(fouc_s) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->n = pj_param(P->ctx, P->host->params, "dn").f;
+    Q->n = pj_param(P->host->ctx, P->host->params, "dn").f;
     if (Q->n < 0. || Q->n > 1.)
     {
         proj_log_error(P, _("Invalid value for n: it should be in [0,1] range."));

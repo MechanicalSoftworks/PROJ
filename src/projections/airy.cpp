@@ -126,8 +126,8 @@ PJ *PROJECTION(airy) {
 
     P->opaque = Q;
 
-    Q->no_cut = pj_param(P->ctx, P->host->params, "bno_cut").i;
-    beta = 0.5 * (M_HALFPI - pj_param(P->ctx, P->host->params, "rlat_b").f);
+    Q->no_cut = pj_param(P->host->ctx, P->host->params, "bno_cut").i;
+    beta = 0.5 * (M_HALFPI - pj_param(P->host->ctx, P->host->params, "rlat_b").f);
     if (fabs(beta) < EPS)
         Q->Cb = -0.5;
     else {

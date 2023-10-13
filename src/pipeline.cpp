@@ -392,7 +392,7 @@ PJ *OPERATION(pipeline,0) {
     int i_pipeline = -1, i_first_step = -1, i_current_step;
     char **argv, **current_argv;
 
-    if( P->ctx->pipelineInitRecursiongCounter == 5 )
+    if( P->host->ctx->pipelineInitRecursiongCounter == 5 )
     {
         // Can happen for a string like:
         // proj=pipeline step "x="""," u=" proj=pipeline step ste=""[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline p step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ste="[" u=" proj=pipeline step ""x="""""""""""
@@ -491,9 +491,9 @@ PJ *OPERATION(pipeline,0) {
 
         err = proj_errno_reset (P);
 
-        P->ctx->pipelineInitRecursiongCounter ++;
-        next_step = pj_create_argv_internal (P->ctx, current_argc, current_argv);
-        P->ctx->pipelineInitRecursiongCounter --;
+        P->host->ctx->pipelineInitRecursiongCounter ++;
+        next_step = pj_create_argv_internal (P->host->ctx, current_argc, current_argv);
+        P->host->ctx->pipelineInitRecursiongCounter --;
         proj_log_trace (P, "Pipeline: Step %d (%s) at %p", i, current_argv[0], next_step);
 
         if (nullptr==next_step) {
@@ -501,7 +501,7 @@ PJ *OPERATION(pipeline,0) {
             int err_to_report = proj_errno(P);
             if (0==err_to_report)
                 err_to_report = PROJ_ERR_INVALID_OP_WRONG_SYNTAX;
-            proj_log_error (P, _("Pipeline: Bad step definition: %s (%s)"), current_argv[0], proj_context_errno_string (P->ctx, err_to_report));
+            proj_log_error (P, _("Pipeline: Bad step definition: %s (%s)"), current_argv[0], proj_context_errno_string (P->host->ctx, err_to_report));
             return destructor (P, err_to_report); /* ERROR: bad pipeline def */
         }
         next_step->parent = P;
@@ -516,8 +516,8 @@ PJ *OPERATION(pipeline,0) {
             }
         }
 
-        bool omit_fwd = pj_param(P->ctx, next_step->host->params, "bomit_fwd").i != 0;
-        bool omit_inv = pj_param(P->ctx, next_step->host->params, "bomit_inv").i != 0;
+        bool omit_fwd = pj_param(P->host->ctx, next_step->host->params, "bomit_fwd").i != 0;
+        bool omit_inv = pj_param(P->host->ctx, next_step->host->params, "bomit_inv").i != 0;
         pipeline->steps.emplace_back(next_step, omit_fwd, omit_inv);
 
         proj_log_trace (P, "Pipeline at [%p]:    step at [%p] (%s) done", P, next_step, current_argv[0]);

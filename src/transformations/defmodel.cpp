@@ -386,25 +386,25 @@ static void reassign_context(PJ *P, PJ_CONTEXT *ctx) {
 
 PJ *TRANSFORMATION(defmodel, 1) {
     // Pass a dummy ellipsoid definition that will be overridden just afterwards
-    auto cart = proj_create(P->ctx, "+proj=cart +a=1");
+    auto cart = proj_create(P->host->ctx, "+proj=cart +a=1");
     if (cart == nullptr)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     /* inherit ellipsoid definition from P to Q->cart */
     pj_inherit_ellipsoid_def(P, cart);
 
-    auto Q = new defmodelData(P->ctx, cart);
+    auto Q = new defmodelData(P->host->ctx, cart);
     P->opaque = (void *)Q;
     P->host->destructor = destructor;
     P->host->reassign_context = reassign_context;
 
-    const char *model = pj_param(P->ctx, P->host->params, "smodel").s;
+    const char *model = pj_param(P->host->ctx, P->host->params, "smodel").s;
     if (!model) {
         proj_log_error(P, _("+model= should be specified."));
         return destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
-    auto file = NS_PROJ::FileManager::open_resource_file(P->ctx, model);
+    auto file = NS_PROJ::FileManager::open_resource_file(P->host->ctx, model);
     if (nullptr == file) {
         proj_log_error(P, _("Cannot open %s"), model);
         return destructor(P, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);

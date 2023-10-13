@@ -74,8 +74,8 @@ PJ *PROJECTION(goode) {
     if (Q->sinu == nullptr || Q->moll == nullptr)
         return destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     Q->sinu->es = 0.;
-    Q->sinu->ctx = P->ctx;
-    Q->moll->ctx = P->ctx;
+    Q->sinu->host->ctx = P->host->ctx;
+    Q->moll->host->ctx = P->host->ctx;
     Q->sinu = pj_sinu(Q->sinu);
     Q->moll = pj_moll(Q->moll);
     if (Q->sinu == nullptr || Q->moll == nullptr)

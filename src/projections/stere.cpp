@@ -307,8 +307,8 @@ PJ *PROJECTION(stere) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->phits = pj_param (P->ctx, P->host->params, "tlat_ts").i ?
-               pj_param (P->ctx, P->host->params, "rlat_ts").f : M_HALFPI;
+    Q->phits = pj_param (P->host->ctx, P->host->params, "tlat_ts").i ?
+               pj_param (P->host->ctx, P->host->params, "rlat_ts").f : M_HALFPI;
 
     return setup(P);
 }
@@ -321,7 +321,7 @@ PJ *PROJECTION(ups) {
     P->opaque = Q;
 
     /* International Ellipsoid */
-    P->phi0 = pj_param(P->ctx, P->host->params, "bsouth").i ? - M_HALFPI: M_HALFPI;
+    P->phi0 = pj_param(P->host->ctx, P->host->params, "bsouth").i ? - M_HALFPI: M_HALFPI;
     if (P->es == 0.0) {
         proj_log_error(P, _("Invalid value for es: only ellipsoidal formulation supported"));
         return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);

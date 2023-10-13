@@ -237,8 +237,8 @@ PJ *PROJECTION(aea) {
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    Q->phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
-    Q->phi2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
+    Q->phi1 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
+    Q->phi2 = pj_param(P->host->ctx, P->host->params, "rlat_2").f;
     return setup(P);
 }
 
@@ -250,8 +250,8 @@ PJ *PROJECTION(leac) {
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    Q->phi2 = pj_param(P->ctx, P->host->params, "rlat_1").f;
-    Q->phi1 = pj_param(P->ctx, P->host->params, "bsouth").i ? - M_HALFPI: M_HALFPI;
+    Q->phi2 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
+    Q->phi1 = pj_param(P->host->ctx, P->host->params, "bsouth").i ? - M_HALFPI: M_HALFPI;
     return setup(P);
 }
 

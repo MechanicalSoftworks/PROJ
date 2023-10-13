@@ -205,7 +205,7 @@ PROJVALUE pj_param (PJ_CONTEXT *ctx, paralist *pl, const char *opt) {
         {
             if( !(*ptr >= '0' && *ptr <= '9') )
             {
-                proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
+                proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
                 value.i = 0;
             }
         }
@@ -228,7 +228,7 @@ PROJVALUE pj_param (PJ_CONTEXT *ctx, paralist *pl, const char *opt) {
             value.i = 1;
             break;
         default:
-            proj_context_errno_set (ctx, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
+            proj_context_errno_set (ctx->shared, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
             value.i = 0;
             break;
         }

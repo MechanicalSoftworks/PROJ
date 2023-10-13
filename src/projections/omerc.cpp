@@ -110,7 +110,7 @@ static PJ_LP omerc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, invers
         lp.phi = Up < 0. ? -M_HALFPI : M_HALFPI;
     } else {
         lp.phi = Q->E / sqrt((1. + Up) / (1. - Up));
-        if ((lp.phi = pj_phi2(P->ctx, pow(lp.phi, 1. / Q->B), P->e)) == HUGE_VAL) {
+        if ((lp.phi = pj_phi2(P->shared_ctx, pow(lp.phi, 1. / Q->B), P->e)) == HUGE_VAL) {
             proj_errno_set(P, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
             return lp;
         }
@@ -131,29 +131,29 @@ PJ *PROJECTION(omerc) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    Q->no_rot = pj_param(P->ctx, P->host->params, "bno_rot").i;
-        if ((alp = pj_param(P->ctx, P->host->params, "talpha").i) != 0)
-            alpha_c = pj_param(P->ctx, P->host->params, "ralpha").f;
-        if ((gam = pj_param(P->ctx, P->host->params, "tgamma").i) != 0)
-            gamma = pj_param(P->ctx, P->host->params, "rgamma").f;
+    Q->no_rot = pj_param(P->host->ctx, P->host->params, "bno_rot").i;
+        if ((alp = pj_param(P->host->ctx, P->host->params, "talpha").i) != 0)
+            alpha_c = pj_param(P->host->ctx, P->host->params, "ralpha").f;
+        if ((gam = pj_param(P->host->ctx, P->host->params, "tgamma").i) != 0)
+            gamma = pj_param(P->host->ctx, P->host->params, "rgamma").f;
     if (alp || gam) {
-        lamc    = pj_param(P->ctx, P->host->params, "rlonc").f;
+        lamc    = pj_param(P->host->ctx, P->host->params, "rlonc").f;
         no_off =
                     /* For libproj4 compatibility */
-                    pj_param(P->ctx, P->host->params, "tno_off").i
+                    pj_param(P->host->ctx, P->host->params, "tno_off").i
                     /* for backward compatibility */
-                    || pj_param(P->ctx, P->host->params, "tno_uoff").i;
+                    || pj_param(P->host->ctx, P->host->params, "tno_uoff").i;
         if( no_off )
         {
             /* Mark the parameter as used, so that the pj_get_def() return them */
-            pj_param(P->ctx, P->host->params, "sno_uoff");
-            pj_param(P->ctx, P->host->params, "sno_off");
+            pj_param(P->host->ctx, P->host->params, "sno_uoff");
+            pj_param(P->host->ctx, P->host->params, "sno_off");
         }
     } else {
-        lam1 = pj_param(P->ctx, P->host->params, "rlon_1").f;
-        phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
-        lam2 = pj_param(P->ctx, P->host->params, "rlon_2").f;
-        phi2 = pj_param(P->ctx, P->host->params, "rlat_2").f;
+        lam1 = pj_param(P->host->ctx, P->host->params, "rlon_1").f;
+        phi1 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
+        lam2 = pj_param(P->host->ctx, P->host->params, "rlon_2").f;
+        phi2 = pj_param(P->host->ctx, P->host->params, "rlat_2").f;
         con = fabs(phi1);
 
         if (fabs(phi1) > M_HALFPI - TOL)
@@ -210,11 +210,11 @@ PJ *PROJECTION(omerc) {
     }
     if (alp || gam) {
         if (alp) {
-            gamma0 = aasin(P->ctx, sin(alpha_c) / D);
+            gamma0 = aasin(P->shared_ctx, sin(alpha_c) / D);
             if (!gam)
                 gamma = alpha_c;
         } else
-            alpha_c = aasin(P->ctx, D*sin(gamma0 = gamma));
+            alpha_c = aasin(P->shared_ctx, D*sin(gamma0 = gamma));
 
         if (fabs(fabs(P->phi0) - M_HALFPI) <= TOL)
         {
@@ -222,7 +222,7 @@ PJ *PROJECTION(omerc) {
             return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
         }
 
-        P->lam0 = lamc - aasin(P->ctx, .5 * (F - 1. / F) *
+        P->lam0 = lamc - aasin(P->shared_ctx, .5 * (F - 1. / F) *
            tan(gamma0)) / Q->B;
     } else {
         H = pow(pj_tsfn(phi1, sin(phi1), P->e), Q->B);
@@ -248,7 +248,7 @@ PJ *PROJECTION(omerc) {
             return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
         }
         gamma0 = atan(2. * sin(Q->B * adjlon(lam1 - P->lam0)) / denom);
-        gamma = alpha_c = aasin(P->ctx, D * sin(gamma0));
+        gamma = alpha_c = aasin(P->shared_ctx, D * sin(gamma0));
     }
     Q->singam = sin(gamma0);
     Q->cosgam = cos(gamma0);

@@ -47,7 +47,7 @@ static PJ_LP gstmerc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inve
     sinC = sin((xy.y * P->a - Q->YS) / Q->n2) / cosh((xy.x * P->a - Q->XS) / Q->n2);
     LC = log(pj_tsfn(-asin(sinC), -sinC, 0.0));
     lp.lam = L / Q->n1;
-    lp.phi = -pj_phi2(P->ctx, exp((LC - Q->c) / Q->n1), P->e);
+    lp.phi = -pj_phi2(P->shared_ctx, exp((LC - Q->c) / Q->n1), P->e);
 
     return lp;
 }

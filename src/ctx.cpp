@@ -48,9 +48,9 @@ PJ_CONTEXT* pj_get_ctx( PJ *pj )
 {
     if (nullptr==pj)
         return pj_get_default_ctx ();
-    if (nullptr==pj->ctx)
+    if (nullptr==pj->host->ctx)
         return pj_get_default_ctx ();
-    return pj->ctx;
+    return pj->host->ctx;
 }
 
 /************************************************************************/
@@ -68,7 +68,8 @@ void proj_assign_context( PJ* pj, PJ_CONTEXT *ctx )
 {
     if (pj==nullptr)
         return;
-    pj->ctx = ctx;
+    pj->host->ctx = ctx;
+    pj->shared_ctx = ctx ? ctx->shared : nullptr;
     if( pj->host->reassign_context )
     {
         pj->host->reassign_context(pj, ctx);
@@ -190,6 +191,8 @@ pj_ctx::~pj_ctx()
 {
     delete[] c_compat_paths;
     proj_context_delete_cpp_context(cpp_context);
+
+    svm_delete(shared);
 }
 
 /************************************************************************/

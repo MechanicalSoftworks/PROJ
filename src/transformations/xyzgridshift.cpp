@@ -105,7 +105,7 @@ static bool get_grid_values(PJ* P,
     }
 
     bool must_retry = false;
-    if( !pj_bilinear_interpolation_three_samples(P->ctx, grid, lp,
+    if( !pj_bilinear_interpolation_three_samples(P->host->ctx, grid, lp,
                                                  sampleX, sampleY, sampleZ,
                                                  dx, dy, dz,
                                                  must_retry) )
@@ -255,14 +255,14 @@ PJ *TRANSFORMATION(xyzgridshift,0) {
     P->right = PJ_IO_UNITS_CARTESIAN;
 
     // Pass a dummy ellipsoid definition that will be overridden just afterwards
-    Q->cart = proj_create(P->ctx, "+proj=cart +a=1");
+    Q->cart = proj_create(P->host->ctx, "+proj=cart +a=1");
     if (Q->cart == nullptr)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     /* inherit ellipsoid definition from P to Q->cart */
     pj_inherit_ellipsoid_def (P, Q->cart);
 
-    const char* grid_ref = pj_param (P->ctx, P->host->params, "sgrid_ref").s;
+    const char* grid_ref = pj_param (P->host->ctx, P->host->params, "sgrid_ref").s;
     if( grid_ref ) {
         if (strcmp(grid_ref, "input_crs") == 0 ) {
             // default
@@ -277,17 +277,17 @@ PJ *TRANSFORMATION(xyzgridshift,0) {
         }
     }
 
-    if (0==pj_param(P->ctx, P->host->params, "tgrids").i) {
+    if (0==pj_param(P->host->ctx, P->host->params, "tgrids").i) {
         proj_log_error(P, _("+grids parameter missing."));
         return destructor (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
     /* multiplier for delta x,y,z */
-    if (pj_param(P->ctx, P->host->params, "tmultiplier").i) {
-        Q->multiplier = pj_param(P->ctx, P->host->params, "dmultiplier").f;
+    if (pj_param(P->host->ctx, P->host->params, "tmultiplier").i) {
+        Q->multiplier = pj_param(P->host->ctx, P->host->params, "dmultiplier").f;
     }
 
-    if( P->ctx->defer_grid_opening ) {
+    if( P->host->ctx->defer_grid_opening ) {
         Q->defer_grid_opening = true;
     }
     else {

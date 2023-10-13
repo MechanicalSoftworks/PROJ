@@ -84,13 +84,13 @@ static PJ_COORD tinshift_reverse_4d(PJ_COORD in, PJ *P) {
 
 PJ *TRANSFORMATION(tinshift, 1) {
 
-    const char *filename = pj_param(P->ctx, P->host->params, "sfile").s;
+    const char *filename = pj_param(P->host->ctx, P->host->params, "sfile").s;
     if (!filename) {
         proj_log_error(P, _("+file= should be specified."));
         return destructor(P, PROJ_ERR_INVALID_OP_MISSING_ARG);
     }
 
-    auto file = NS_PROJ::FileManager::open_resource_file(P->ctx, filename);
+    auto file = NS_PROJ::FileManager::open_resource_file(P->host->ctx, filename);
     if (nullptr == file) {
         proj_log_error(P, _("Cannot open %s"), filename);
         return destructor(P, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);

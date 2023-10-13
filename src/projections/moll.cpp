@@ -46,11 +46,11 @@ static PJ_XY moll_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 static PJ_LP moll_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
-    lp.phi = aasin(P->ctx, xy.y / Q->C_y);
+    lp.phi = aasin(P->shared_ctx, xy.y / Q->C_y);
     lp.lam = xy.x / (Q->C_x * cos(lp.phi));
         if (fabs(lp.lam) < M_PI) {
             lp.phi += lp.phi;
-            lp.phi = aasin(P->ctx, (lp.phi + sin(lp.phi)) / Q->C_p);
+            lp.phi = aasin(P->shared_ctx, (lp.phi + sin(lp.phi)) / Q->C_p);
         } else {
             lp.lam = lp.phi = HUGE_VAL;
         }

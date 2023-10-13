@@ -170,10 +170,10 @@ static void fwd_finalize (PJ *P, PJ_COORD& coo) {
 
 
 static inline PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
-    if (P->ctx->last_errno)
+    if (P->shared_ctx->last_errno)
         return proj_coord_error();
 
-    P->ctx->last_errno = last_errno;
+    P->shared_ctx->last_errno = last_errno;
 
     return coord;
 }
@@ -183,8 +183,8 @@ PJ_XY pj_fwd(PJ_LP lp, PJ *P) {
     PJ_COORD coo = {{0,0,0,0}};
     coo.lp = lp;
 
-    const int last_errno = P->ctx->last_errno;
-    P->ctx->last_errno = 0;
+    const int last_errno = P->shared_ctx->last_errno;
+    P->shared_ctx->last_errno = 0;
 
     if (!P->skip_fwd_prepare)
         fwd_prepare (P, coo);
@@ -223,8 +223,8 @@ PJ_XYZ pj_fwd3d(PJ_LPZ lpz, PJ *P) {
     PJ_COORD coo = {{0,0,0,0}};
     coo.lpz = lpz;
 
-    const int last_errno = P->ctx->last_errno;
-    P->ctx->last_errno = 0;
+    const int last_errno = P->shared_ctx->last_errno;
+    P->shared_ctx->last_errno = 0;
 
     if (!P->skip_fwd_prepare)
         fwd_prepare (P, coo);
@@ -261,8 +261,8 @@ PJ_XYZ pj_fwd3d(PJ_LPZ lpz, PJ *P) {
 
 PJ_COORD pj_fwd4d (PJ_COORD coo, PJ *P) {
 
-    const int last_errno = P->ctx->last_errno;
-    P->ctx->last_errno = 0;
+    const int last_errno = P->shared_ctx->last_errno;
+    P->shared_ctx->last_errno = 0;
 
     if (!P->skip_fwd_prepare)
         fwd_prepare (P, coo);

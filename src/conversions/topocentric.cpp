@@ -118,7 +118,7 @@ PJ *CONVERSION(topocentric,1) {
     }
 
     // Pass a dummy ellipsoid definition that will be overridden just afterwards
-    PJ* cart = proj_create(P->ctx, "+proj=cart +a=1");
+    PJ* cart = proj_create(P->host->ctx, "+proj=cart +a=1");
     if (cart == nullptr)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     /* inherit ellipsoid definition from P to cart */
@@ -126,9 +126,9 @@ PJ *CONVERSION(topocentric,1) {
 
     if( hasX0 )
     {
-        Q->X0 = pj_param(P->ctx, P->host->params, "dX_0").f;
-        Q->Y0 = pj_param(P->ctx, P->host->params, "dY_0").f;
-        Q->Z0 = pj_param(P->ctx, P->host->params, "dZ_0").f;
+        Q->X0 = pj_param(P->host->ctx, P->host->params, "dX_0").f;
+        Q->Y0 = pj_param(P->host->ctx, P->host->params, "dY_0").f;
+        Q->Z0 = pj_param(P->host->ctx, P->host->params, "dZ_0").f;
 
         // Compute lam0, phi0 from X0,Y0,Z0
         PJ_XYZ xyz;
@@ -147,7 +147,7 @@ PJ *CONVERSION(topocentric,1) {
         PJ_LPZ lpz;
         lpz.lam = P->lam0;
         lpz.phi = P->phi0;
-        lpz.z = pj_param(P->ctx, P->host->params, "dh_0").f;
+        lpz.z = pj_param(P->host->ctx, P->host->params, "dh_0").f;
         const auto xyz = pj_fwd3d(lpz, cart);
         Q->X0 = xyz.x;
         Q->Y0 = xyz.y;

@@ -59,7 +59,7 @@ PJ *PROJECTION(col_urban) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    const double h0_unscaled = pj_param(P->ctx, P->host->params, "dh_0").f;
+    const double h0_unscaled = pj_param(P->host->ctx, P->host->params, "dh_0").f;
     Q->h0 = h0_unscaled / P->a;
     const double sinphi0 = sin(P->phi0);
     const double nu0 = 1. / sqrt(1 - P->es * sinphi0 * sinphi0);

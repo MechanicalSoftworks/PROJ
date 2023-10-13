@@ -36,7 +36,7 @@ static PJ_XY nell_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 static PJ_LP nell_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     lp.lam = 2. * xy.x / (1. + cos(xy.y));
-    lp.phi = aasin(P->ctx,0.5 * (xy.y + sin(xy.y)));
+    lp.phi = aasin(P->shared_ctx,0.5 * (xy.y + sin(xy.y)));
 
     return lp;
 }

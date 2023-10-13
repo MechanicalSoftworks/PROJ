@@ -47,10 +47,10 @@ static PJ_XY eck4_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 static PJ_LP eck4_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
 
-    lp.phi = aasin(P->ctx,xy.y * RC_y);
+    lp.phi = aasin(P->shared_ctx,xy.y * RC_y);
     const double c = cos(lp.phi);
     lp.lam = xy.x / (C_x * (1. + c));
-    lp.phi = aasin(P->ctx,(lp.phi + sin(lp.phi) * (c + 2.)) * RC_p);
+    lp.phi = aasin(P->shared_ctx,(lp.phi + sin(lp.phi) * (c + 2.)) * RC_p);
     return lp;
 }
 

@@ -135,8 +135,8 @@ static PJ_XY adams_forward(PJ_LP lp, PJ *P) {
             const double sl = sin(lp.lam);
             const double sp = sin(lp.phi);
             const double cp = cos(lp.phi);
-            a = aacos(P->ctx, (cp * sl - sp) * RSQRT2);
-            b = aacos(P->ctx, (cp * sl + sp) * RSQRT2);
+            a = aacos(P->shared_ctx, (cp * sl - sp) * RSQRT2);
+            b = aacos(P->shared_ctx, (cp * sl + sp) * RSQRT2);
             sm = lp.lam < 0.;
             sn = lp.phi < 0.;
         }
@@ -158,8 +158,8 @@ static PJ_XY adams_forward(PJ_LP lp, PJ *P) {
             const double sl = sin(lp.lam);
             const double cl = cos(lp.lam);
             const double cp = cos(lp.phi);
-            a = aacos(P->ctx, cp * (sl + cl) * RSQRT2);
-            b = aacos(P->ctx, cp * (sl - cl) * RSQRT2);
+            a = aacos(P->shared_ctx, cp * (sl + cl) * RSQRT2);
+            b = aacos(P->shared_ctx, cp * (sl - cl) * RSQRT2);
             sm = sl < 0.;
             sn = cl > 0.;
         }
@@ -173,34 +173,34 @@ static PJ_XY adams_forward(PJ_LP lp, PJ *P) {
             a = cos(lp.phi) * sin(lp.lam);
             sm = (sp + a) < 0.;
             sn = (sp - a) < 0.;
-            a = aacos(P->ctx, a);
+            a = aacos(P->shared_ctx, a);
             b = M_PI_2 - lp.phi;
         }
         break;
     case ADAMS_WS1: {
             const double sp = tan(0.5 * lp.phi);
-            b = cos(aasin(P->ctx, sp)) * sin(0.5 * lp.lam);
-            a = aacos(P->ctx, (b - sp) * RSQRT2);
-            b = aacos(P->ctx, (b + sp) * RSQRT2);
+            b = cos(aasin(P->shared_ctx, sp)) * sin(0.5 * lp.lam);
+            a = aacos(P->shared_ctx, (b - sp) * RSQRT2);
+            b = aacos(P->shared_ctx, (b + sp) * RSQRT2);
             sm = lp.lam < 0.;
             sn = lp.phi < 0.;
         }
         break;
     case ADAMS_WS2: {
             const double spp = tan(0.5 * lp.phi);
-            a = cos(aasin(P->ctx, spp)) * sin(0.5 * lp.lam);
+            a = cos(aasin(P->shared_ctx, spp)) * sin(0.5 * lp.lam);
             sm = (spp + a) < 0.;
             sn = (spp - a) < 0.;
-            b = aacos(P->ctx, spp);
-            a = aacos(P->ctx, a);
+            b = aacos(P->shared_ctx, spp);
+            a = aacos(P->shared_ctx, a);
         }
         break;
     }
 
-    double m = aasin(P->ctx, sqrt((1. + std::min(0.0, cos(a + b)))));
+    double m = aasin(P->shared_ctx, sqrt((1. + std::min(0.0, cos(a + b)))));
     if (sm) m = -m;
 
-    double n = aasin(P->ctx, sqrt(fabs(1. - std::max(0.0, cos(a - b)))));
+    double n = aasin(P->shared_ctx, sqrt(fabs(1. - std::max(0.0, cos(a - b)))));
     if (sn) n = -n;
 
     xy.x = ell_int_5(m);
@@ -317,7 +317,7 @@ static PJ *setup(PJ *P, projection_type mode) {
 
     if( mode == PEIRCE_Q) {
       // Quincuncial projections type options: square, diamond, hemisphere, horizontal (rectangle) or vertical (rectangle)
-      const char* pqtype = pj_param (P->ctx, P->host->params, "stype").s;
+      const char* pqtype = pj_param (P->host->ctx, P->host->params, "stype").s;
 
       if (!pqtype) pqtype = "diamond"; /* default if type value not supplied */
 
@@ -335,9 +335,9 @@ static PJ *setup(PJ *P, projection_type mode) {
       }
       else if (strcmp(pqtype, "horizontal") == 0) {
         Q->pqtype = PEIRCE_Q_HORIZONTAL;
-        if (pj_param(P->ctx, P->host->params, "tscrollx").i) {
+        if (pj_param(P->host->ctx, P->host->params, "tscrollx").i) {
           double scrollx;
-          scrollx = pj_param(P->ctx, P->host->params, "dscrollx").f;
+          scrollx = pj_param(P->host->ctx, P->host->params, "dscrollx").f;
           if (scrollx > 1 || scrollx < -1) {
               proj_log_error(P, _("Invalid value for scrollx: |scrollx| should between -1 and 1"));
               return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
@@ -347,9 +347,9 @@ static PJ *setup(PJ *P, projection_type mode) {
       }
       else if (strcmp(pqtype, "vertical") == 0) {
         Q->pqtype = PEIRCE_Q_VERTICAL;
-        if (pj_param(P->ctx, P->host->params, "tscrolly").i) {
+        if (pj_param(P->host->ctx, P->host->params, "tscrolly").i) {
           double scrolly;
-          scrolly = pj_param(P->ctx, P->host->params, "dscrolly").f;
+          scrolly = pj_param(P->host->ctx, P->host->params, "dscrolly").f;
           if (scrolly > 1 || scrolly < -1) {
               proj_log_error(P, _("Invalid value for scrolly: |scrolly| should between -1 and 1"));
               return pj_default_destructor (P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);

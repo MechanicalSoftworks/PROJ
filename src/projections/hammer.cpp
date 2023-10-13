@@ -50,7 +50,7 @@ static PJ_LP hammer_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
         proj_errno_set(P, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
     } else {
         lp.lam = aatan2(Q->w * xy.x * z,2. * z * z - 1)/Q->w;
-        lp.phi = aasin(P->ctx,z * xy.y);
+        lp.phi = aasin(P->shared_ctx,z * xy.y);
     }
     return lp;
 }
@@ -62,8 +62,8 @@ PJ *PROJECTION(hammer) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    if (pj_param(P->ctx, P->host->params, "tW").i) {
-        Q->w = fabs(pj_param(P->ctx, P->host->params, "dW").f);
+    if (pj_param(P->host->ctx, P->host->params, "tW").i) {
+        Q->w = fabs(pj_param(P->host->ctx, P->host->params, "dW").f);
         if (Q->w <= 0.)
         {
             proj_log_error(P, _("Invalid value for W: it should be > 0"));
@@ -71,8 +71,8 @@ PJ *PROJECTION(hammer) {
         }
     } else
         Q->w = .5;
-    if (pj_param(P->ctx, P->host->params, "tM").i) {
-        Q->m = fabs(pj_param(P->ctx, P->host->params, "dM").f);
+    if (pj_param(P->host->ctx, P->host->params, "tM").i) {
+        Q->m = fabs(pj_param(P->host->ctx, P->host->params, "dM").f);
         if (Q->m <= 0.)
         {
             proj_log_error(P, _("Invalid value for M: it should be > 0"));

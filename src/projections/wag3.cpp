@@ -41,7 +41,7 @@ PJ *PROJECTION(wag3) {
 
     P->opaque = Q;
 
-	ts = pj_param (P->ctx, P->host->params, "rlat_ts").f;
+	ts = pj_param (P->host->ctx, P->host->params, "rlat_ts").f;
 	static_cast<struct pj_opaque*>(P->opaque)->C_x = cos (ts) / cos (2.*ts/3.);
 	P->es = 0.;
     P->host->inv = wag3_s_inverse;

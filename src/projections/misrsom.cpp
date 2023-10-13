@@ -108,7 +108,7 @@ static PJ_XY misrsom_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forw
     }
     if (l) {
             sp = sin(lp.phi);
-            phidp = aasin(P->ctx,(P->one_es * Q->ca * sp - Q->sa * cos(lp.phi) *
+            phidp = aasin(P->shared_ctx,(P->one_es * Q->ca * sp - Q->sa * cos(lp.phi) *
                     sin(lamt)) / sqrt(1. - P->es * sp * sp));
             tanph = log(tan(M_FORTPI + .5 * phidp));
             sd = sin(lamdp);
@@ -166,7 +166,7 @@ static PJ_LP misrsom_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inve
     lamt -= M_HALFPI * (1. - scl) * sl;
     lp.lam = lamt - Q->p22 * lamdp;
     if (fabs(Q->sa) < TOL)
-        lp.phi = aasin(P->ctx,spp / sqrt(P->one_es * P->one_es + P->es * sppsq));
+        lp.phi = aasin(P->shared_ctx,spp / sqrt(P->one_es * P->one_es + P->es * sppsq));
     else
         lp.phi = atan((tan(lamdp) * cos(lamt) - Q->ca * sin(lamt)) /
                 (P->one_es * Q->sa));
@@ -183,7 +183,7 @@ PJ *PROJECTION(misrsom) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
 
-    path = pj_param(P->ctx, P->host->params, "ipath").i;
+    path = pj_param(P->host->ctx, P->host->params, "ipath").i;
     if (path <= 0 || path > 233)
     {
         proj_log_error(P, _("Invalid value for path: path should be in [1, 233] range"));

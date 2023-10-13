@@ -44,7 +44,7 @@ static PJ_LP sts_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse 
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     xy.y /= Q->C_y;
-    lp.phi = Q->tan_mode ? atan (xy.y) : aasin (P->ctx, xy.y);
+    lp.phi = Q->tan_mode ? atan (xy.y) : aasin (P->shared_ctx, xy.y);
     const double c = cos (lp.phi);
     lp.phi /= Q->C_p;
     lp.lam = xy.x / (Q->C_x * cos(lp.phi));

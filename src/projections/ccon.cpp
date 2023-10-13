@@ -88,7 +88,7 @@ PJ *PROJECTION(ccon) {
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    Q->phi1 = pj_param(P->ctx, P->host->params, "rlat_1").f;
+    Q->phi1 = pj_param(P->host->ctx, P->host->params, "rlat_1").f;
     if (fabs(Q->phi1) < EPS10)
     {
         proj_log_error(P, _("Invalid value for lat_1: |lat_1| should be > 0"));

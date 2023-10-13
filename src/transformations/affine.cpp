@@ -153,7 +153,7 @@ static void computeReverseParameters(PJ* P)
     const double I = a * e - b * d;
     const double det = a * A + b * B + c * C;
     if( det == 0.0 || Q->forward.tscale == 0.0 ) {
-        if (proj_log_level(P->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
+        if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
             proj_log_debug(P, "matrix non invertible");
         }
         P->host->inv4d = nullptr;
@@ -190,28 +190,28 @@ PJ *TRANSFORMATION(affine,0 /* no need for ellipsoid */) {
     P->right  = PJ_IO_UNITS_WHATEVER;
 
     /* read args */
-    Q->xoff = pj_param(P->ctx, P->host->params, "dxoff").f;
-    Q->yoff = pj_param(P->ctx, P->host->params, "dyoff").f;
-    Q->zoff = pj_param(P->ctx, P->host->params, "dzoff").f;
-    Q->toff = pj_param(P->ctx, P->host->params, "dtoff").f;
+    Q->xoff = pj_param(P->host->ctx, P->host->params, "dxoff").f;
+    Q->yoff = pj_param(P->host->ctx, P->host->params, "dyoff").f;
+    Q->zoff = pj_param(P->host->ctx, P->host->params, "dzoff").f;
+    Q->toff = pj_param(P->host->ctx, P->host->params, "dtoff").f;
 
-    if(pj_param (P->ctx, P->host->params, "ts11").i) {
-        Q->forward.s11 = pj_param(P->ctx, P->host->params, "ds11").f;
+    if(pj_param (P->host->ctx, P->host->params, "ts11").i) {
+        Q->forward.s11 = pj_param(P->host->ctx, P->host->params, "ds11").f;
     }
-    Q->forward.s12 = pj_param(P->ctx, P->host->params, "ds12").f;
-    Q->forward.s13 = pj_param(P->ctx, P->host->params, "ds13").f;
-    Q->forward.s21 = pj_param(P->ctx, P->host->params, "ds21").f;
-    if(pj_param (P->ctx, P->host->params, "ts22").i) {
-        Q->forward.s22 = pj_param(P->ctx, P->host->params, "ds22").f;
+    Q->forward.s12 = pj_param(P->host->ctx, P->host->params, "ds12").f;
+    Q->forward.s13 = pj_param(P->host->ctx, P->host->params, "ds13").f;
+    Q->forward.s21 = pj_param(P->host->ctx, P->host->params, "ds21").f;
+    if(pj_param (P->host->ctx, P->host->params, "ts22").i) {
+        Q->forward.s22 = pj_param(P->host->ctx, P->host->params, "ds22").f;
     }
-    Q->forward.s23 = pj_param(P->ctx, P->host->params, "ds23").f;
-    Q->forward.s31 = pj_param(P->ctx, P->host->params, "ds31").f;
-    Q->forward.s32 = pj_param(P->ctx, P->host->params, "ds32").f;
-    if(pj_param (P->ctx, P->host->params, "ts33").i) {
-        Q->forward.s33 = pj_param(P->ctx, P->host->params, "ds33").f;
+    Q->forward.s23 = pj_param(P->host->ctx, P->host->params, "ds23").f;
+    Q->forward.s31 = pj_param(P->host->ctx, P->host->params, "ds31").f;
+    Q->forward.s32 = pj_param(P->host->ctx, P->host->params, "ds32").f;
+    if(pj_param (P->host->ctx, P->host->params, "ts33").i) {
+        Q->forward.s33 = pj_param(P->host->ctx, P->host->params, "ds33").f;
     }
-    if(pj_param (P->ctx, P->host->params, "ttscale").i) {
-        Q->forward.tscale = pj_param(P->ctx, P->host->params, "dtscale").f;
+    if(pj_param (P->host->ctx, P->host->params, "ttscale").i) {
+        Q->forward.tscale = pj_param(P->host->ctx, P->host->params, "dtscale").f;
     }
 
     computeReverseParameters(P);
@@ -241,9 +241,9 @@ PJ *TRANSFORMATION(geogoffset,0 /* no need for ellipsoid */) {
     P->right  = PJ_IO_UNITS_RADIANS;
 
     /* read args */
-    Q->xoff = pj_param(P->ctx, P->host->params, "ddlon").f * ARCSEC_TO_RAD;
-    Q->yoff = pj_param(P->ctx, P->host->params, "ddlat").f * ARCSEC_TO_RAD;
-    Q->zoff = pj_param(P->ctx, P->host->params, "ddh").f;
+    Q->xoff = pj_param(P->host->ctx, P->host->params, "ddlon").f * ARCSEC_TO_RAD;
+    Q->yoff = pj_param(P->host->ctx, P->host->params, "ddlat").f * ARCSEC_TO_RAD;
+    Q->zoff = pj_param(P->host->ctx, P->host->params, "ddh").f;
 
     return P;
 }
