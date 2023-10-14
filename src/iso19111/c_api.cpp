@@ -209,7 +209,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
             // PROJ string.
         }
     }
-    auto pj = pj_new();
+    auto pj = pj_new(ctx);
     if (pj) {
         pj->host->ctx = ctx;
         pj->host->descr = "ISO-19111 object";
@@ -232,7 +232,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
                     pj_calc_ellipsoid_params(pj, a, es);
                     assert(pj->geod == nullptr);
                     pj->geod = static_cast<struct geod_geodesic *>(
-                        svm_calloc(1, sizeof(struct geod_geodesic)));
+                        svm_calloc(pj->host->ctx, 1, sizeof(struct geod_geodesic)));
                     if (pj->geod) {
                         geod_init(pj->geod, pj->a,
                                   pj->es / (1 + sqrt(pj->one_es)));
@@ -515,7 +515,7 @@ PJ *proj_clone(PJ_CONTEXT *ctx, const PJ *obj) {
     }
     if (!obj->host->iso_obj) {
         if (!obj->host->alternativeCoordinateOperations.empty()) {
-            auto newPj = pj_new();
+            auto newPj = pj_new(ctx);
             if (newPj) {
                 newPj->host->descr = "Set of coordinate operations";
                 newPj->host->ctx = ctx;
@@ -8083,7 +8083,7 @@ PJ_OPERATION_LIST::PJ_OPERATION_LIST(
 // ---------------------------------------------------------------------------
 
 PJ_OPERATION_LIST::~PJ_OPERATION_LIST() {
-    auto tmpCtxt = proj_context_create();
+    auto tmpCtxt = proj_context_create(nullptr);
     proj_assign_context(source_crs, tmpCtxt);
     proj_assign_context(target_crs, tmpCtxt);
     proj_destroy(source_crs);
@@ -8752,7 +8752,7 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
     SANITIZE_CTX(ctx);
     if (!obj->host->alternativeCoordinateOperations.empty()) {
         try {
-            auto pjNew = std::unique_ptr<PJ>(pj_new());
+            auto pjNew = std::unique_ptr<PJ>(pj_new(ctx));
             if (!pjNew)
                 return nullptr;
             pjNew->host->ctx = ctx;

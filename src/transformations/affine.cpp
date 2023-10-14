@@ -109,8 +109,8 @@ static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
     return reverse_4d(point, P).lp;
 }
 
-static struct pj_opaque_affine * initQ() {
-    struct pj_opaque_affine *Q = static_cast<struct pj_opaque_affine *>(svm_calloc(1, sizeof(struct pj_opaque_affine)));
+static struct pj_opaque_affine * initQ(PJ_CONTEXT *ctx) {
+    struct pj_opaque_affine *Q = static_cast<struct pj_opaque_affine *>(svm_calloc(ctx, 1, sizeof(struct pj_opaque_affine)));
     if (nullptr==Q)
         return nullptr;
 
@@ -174,7 +174,7 @@ static void computeReverseParameters(PJ* P)
 }
 
 PJ *TRANSFORMATION(affine,0 /* no need for ellipsoid */) {
-    struct pj_opaque_affine *Q = initQ();
+    struct pj_opaque_affine *Q = initQ(P->host->ctx);
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
@@ -225,7 +225,7 @@ PJ *TRANSFORMATION(affine,0 /* no need for ellipsoid */) {
 
 
 PJ *TRANSFORMATION(geogoffset,0 /* no need for ellipsoid */) {
-    struct pj_opaque_affine *Q = initQ();
+    struct pj_opaque_affine *Q = initQ(P->host->ctx);
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;

@@ -174,14 +174,14 @@ enum pj_io_units {
 enum pj_io_units pj_left (PJ *P);
 enum pj_io_units pj_right (PJ *P);
 
-void* svm_malloc(size_t sz);
-void* svm_calloc(size_t n, size_t sz);
-void svm_free(void* ptr);
+void* svm_malloc(PJ_CONTEXT *ctx, size_t sz);
+void* svm_calloc(PJ_CONTEXT *ctx, size_t n, size_t sz);
+void svm_free(PJ_CONTEXT *ctx, void* ptr);
 
 template<typename T>
-T* svm_new()
+T* svm_new(PJ_CONTEXT *ctx)
 {
-    auto* p = svm_malloc(sizeof(T));
+    auto* p = svm_malloc(ctx, sizeof(T));
     if (p)
     {
         new (p) T;
@@ -190,14 +190,14 @@ T* svm_new()
 }
 
 template<typename T>
-void svm_delete(T* p)
+void svm_delete(PJ_CONTEXT *ctx, T* p)
 {
     if (p)
     {
         p->~T();
     }
 
-    svm_free(p);
+    svm_free(ctx, p);
 }
 
 PJ_COORD PROJ_DLL proj_coord_error (void);
@@ -736,6 +736,13 @@ struct projFileApiCallbackAndData
     void*            user_data = nullptr;
 };
 
+struct pj_compute
+{
+#ifdef PROJ_OPENCL
+    cl_context ctx;
+#endif
+};
+
 /* Context data that's shared between the OpenCL host and evice */
 struct pj_ctx_shared {
     int     last_errno = 0;
@@ -743,7 +750,8 @@ struct pj_ctx_shared {
 
 /* proj thread context */
 struct pj_ctx{
-    pj_ctx_shared *shared = svm_new<pj_ctx_shared>();
+    pj_ctx_shared *shared = nullptr;
+    pj_compute    *compute = nullptr;
 
     std::string lastFullErrorMessage{}; // used by proj_context_errno_string
     int     debug_level = PJ_LOG_ERROR;
@@ -780,8 +788,10 @@ struct pj_ctx{
     int pipelineInitRecursiongCounter = 0; // to avoid potential infinite recursion in pipeline.cpp
 
 
-    pj_ctx() = default;
+    pj_ctx() = delete;
+    pj_ctx(pj_compute *compute);
     pj_ctx(const pj_ctx&);
+    pj_ctx(const pj_ctx&, pj_compute*);
     ~pj_ctx();
 
     pj_ctx& operator= (const pj_ctx&) = delete;
@@ -790,7 +800,7 @@ struct pj_ctx{
     void set_search_paths(const std::vector<std::string>& search_paths_in);
     void set_ca_bundle_path(const std::string& ca_bundle_path_in);
 
-    static pj_ctx createDefault();
+    static pj_ctx createDefault(pj_compute *compute);
 };
 
 /* Generate pj_list external or make list from include file */
@@ -808,14 +818,14 @@ C_NAMESPACE_VAR struct PJ_DATUMS pj_datums[];
 #define OPERATION(name, NEED_ELLPS)                          \
                                                              \
 pj_projection_specific_setup_##name (PJ *P);                 \
-C_NAMESPACE PJ *pj_##name (PJ *P);                           \
+C_NAMESPACE PJ *pj_##name (PJ *P, PJ_CONTEXT *ctx);          \
                                                              \
 C_NAMESPACE_VAR const char * const pj_s_##name = des_##name; \
                                                              \
-C_NAMESPACE PJ *pj_##name (PJ *P) {                          \
+C_NAMESPACE PJ *pj_##name (PJ *P, PJ_CONTEXT *ctx) {         \
     if (P)                                                   \
         return pj_projection_specific_setup_##name (P);      \
-    P = pj_new();                                            \
+    P = pj_new(ctx);                                         \
     if (nullptr==P)                                          \
         return nullptr;                                      \
     P->host->short_name = #name;                                   \
@@ -866,8 +876,8 @@ paralist *pj_expand_init(PJ_CONTEXT *ctx, paralist *init);
 void     *free_params (PJ_CONTEXT *ctx, paralist *start, int errlev);
 
 
-double *pj_enfn(double);
-void    pj_free_en(double* en);
+double *pj_enfn(PJ_CONTEXT *, double);
+void    pj_free_en(PJ_CONTEXT *, double* en);
 double  pj_mlfn(double, double, double, const double *);
 double  pj_inv_mlfn(pj_ctx_shared *, double, double, const double *);
 double  pj_qsfn(double, double, double);
@@ -876,8 +886,8 @@ double  pj_msfn(double, double, double);
 double  pj_phi2(pj_ctx_shared *, const double, const double);
 double  pj_sinhpsi2tanphi(pj_ctx_shared *, const double, const double);
 double  pj_qsfn_(double, PJ *);
-double *pj_authset(double);
-void    pj_free_authset(double* apa);
+double *pj_authset(PJ_CONTEXT*, double);
+void    pj_free_authset(PJ_CONTEXT*, double* apa);
 double  pj_authlat(double, double *);
 
 COMPLEX pj_zpoly1(COMPLEX, const COMPLEX *, int);
@@ -895,7 +905,7 @@ PJ_LP     pj_inv_gauss(pj_ctx_shared*, PJ_LP, const void *);
 
 struct PJ_DATUMS           PROJ_DLL *pj_get_datums_ref( void );
 
-PJ *pj_new(void);
+PJ *pj_new(PJ_CONTEXT* ctx);
 PJ *pj_default_destructor (PJ *P, int errlev);
 
 double PROJ_DLL pj_atof( const char* nptr );
@@ -966,7 +976,7 @@ extern char const PROJ_DLL pj_release[]; /* global release id string */
 
 /* procedure prototypes */
 
-PJ_CONTEXT PROJ_DLL *pj_get_default_ctx(void);
+PJ_CONTEXT PROJ_DLL *pj_get_default_ctx();
 PJ_CONTEXT *pj_get_ctx( PJ *);
 
 PJ_XY PROJ_DLL pj_fwd(PJ_LP, PJ *);

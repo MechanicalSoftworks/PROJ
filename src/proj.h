@@ -216,6 +216,14 @@ struct P5_FACTORS {                  /* Common designation */
 };
 typedef struct P5_FACTORS PJ_FACTORS;
 
+/* The compute type - properly namespaced synonym for pj_compute */
+struct pj_compute;
+typedef struct pj_compute PJ_COMPUTE;
+
+/* The context type - properly namespaced synonym for pj_ctx */
+struct pj_ctx;
+typedef struct pj_ctx PJ_CONTEXT;
+
 /* Data type for projection/transformation information */
 struct PJconsts;
 typedef struct PJconsts PJ;         /* the PJ object herself */
@@ -235,9 +243,9 @@ typedef struct PJ_INIT_INFO PJ_INIT_INFO;
 
 /* Data types for list of operations, ellipsoids, datums and units used in PROJ.4 */
 struct PJ_LIST {
-    const char  *id;                /* projection keyword */
-    PJ          *(*proj)(PJ *);     /* projection entry point */
-    const char  * const *descr;     /* description text */
+    const char  *id;                              /* projection keyword */
+    PJ          *(*proj)(PJ *, PJ_CONTEXT *);     /* projection entry point */
+    const char  * const *descr;                   /* description text */
 };
 
 typedef struct PJ_LIST PJ_OPERATIONS;
@@ -353,12 +361,14 @@ typedef enum PJ_LOG_LEVEL {
 
 typedef void (*PJ_LOG_FUNCTION)(void *, int, const char *);
 
-
-/* The context type - properly namespaced synonym for pj_ctx */
-struct pj_ctx;
-typedef struct pj_ctx PJ_CONTEXT;
-
 /* A P I */
+
+#ifdef PROJ_OPENCL
+PJ_COMPUTE PROJ_DLL* proj_compute_create(cl_context ctx);
+#else
+PJ_COMPUTE PROJ_DLL* proj_compute_create();
+#endif
+PJ_COMPUTE PROJ_DLL* proj_compute_destroy(PJ_COMPUTE* compute);
 
 /**
  * The objects returned by the functions defined in this section have minimal
@@ -367,13 +377,14 @@ typedef struct pj_ctx PJ_CONTEXT;
  * paragraph for more details.
  */
 
-/* Functionality for handling thread contexts */
+/** Functionality for handling thread contexts 
+ * Default contexts aren't OpenCL enabled. You need to create a PJ_COMPUTE instance. */
 #ifdef __cplusplus
 #define PJ_DEFAULT_CTX nullptr
 #else
 #define PJ_DEFAULT_CTX 0
 #endif
-PJ_CONTEXT PROJ_DLL *proj_context_create (void);
+PJ_CONTEXT PROJ_DLL *proj_context_create (PJ_COMPUTE *compute);
 PJ_CONTEXT PROJ_DLL *proj_context_destroy (PJ_CONTEXT *ctx);
 PJ_CONTEXT PROJ_DLL *proj_context_clone (PJ_CONTEXT *ctx);
 

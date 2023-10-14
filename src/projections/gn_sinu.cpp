@@ -102,7 +102,7 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
     if (nullptr==P->opaque)
         return pj_default_destructor (P, errlev);
 
-    pj_free_en (static_cast<struct pj_opaque*>(P->opaque)->en);
+    pj_free_en (P->host->ctx, static_cast<struct pj_opaque*>(P->opaque)->en);
     return pj_default_destructor (P, errlev);
 }
 
@@ -121,13 +121,13 @@ static void setup(PJ *P) {
 
 
 PJ *PROJECTION(sinu) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
     P->host->destructor = destructor;
 
-    if (!(Q->en = pj_enfn(P->es)))
+    if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     if (P->es != 0.0) {
@@ -143,7 +143,7 @@ PJ *PROJECTION(sinu) {
 
 
 PJ *PROJECTION(eck6) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -158,7 +158,7 @@ PJ *PROJECTION(eck6) {
 
 
 PJ *PROJECTION(mbtfps) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -173,7 +173,7 @@ PJ *PROJECTION(mbtfps) {
 
 
 PJ *PROJECTION(gn_sinu) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;

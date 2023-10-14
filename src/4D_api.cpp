@@ -2045,9 +2045,32 @@ int proj_errno_reset (const PJ *P) {
 }
 
 
+#ifdef PROJ_OPENCL
+
+PJ_COMPUTE PROJ_DLL* proj_compute_create(cl_context ctx)
+{
+    return new (std::nothrow) pj_compute{ ctx };
+}
+
+#else
+
+PJ_COMPUTE PROJ_DLL* proj_compute_create()
+{
+    return new (std::nothrow) pj_compute{};
+}
+
+#endif
+
+PJ_COMPUTE PROJ_DLL* proj_compute_destroy(PJ_COMPUTE* compute)
+{
+    delete compute;
+    return nullptr;
+}
+
+
 /* Create a new context based on the default context */
-PJ_CONTEXT *proj_context_create (void) {
-    return new (std::nothrow) pj_ctx(*pj_get_default_ctx());
+PJ_CONTEXT *proj_context_create (PJ_COMPUTE *compute) {
+    return new (std::nothrow) pj_ctx(*pj_get_default_ctx(), compute);
 }
 
 

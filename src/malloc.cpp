@@ -58,48 +58,46 @@
 
 using namespace NS_PROJ;
 
-//
-// For convenience, we share the entire PJ structure with the GPU.
-//
-#ifdef PROJ_OPENCL
-
-void* svm_malloc(size_t sz)
+/**********************************************************************/
+void* svm_malloc(PJ_CONTEXT *ctx, size_t sz)
+/**********************************************************************/
 {
-    return nullptr;
+#ifdef PROJ_OPENCL
+    return clSVMAlloc(ctx->compute->ctx, CL_MEM_READ_WRITE, sz, sizeof(size_t));
+#else
+    (void) ctx;
+    return malloc(sz);
+#endif
 }
 
-void* svm_calloc(size_t n, size_t sz)
+/**********************************************************************/
+void* svm_calloc(PJ_CONTEXT *ctx, size_t n, size_t sz)
+/**********************************************************************/
 {
+#ifdef PROJ_OPENCL
     void* p = svm_malloc(n * sz);
     if (p)
     {
         memset(p, 0, n * sz);
     }
     return p;
-}
-
-void svm_free(void* ptr)
-{
-}
-
 #else
-
-void* svm_malloc(size_t sz)
-{
-    return malloc(sz);
-}
-
-void* svm_calloc(size_t n, size_t sz)
-{
+    (void) ctx;
     return calloc(n, sz);
-}
-
-void svm_free(void* ptr)
-{
-    free(ptr);
-}
-
 #endif
+}
+
+/**********************************************************************/
+void svm_free(PJ_CONTEXT *ctx, void* ptr)
+/**********************************************************************/
+{
+#ifdef PROJ_OPENCL
+    clSVMFree(ctx->compute->ctx, ptr);
+#else
+    (void) ctx;
+    free(ptr);
+#endif
+}
 
 
 /**********************************************************************/
@@ -168,9 +166,9 @@ PJconsts::PJconsts() : host(new PJhost) {}
 /*****************************************************************************/
 
 /*****************************************************************************/
-PJ *pj_new() {
+PJ *pj_new(PJ_CONTEXT *ctx) {
 /*****************************************************************************/
-    return svm_new<PJ>();
+    return svm_new<PJ>(ctx);
 }
 
 
@@ -206,7 +204,7 @@ PJ *pj_default_destructor (PJ *P, int errlev) {   /* Destructor */
     /* that */
 
     /* free the interface to Charles Karney's geodesic library */
-    svm_free( P->geod );
+    svm_free( P->host->ctx, P->geod );
 
     /* free parameter list elements */
     free_params (pj_get_ctx(P), P->host->params, errlev);
@@ -222,8 +220,8 @@ PJ *pj_default_destructor (PJ *P, int errlev) {   /* Destructor */
     proj_destroy (P->hgridshift);
     proj_destroy (P->vgridshift);
 
-    svm_free (static_cast<struct pj_opaque*>(P->opaque));
-    svm_delete(P);
+    svm_free (P->host->ctx, static_cast<struct pj_opaque*>(P->opaque));
+    svm_delete(P->host->ctx, P);
     return nullptr;
 }
 

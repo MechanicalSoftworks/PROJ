@@ -75,14 +75,14 @@ static PJ *destructor (PJ *P, int errlev) {
     if (nullptr==P->opaque)
         return pj_default_destructor (P, errlev);
 
-    pj_free_en (static_cast<struct pj_opaque*>(P->opaque)->en);
+    pj_free_en (P->host->ctx, static_cast<struct pj_opaque*>(P->opaque)->en);
     return pj_default_destructor (P, errlev);
 }
 
 
 PJ *PROJECTION(ccon) {
 
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -94,7 +94,7 @@ PJ *PROJECTION(ccon) {
         proj_log_error(P, _("Invalid value for lat_1: |lat_1| should be > 0"));
         return destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
-    if (!(Q->en = pj_enfn(P->es)))
+    if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     Q->sinphi1 = sin(Q->phi1);

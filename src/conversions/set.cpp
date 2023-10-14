@@ -39,7 +39,7 @@ PJ *OPERATION(set, 0) {
     P->host->inv4d = set_fwd_inv;
     P->host->fwd4d = set_fwd_inv;
 
-    auto set = static_cast<struct Set*>(svm_calloc (1, sizeof(struct Set)));
+    auto set = static_cast<struct Set*>(svm_calloc (P->host->ctx, 1, sizeof(struct Set)));
     P->opaque = set;
     if (nullptr==P->opaque)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);

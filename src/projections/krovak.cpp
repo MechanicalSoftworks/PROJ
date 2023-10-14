@@ -191,7 +191,7 @@ static PJ_LP krovak_e_inverse (PJ_XY xy, PJ *P) {                /* Ellipsoidal,
 
 PJ *PROJECTION(krovak) {
     double u0, n0, g;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;

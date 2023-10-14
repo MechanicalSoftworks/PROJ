@@ -296,7 +296,7 @@ static PJ *destructor (PJ *P, int errlev) {
     free (pipeline->argv);
     free (pipeline->current_argv);
 
-    svm_delete(pipeline);
+    svm_delete(P->host->ctx, pipeline);
     P->opaque = nullptr;
 
     return pj_default_destructor(P, errlev);
@@ -419,7 +419,7 @@ PJ *OPERATION(pipeline,0) {
     P->skip_inv_finalize = 1;
 
 
-    P->opaque  = svm_new<Pipeline>();
+    P->opaque  = svm_new<Pipeline>(P->host->ctx);
     if (nullptr==P->opaque)
         return destructor(P, PROJ_ERR_INVALID_OP /* ENOMEM */);
 
@@ -659,7 +659,7 @@ static PJ_COORD pop(PJ_COORD point, PJ *P) {
 
 
 static PJ *setup_pushpop(PJ *P) {
-    auto pushpop = static_cast<struct PushPop*>(svm_calloc (1, sizeof(struct PushPop)));
+    auto pushpop = static_cast<struct PushPop*>(svm_calloc (P->host->ctx, 1, sizeof(struct PushPop)));
     P->opaque = pushpop;
     if (nullptr==P->opaque)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);

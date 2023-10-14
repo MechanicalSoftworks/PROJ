@@ -23,10 +23,10 @@
 #define C88 .3076171875
 #define EN_SIZE 5
 
-double *pj_enfn(double es) {
+double *pj_enfn(PJ_CONTEXT *ctx, double es) {
     double t, *en;
 
-    en = (double *) svm_malloc(EN_SIZE * sizeof (double));
+    en = (double *) svm_malloc(ctx, EN_SIZE * sizeof (double));
     if (nullptr==en)
         return nullptr;
 
@@ -39,9 +39,9 @@ double *pj_enfn(double es) {
     return en;
 }
 
-void pj_free_en(double* en)
+void pj_free_en(PJ_CONTEXT *ctx, double* en)
 {
-    svm_free(en);
+    svm_free(ctx, en);
 }
 
 double

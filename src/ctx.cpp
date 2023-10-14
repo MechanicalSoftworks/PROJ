@@ -85,9 +85,9 @@ void proj_assign_context( PJ* pj, PJ_CONTEXT *ctx )
 /*                          createDefault()                             */
 /************************************************************************/
 
-pj_ctx pj_ctx::createDefault()
+pj_ctx pj_ctx::createDefault(pj_compute *compute)
 {
-    pj_ctx ctx;
+    pj_ctx ctx(compute);
     ctx.debug_level = PJ_LOG_ERROR;
     ctx.logger = pj_stderr_logger;
     NS_PROJ::FileManager::fillDefaultNetworkInterface(&ctx);
@@ -144,11 +144,34 @@ void pj_ctx::set_ca_bundle_path(const std::string& ca_bundle_path_in)
 }
 
 /************************************************************************/
+/*                  pj_ctx(PJ_CONTEXT *ctx)                             */
+/************************************************************************/
+
+pj_ctx::pj_ctx(pj_compute *c) :
+    compute(c)
+{
+    // Default context isn't OpenCL enabled.
+    if (compute)
+    {
+        shared = svm_new<pj_ctx_shared>(this);
+    }
+    else
+    {
+        shared = new pj_ctx_shared;
+    }
+}
+
+/************************************************************************/
 /*                  pj_ctx(const pj_ctx& other)                   */
 /************************************************************************/
 
 pj_ctx::pj_ctx(const pj_ctx& other) :
+    pj_ctx(other, other.compute)
+{}
+
+pj_ctx::pj_ctx(const pj_ctx& other, pj_compute *c) :
     debug_level(other.debug_level),
+    compute(c),
     logger(other.logger),
     logger_app_data(other.logger_app_data),
     cpp_context(other.cpp_context ? other.cpp_context->clone(this) : nullptr),
@@ -169,6 +192,18 @@ pj_ctx::pj_ctx(const pj_ctx& other) :
     // END ini file settings
 {
     set_search_paths(other.search_paths);
+
+    // Default context isn't OpenCL enabled.
+    if (compute)
+    {
+        shared = svm_new<pj_ctx_shared>(this);
+    }
+    else
+    {
+        shared = new pj_ctx_shared;
+    }
+
+    *shared = *other.shared;
 }
 
 /************************************************************************/
@@ -179,7 +214,7 @@ PJ_CONTEXT* pj_get_default_ctx()
 
 {
     // C++11 rules guarantee a thread-safe instantiation.
-    static pj_ctx default_context(pj_ctx::createDefault());
+    static pj_ctx default_context(pj_ctx::createDefault(nullptr));
     return &default_context;
 }
 
@@ -192,7 +227,15 @@ pj_ctx::~pj_ctx()
     delete[] c_compat_paths;
     proj_context_delete_cpp_context(cpp_context);
 
-    svm_delete(shared);
+    // Default context isn't OpenCL enabled.
+    if (compute)
+    {
+        svm_delete(this, shared);
+    }
+    else
+    {
+        delete compute;
+    }
 }
 
 /************************************************************************/
@@ -203,7 +246,7 @@ pj_ctx::~pj_ctx()
 PJ_CONTEXT* proj_context_clone (PJ_CONTEXT *ctx)
 {
     if (nullptr==ctx)
-        return proj_context_create();
+        return proj_context_create(nullptr);
 
     return new (std::nothrow) pj_ctx(*ctx);
 }

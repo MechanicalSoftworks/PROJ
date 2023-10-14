@@ -69,7 +69,7 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
     if (nullptr==P->opaque)
         return pj_default_destructor (P, errlev);
 
-    pj_free_en (static_cast<struct pj_opaque*>(P->opaque)->en);
+    pj_free_en (P->host->ctx, static_cast<struct pj_opaque*>(P->opaque)->en);
     return pj_default_destructor (P, errlev);
 }
 
@@ -274,7 +274,7 @@ static PJ_LP aeqd_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 
 
 PJ *PROJECTION(aeqd) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -299,7 +299,7 @@ PJ *PROJECTION(aeqd) {
         P->host->inv = aeqd_s_inverse;
         P->host->fwd = aeqd_s_forward;
     } else {
-        if (!(Q->en = pj_enfn(P->es)))
+        if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
             return pj_default_destructor (P, 0);
         if (pj_param(P->host->ctx, P->host->params, "bguam").i) {
             Q->M1 = pj_mlfn(P->phi0, Q->sinph0, Q->cosph0, Q->en);

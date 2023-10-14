@@ -109,7 +109,7 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
     if (nullptr==P->opaque)
         return pj_default_destructor (P, errlev);
 
-    pj_free_en (static_cast<struct cass_data*>(P->opaque)->en);
+    pj_free_en (P->host->ctx, static_cast<struct cass_data*>(P->opaque)->en);
     return pj_default_destructor (P, errlev);
 }
 
@@ -125,13 +125,13 @@ PJ *PROJECTION(cass) {
     }
 
     /* otherwise it's ellipsoidal */
-    auto Q = static_cast<struct cass_data*>(svm_calloc (1, sizeof (struct cass_data)));
+    auto Q = static_cast<struct cass_data*>(svm_calloc (P->host->ctx, 1, sizeof (struct cass_data)));
     P->opaque = Q;
     if (nullptr==P->opaque)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->host->destructor = destructor;
 
-    Q->en = pj_enfn (P->es);
+    Q->en = pj_enfn (P->host->ctx, P->es);
     if (nullptr==Q->en)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 

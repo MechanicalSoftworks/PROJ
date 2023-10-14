@@ -89,11 +89,12 @@
 PROJ_HEAD(horner, "Horner polynomial evaluation");
 
 /* make horner.h interface with proj's memory management */
-#define horner_dealloc(x) svm_free(x)
-#define horner_calloc(n,x) svm_calloc(n,x)
+#define horner_dealloc(ctx,x) svm_free(ctx,x)
+#define horner_calloc(ctx,n,x) svm_calloc(ctx,n,x)
 
 namespace { // anonymous namespace
 struct horner {
+    PJ_CONTEXT* ctx; /* Memory allocation context */
     int    uneg;     /* u axis negated? */
     int    vneg;     /* v axis negated? */
     int    order;    /* maximum degree of polynomium */
@@ -125,26 +126,28 @@ static void    horner_free (HORNER *h);
 
 
 static void horner_free (HORNER *h) {
-    horner_dealloc (h->inv_v);
-    horner_dealloc (h->inv_u);
-    horner_dealloc (h->fwd_v);
-    horner_dealloc (h->fwd_u);
-    horner_dealloc (h->fwd_c);
-    horner_dealloc (h->inv_c);
-    horner_dealloc (h->fwd_origin);
-    horner_dealloc (h->inv_origin);
-    horner_dealloc (h);
+    horner_dealloc (h->ctx, h->inv_v);
+    horner_dealloc (h->ctx, h->inv_u);
+    horner_dealloc (h->ctx, h->fwd_v);
+    horner_dealloc (h->ctx, h->fwd_u);
+    horner_dealloc (h->ctx, h->fwd_c);
+    horner_dealloc (h->ctx, h->inv_c);
+    horner_dealloc (h->ctx, h->fwd_origin);
+    horner_dealloc (h->ctx, h->inv_origin);
+    horner_dealloc (h->ctx, h);
 }
 
 
-static HORNER *horner_alloc (size_t order, int complex_polynomia) {
+static HORNER *horner_alloc (PJ_CONTEXT *ctx, size_t order, int complex_polynomia) {
     /* size_t is unsigned, so we need not check for order > 0 */
     int n = (int)horner_number_of_coefficients(order);
     int polynomia_ok = 0;
-    HORNER *h = static_cast<HORNER*>(horner_calloc (1, sizeof (HORNER)));
+    HORNER *h = static_cast<HORNER*>(horner_calloc (ctx, 1, sizeof (HORNER)));
 
     if (nullptr==h)
         return nullptr;
+
+    h->ctx = ctx;
 
     if (complex_polynomia)
         n = 2*(int)order + 2;
@@ -152,22 +155,22 @@ static HORNER *horner_alloc (size_t order, int complex_polynomia) {
     h->coefs = n;
 
     if (complex_polynomia) {
-        h->fwd_c = static_cast<double*>(horner_calloc (n, sizeof(double)));
-        h->inv_c = static_cast<double*>(horner_calloc (n, sizeof(double)));
+        h->fwd_c = static_cast<double*>(horner_calloc (ctx, n, sizeof(double)));
+        h->inv_c = static_cast<double*>(horner_calloc (ctx, n, sizeof(double)));
         if (h->fwd_c && h->inv_c)
             polynomia_ok = 1;
     }
     else {
-        h->fwd_u = static_cast<double*>(horner_calloc (n, sizeof(double)));
-        h->fwd_v = static_cast<double*>(horner_calloc (n, sizeof(double)));
-        h->inv_u = static_cast<double*>(horner_calloc (n, sizeof(double)));
-        h->inv_v = static_cast<double*>(horner_calloc (n, sizeof(double)));
+        h->fwd_u = static_cast<double*>(horner_calloc (ctx, n, sizeof(double)));
+        h->fwd_v = static_cast<double*>(horner_calloc (ctx, n, sizeof(double)));
+        h->inv_u = static_cast<double*>(horner_calloc (ctx, n, sizeof(double)));
+        h->inv_v = static_cast<double*>(horner_calloc (ctx, n, sizeof(double)));
         if (h->fwd_u && h->fwd_v && h->inv_u && h->inv_v)
             polynomia_ok = 1;
     }
 
-    h->fwd_origin = static_cast<PJ_UV*>(horner_calloc (1, sizeof(PJ_UV)));
-    h->inv_origin = static_cast<PJ_UV*>(horner_calloc (1, sizeof(PJ_UV)));
+    h->fwd_origin = static_cast<PJ_UV*>(horner_calloc (ctx, 1, sizeof(PJ_UV)));
+    h->inv_origin = static_cast<PJ_UV*>(horner_calloc (ctx, 1, sizeof(PJ_UV)));
 
     if (polynomia_ok && h->fwd_origin && h->inv_origin)
         return h;
@@ -469,7 +472,7 @@ PJ *PROJECTION(horner) {
     if (pj_param (P->host->ctx, P->host->params, "tfwd_c").i || pj_param (P->host->ctx, P->host->params, "tinv_c").i) /* complex polynomium? */
 		complex_polynomia = 1;
 
-    Q = horner_alloc (degree, complex_polynomia);
+    Q = horner_alloc (P->host->ctx, degree, complex_polynomia);
     if (Q == nullptr)
         return horner_freeup (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;

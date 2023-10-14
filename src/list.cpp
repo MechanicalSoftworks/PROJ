@@ -9,7 +9,7 @@
 
 
 /* Generate prototypes for projection functions */
-#define PROJ_HEAD(id, name) extern "C" struct PJconsts *pj_##id(struct PJconsts*);
+#define PROJ_HEAD(id, name) extern "C" struct PJconsts *pj_##id(struct PJconsts*, struct pj_ctx *ctx);
 #include "pj_list.h"
 #undef PROJ_HEAD
 

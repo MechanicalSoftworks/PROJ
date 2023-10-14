@@ -178,7 +178,7 @@ PJ *PROJECTION(ob_tran) {
     ARGS args;
     PJ *R; /* projection to rotate */
 
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 

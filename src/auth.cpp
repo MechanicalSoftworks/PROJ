@@ -15,10 +15,10 @@
 #define APA_SIZE 3
 
 	double *
-pj_authset(double es) {
+pj_authset(PJ_CONTEXT* ctx, double es) {
 	double t, *APA;
 
-	if ((APA = (double *)svm_malloc(APA_SIZE * sizeof(double))) != nullptr) {
+	if ((APA = (double *)svm_malloc(ctx, APA_SIZE * sizeof(double))) != nullptr) {
 		APA[0] = es * P00;
 		t = es * es;
 		APA[0] += t * P01;
@@ -31,9 +31,9 @@ pj_authset(double es) {
 	return APA;
 }
 	void
-pj_free_authset(double* apa)
+pj_free_authset(PJ_CONTEXT *ctx, double* apa)
 {
-	svm_free(apa);
+	svm_free(ctx, apa);
 }
 	double
 pj_authlat(double beta, double *APA) {

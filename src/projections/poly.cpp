@@ -147,14 +147,14 @@ static PJ *destructor(PJ *P, int errlev) {
         return pj_default_destructor (P, errlev);
 
     if (static_cast<struct pj_opaque*>(P->opaque)->en)
-        pj_free_en (static_cast<struct pj_opaque*>(P->opaque)->en);
+        pj_free_en (P->host->ctx, static_cast<struct pj_opaque*>(P->opaque)->en);
 
     return pj_default_destructor(P, errlev);
 }
 
 
 PJ *PROJECTION(poly) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
@@ -162,7 +162,7 @@ PJ *PROJECTION(poly) {
     P->host->destructor = destructor;
 
     if (P->es != 0.0) {
-        if (!(Q->en = pj_enfn(P->es)))
+        if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
             return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
         Q->ml0 = pj_mlfn(P->phi0, sin(P->phi0), cos(P->phi0), Q->en);
         P->host->inv = poly_e_inverse;

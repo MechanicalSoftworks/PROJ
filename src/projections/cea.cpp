@@ -66,14 +66,14 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
     if (nullptr==P->opaque)
         return pj_default_destructor (P, errlev);
 
-    pj_free_authset (static_cast<struct pj_opaque*>(P->opaque)->apa);
+    pj_free_authset (P->host->ctx, static_cast<struct pj_opaque*>(P->opaque)->apa);
     return pj_default_destructor (P, errlev);
 }
 
 
 PJ *PROJECTION(cea) {
     double t = 0.0;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -93,7 +93,7 @@ PJ *PROJECTION(cea) {
         t = sin(t);
         P->k0 /= sqrt(1. - P->es * t * t);
         P->e = sqrt(P->es);
-        Q->apa = pj_authset(P->es);
+        Q->apa = pj_authset(P->host->ctx, P->es);
         if (!(Q->apa))
             return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
