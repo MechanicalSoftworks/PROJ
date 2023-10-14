@@ -447,8 +447,8 @@ PJ *PROJECTION(horner) {
 /*********************************************************************/
     int   degree = 0, n, complex_polynomia = 0;
     HORNER *Q;
-    P->host->fwd4d  = horner_forward_4d;
-    P->host->inv4d  = horner_reverse_4d;
+    P->host->fwd4d  = PJ_MAKE_KERNEL(horner_forward_4d);
+    P->host->inv4d  = PJ_MAKE_KERNEL(horner_reverse_4d);
     P->host->fwd3d  =  nullptr;
     P->host->inv3d  =  nullptr;
     P->host->fwd    =  nullptr;
@@ -493,8 +493,8 @@ PJ *PROJECTION(horner) {
             proj_log_error (P, _("missing inv_c"));
             return horner_freeup (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
         }
-        P->host->fwd4d = complex_horner_forward_4d;
-        P->host->inv4d = complex_horner_reverse_4d;
+        P->host->fwd4d = PJ_MAKE_KERNEL(complex_horner_forward_4d);
+        P->host->inv4d = PJ_MAKE_KERNEL(complex_horner_reverse_4d);
     }
 
     else {

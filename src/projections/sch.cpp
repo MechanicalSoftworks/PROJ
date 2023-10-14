@@ -177,8 +177,8 @@ static PJ *setup(PJ *P) { /* general initialization */
     Q->xyzoff[1] = xyz.y- (Q->rcurv) * clt * slo;
     Q->xyzoff[2] = xyz.z - (Q->rcurv) * slt;
 
-    P->host->fwd3d = sch_forward3d;
-    P->host->inv3d = sch_inverse3d;
+    P->host->fwd3d = PJ_MAKE_KERNEL(sch_forward3d);
+    P->host->inv3d = PJ_MAKE_KERNEL(sch_inverse3d);
     return P;
 }
 

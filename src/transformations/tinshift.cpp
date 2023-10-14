@@ -124,8 +124,8 @@ PJ *TRANSFORMATION(tinshift, 1) {
     }
 
     P->host->destructor = destructor;
-    P->host->fwd4d = tinshift_forward_4d;
-    P->host->inv4d = tinshift_reverse_4d;
+    P->host->fwd4d = PJ_MAKE_KERNEL(tinshift_forward_4d);
+    P->host->inv4d = PJ_MAKE_KERNEL(tinshift_reverse_4d);
     P->left = PJ_IO_UNITS_WHATEVER;
     P->right = PJ_IO_UNITS_WHATEVER;
 

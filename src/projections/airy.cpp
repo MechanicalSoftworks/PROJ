@@ -152,7 +152,7 @@ PJ *PROJECTION(airy) {
             Q->cosph0 = cos(P->phi0);
         }
     }
-    P->host->fwd = airy_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(airy_s_forward);
     P->es = 0.;
     return P;
 }

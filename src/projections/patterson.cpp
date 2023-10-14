@@ -112,8 +112,8 @@ static PJ_LP patterson_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, in
 
 PJ *PROJECTION(patterson) {
     P->es = 0.;
-    P->host->inv = patterson_s_inverse;
-    P->host->fwd = patterson_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(patterson_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(patterson_s_forward);
 
     return P;
 }

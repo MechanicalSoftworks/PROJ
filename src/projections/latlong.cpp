@@ -91,12 +91,12 @@ static PJ *latlong_setup (PJ *P) {
     P->is_latlong = 1;
     P->x0 = 0;
     P->y0 = 0;
-    P->host->inv = latlong_inverse;
-    P->host->fwd = latlong_forward;
-    P->host->inv3d = latlong_inverse_3d;
-    P->host->fwd3d = latlong_forward_3d;
-    P->host->inv4d = latlong_inverse_4d;
-    P->host->fwd4d = latlong_forward_4d;
+    P->host->inv = PJ_MAKE_KERNEL(latlong_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(latlong_forward);
+    P->host->inv3d = PJ_MAKE_KERNEL(latlong_inverse_3d);
+    P->host->fwd3d = PJ_MAKE_KERNEL(latlong_forward_3d);
+    P->host->inv4d = PJ_MAKE_KERNEL(latlong_inverse_4d);
+    P->host->fwd4d = PJ_MAKE_KERNEL(latlong_forward_4d);
     P->left = PJ_IO_UNITS_RADIANS;
     P->right = PJ_IO_UNITS_RADIANS;
     return P;

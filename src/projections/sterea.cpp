@@ -114,8 +114,8 @@ PJ *PROJECTION(sterea) {
     Q->cosc0 = cos (Q->phic0);
     Q->R2 = 2. * R;
 
-    P->host->inv = sterea_e_inverse;
-    P->host->fwd = sterea_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(sterea_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(sterea_e_forward);
     P->host->destructor = destructor;
 
     return P;

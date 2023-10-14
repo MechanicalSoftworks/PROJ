@@ -434,8 +434,8 @@ PJ *TRANSFORMATION(defmodel, 1) {
         return destructor(P, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
     }
 
-    P->host->fwd4d = forward_4d;
-    P->host->inv4d = reverse_4d;
+    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
+    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
 
     if (Q->evaluator->isGeographicCRS()) {
         P->left = PJ_IO_UNITS_RADIANS;

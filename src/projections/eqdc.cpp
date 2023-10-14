@@ -142,8 +142,8 @@ PJ *PROJECTION(eqdc) {
         Q->rho0 = Q->c - P->phi0;
     }
 
-    P->host->inv = eqdc_e_inverse;
-    P->host->fwd = eqdc_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(eqdc_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(eqdc_e_forward);
 
     return P;
 }

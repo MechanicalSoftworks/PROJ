@@ -309,11 +309,11 @@ static PJ *setup(PJ *P, projection_type mode) {
     P->opaque = Q;
 
     P->es = 0;
-    P->host->fwd = adams_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(adams_forward);
 
     Q->mode = mode;
     if( mode == ADAMS_WS2 )
-        P->host->inv = adams_inverse;
+        P->host->inv = PJ_MAKE_KERNEL(adams_inverse);
 
     if( mode == PEIRCE_Q) {
       // Quincuncial projections type options: square, diamond, hemisphere, horizontal (rectangle) or vertical (rectangle)

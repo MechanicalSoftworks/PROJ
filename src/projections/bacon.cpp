@@ -51,7 +51,7 @@ PJ *PROJECTION(bacon) {
 	Q->bacn = 1;
 	Q->ortl = 0;
 	P->es = 0.;
-    P->host->fwd = bacon_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(bacon_s_forward);
     return P;
 }
 
@@ -64,7 +64,7 @@ PJ *PROJECTION(apian) {
 
 	Q->bacn = Q->ortl = 0;
 	P->es = 0.;
-    P->host->fwd = bacon_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(bacon_s_forward);
     return P;
 }
 
@@ -78,6 +78,6 @@ PJ *PROJECTION(ortel) {
 	Q->bacn = 0;
 	Q->ortl = 1;
 	P->es = 0.;
-    P->host->fwd = bacon_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(bacon_s_forward);
     return P;
 }

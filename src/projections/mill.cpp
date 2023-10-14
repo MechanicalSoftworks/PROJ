@@ -31,8 +31,8 @@ static PJ_LP mill_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 
 PJ *PROJECTION(mill) {
     P->es = 0.;
-    P->host->inv = mill_s_inverse;
-    P->host->fwd = mill_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(mill_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(mill_s_forward);
 
     return P;
 }

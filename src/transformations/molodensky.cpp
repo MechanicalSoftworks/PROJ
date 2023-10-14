@@ -306,12 +306,12 @@ PJ *TRANSFORMATION(molodensky,1) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
 
-    P->host->fwd4d = forward_4d;
-    P->host->inv4d = reverse_4d;
-    P->host->fwd3d  = forward_3d;
-    P->host->inv3d  = reverse_3d;
-    P->host->fwd    = forward_2d;
-    P->host->inv    = reverse_2d;
+    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
+    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
+    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
+    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
+    P->host->fwd    = PJ_MAKE_KERNEL(forward_2d);
+    P->host->inv    = PJ_MAKE_KERNEL(reverse_2d);
 
     P->left   = PJ_IO_UNITS_RADIANS;
     P->right  = PJ_IO_UNITS_RADIANS;

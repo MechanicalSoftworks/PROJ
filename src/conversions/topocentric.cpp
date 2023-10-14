@@ -161,8 +161,8 @@ PJ *CONVERSION(topocentric,1) {
 
     proj_destroy(cart);
 
-    P->host->fwd4d  =  topocentric_fwd;
-    P->host->inv4d  =  topocentric_inv;
+    P->host->fwd4d  =  PJ_MAKE_KERNEL(topocentric_fwd);
+    P->host->inv4d  =  PJ_MAKE_KERNEL(topocentric_inv);
     P->left   =  PJ_IO_UNITS_CARTESIAN;
     P->right  =  PJ_IO_UNITS_CARTESIAN;
     return P;

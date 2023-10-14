@@ -134,8 +134,8 @@ PJ *PROJECTION(labrd) {
     Q->Cc = 3. * (Q->Ca * Q->Ca - Q->Cb * Q->Cb);
     Q->Cd = 6. * Q->Ca * Q->Cb;
 
-    P->host->inv = labrd_e_inverse;
-    P->host->fwd = labrd_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(labrd_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(labrd_e_forward);
 
     return P;
 }

@@ -54,8 +54,8 @@ PJ *CONVERSION (geocent, 0) {
     P->is_geocent = 1;
     P->x0 = 0.0;
     P->y0 = 0.0;
-    P->host->inv = inverse;
-    P->host->fwd = forward;
+    P->host->inv = PJ_MAKE_KERNEL(inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(forward);
     P->left = PJ_IO_UNITS_RADIANS;
     P->right = PJ_IO_UNITS_CARTESIAN;
 

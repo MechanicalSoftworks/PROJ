@@ -95,8 +95,8 @@ static PJ_LP natearth_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inv
 
 PJ *PROJECTION(natearth) {
     P->es = 0;
-    P->host->inv = natearth_s_inverse;
-    P->host->fwd = natearth_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(natearth_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(natearth_s_forward);
 
     return P;
 }

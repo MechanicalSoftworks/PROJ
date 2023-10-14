@@ -40,8 +40,8 @@ static PJ_LP urmfps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 static PJ *setup(PJ *P) {
     static_cast<struct pj_opaque*>(P->opaque)->C_y = Cy / static_cast<struct pj_opaque*>(P->opaque)->n;
     P->es = 0.;
-    P->host->inv = urmfps_s_inverse;
-    P->host->fwd = urmfps_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(urmfps_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(urmfps_s_forward);
     return P;
 }
 

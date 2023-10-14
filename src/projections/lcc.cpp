@@ -156,8 +156,8 @@ PJ *PROJECTION(lcc) {
             Q->c * pow(tan(M_FORTPI + .5 * P->phi0), -Q->n);
     }
 
-    P->host->inv = lcc_e_inverse;
-    P->host->fwd = lcc_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(lcc_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(lcc_e_forward);
 
     return P;
 }

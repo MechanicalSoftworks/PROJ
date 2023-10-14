@@ -33,7 +33,7 @@ static PJ_XY lask_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 
 PJ *PROJECTION(lask) {
 
-    P->host->fwd = lask_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(lask_s_forward);
     P->es = 0.;
 
     return P;

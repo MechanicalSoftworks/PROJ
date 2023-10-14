@@ -70,8 +70,8 @@ static PJ * setup(PJ *P, double p) {
     Q->C_y = r / sp;
     Q->C_p = p2 + sin(p2);
 
-    P->host->inv = moll_s_inverse;
-    P->host->fwd = moll_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(moll_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(moll_s_forward);
     return P;
 }
 
@@ -106,8 +106,8 @@ PJ *PROJECTION(wag5) {
     Q->C_y = 1.65014;
     Q->C_p = 3.00896;
 
-    P->host->inv = moll_s_inverse;
-    P->host->fwd = moll_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(moll_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(moll_s_forward);
 
     return P;
 }

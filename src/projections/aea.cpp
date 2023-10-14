@@ -164,8 +164,8 @@ static PJ_LP aea_e_inverse (PJ_XY xy, PJ *P) {   /* Ellipsoid/spheroid, inverse 
 static PJ *setup(PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
-    P->host->inv = aea_e_inverse;
-    P->host->fwd = aea_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(aea_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(aea_e_forward);
 
     if (fabs(Q->phi1) > M_HALFPI)
     {

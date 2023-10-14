@@ -629,11 +629,11 @@ PJ *PROJECTION(healpix) {
         Q->qp = pj_qsfn(1.0, P->e, P->one_es);  /* For auth_lat(). */
         P->a = P->a*sqrt(0.5*Q->qp);            /* Set P->a to authalic radius. */
         pj_calc_ellipsoid_params (P, P->a, P->es);  /* Ensure we have a consistent parameter set */
-        P->host->fwd = e_healpix_forward;
-        P->host->inv = e_healpix_inverse;
+        P->host->fwd = PJ_MAKE_KERNEL(e_healpix_forward);
+        P->host->inv = PJ_MAKE_KERNEL(e_healpix_inverse);
     } else {
-        P->host->fwd = s_healpix_forward;
-        P->host->inv = s_healpix_inverse;
+        P->host->fwd = PJ_MAKE_KERNEL(s_healpix_forward);
+        P->host->inv = PJ_MAKE_KERNEL(s_healpix_inverse);
     }
 
     return P;
@@ -668,11 +668,11 @@ PJ *PROJECTION(rhealpix) {
         Q->qp = pj_qsfn(1.0, P->e, P->one_es); /* For auth_lat(). */
         P->a = P->a*sqrt(0.5*Q->qp); /* Set P->a to authalic radius. */
         P->ra = 1.0/P->a;
-        P->host->fwd = e_rhealpix_forward;
-        P->host->inv = e_rhealpix_inverse;
+        P->host->fwd = PJ_MAKE_KERNEL(e_rhealpix_forward);
+        P->host->inv = PJ_MAKE_KERNEL(e_rhealpix_inverse);
     } else {
-        P->host->fwd = s_rhealpix_forward;
-        P->host->inv = s_rhealpix_inverse;
+        P->host->fwd = PJ_MAKE_KERNEL(s_rhealpix_forward);
+        P->host->inv = PJ_MAKE_KERNEL(s_rhealpix_inverse);
     }
 
     return P;

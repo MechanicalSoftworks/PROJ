@@ -221,8 +221,8 @@ PJ *PROJECTION(misrsom) {
     Q->c1 /= 15.;
     Q->c3 /= 45.;
 
-    P->host->inv = misrsom_e_inverse;
-    P->host->fwd = misrsom_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(misrsom_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(misrsom_e_forward);
 
    return P;
 }

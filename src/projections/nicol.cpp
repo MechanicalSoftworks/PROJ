@@ -49,7 +49,7 @@ static PJ_XY nicol_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 
 PJ *PROJECTION(nicol) {
     P->es = 0.;
-    P->host->fwd = nicol_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(nicol_s_forward);
 
     return P;
 }

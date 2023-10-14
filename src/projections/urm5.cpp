@@ -61,7 +61,7 @@ PJ *PROJECTION(urm5) {
 
     P->es = 0.;
     P->host->inv = nullptr;
-    P->host->fwd = urm5_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(urm5_s_forward);
 
     return P;
 }

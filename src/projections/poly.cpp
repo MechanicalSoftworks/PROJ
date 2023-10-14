@@ -165,12 +165,12 @@ PJ *PROJECTION(poly) {
         if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
             return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
         Q->ml0 = pj_mlfn(P->phi0, sin(P->phi0), cos(P->phi0), Q->en);
-        P->host->inv = poly_e_inverse;
-        P->host->fwd = poly_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(poly_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(poly_e_forward);
     } else {
         Q->ml0 = -P->phi0;
-        P->host->inv = poly_s_inverse;
-        P->host->fwd = poly_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(poly_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(poly_s_forward);
     }
 
     return P;

@@ -246,8 +246,8 @@ PJ *TRANSFORMATION(xyzgridshift,0) {
 
     P->host->fwd4d  = nullptr;
     P->host->inv4d  = nullptr;
-    P->host->fwd3d  = forward_3d;
-    P->host->inv3d  = reverse_3d;
+    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
+    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
     P->host->fwd    = nullptr;
     P->host->inv    = nullptr;
 

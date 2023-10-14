@@ -54,8 +54,8 @@ PJ *PROJECTION(putp4p) {
     Q->C_y = 3.883251825;
 
     P->es = 0.;
-    P->host->inv = putp4p_s_inverse;
-    P->host->fwd = putp4p_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(putp4p_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(putp4p_s_forward);
 
     return P;
 }
@@ -71,8 +71,8 @@ PJ *PROJECTION(weren) {
     Q->C_y = 4.442882938;
 
     P->es = 0.;
-    P->host->inv = putp4p_s_inverse;
-    P->host->fwd = putp4p_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(putp4p_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(putp4p_s_forward);
 
     return P;
 }

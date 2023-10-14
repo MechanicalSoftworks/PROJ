@@ -263,8 +263,8 @@ PJ *PROJECTION(igh_o) {
        return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     }
 
-    P->host->inv = igh_o_s_inverse;
-    P->host->fwd = igh_o_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(igh_o_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(igh_o_s_forward);
     P->host->destructor = destructor;
     P->es = 0.;
 

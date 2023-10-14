@@ -134,15 +134,15 @@ PJ *PROJECTION(bonne) {
         c = cos(Q->phi1);
         Q->m1 = pj_mlfn(Q->phi1, Q->am1, c, Q->en);
         Q->am1 = c / (sqrt(1. - P->es * Q->am1 * Q->am1) * Q->am1);
-        P->host->inv = bonne_e_inverse;
-        P->host->fwd = bonne_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(bonne_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(bonne_e_forward);
     } else {
         if (fabs(Q->phi1) + EPS10 >= M_HALFPI)
             Q->cphi1 = 0.;
         else
             Q->cphi1 = 1. / tan(Q->phi1);
-        P->host->inv = bonne_s_inverse;
-        P->host->fwd = bonne_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(bonne_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(bonne_s_forward);
     }
     return P;
 }

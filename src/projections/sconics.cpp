@@ -195,8 +195,8 @@ static PJ *setup(PJ *P, enum Type type) {
         break;
     }
 
-    P->host->inv = sconics_s_inverse;
-    P->host->fwd = sconics_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(sconics_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(sconics_s_forward);
     P->es = 0;
     return (P);
 }

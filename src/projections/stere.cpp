@@ -275,8 +275,8 @@ static PJ *setup(PJ *P) {                   /* general initialization */
             Q->cosX1 = cos (X);
             break;
         }
-        P->host->inv = stere_e_inverse;
-        P->host->fwd = stere_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(stere_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(stere_e_forward);
     } else {
         switch (Q->mode) {
         case OBLIQ:
@@ -294,8 +294,8 @@ static PJ *setup(PJ *P) {                   /* general initialization */
             break;
         }
 
-        P->host->inv = stere_s_inverse;
-        P->host->fwd = stere_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(stere_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(stere_s_forward);
     }
     return P;
 }

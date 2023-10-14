@@ -397,6 +397,43 @@ enum class TMercAlgo
     PODER_ENGSAGER,
 };
 
+/* Pointer to a kernel function.
+ * Executed directly in CPU mode, function is written using name in OpenCL mode.
+ *
+ * This struct acts as a drop in replacement for a function pointer variable, with the option of retrieving the function name. */
+template<typename T>
+struct PJkernel
+{
+    const char *name = nullptr;
+    T           fn = nullptr;
+
+    auto operator==(std::nullptr_t) const { return nullptr == fn; }
+    operator bool() const { return fn != nullptr; }
+
+    /* Dereference is a no-op, since this is already a value type.
+     * Just return a self-reference so the caller can use 'operator()'. */
+          auto& operator*()       { return *this; }
+    const auto& operator*() const { return *this; }
+
+    template<typename... TArgs>
+    auto operator()(TArgs... args) const { return fn(std::forward<TArgs>(args)...); }
+
+    auto operator=(std::nullptr_t) { fn = nullptr; name = nullptr; return *this; }
+};
+
+template<typename T>
+inline auto operator==(std::nullptr_t, const PJkernel<T>& k) { return k == nullptr; }
+
+typedef PJ_XY  (*PJ_FWD_2D)(PJ_LP, PJ*);
+typedef PJ_LP  (*PJ_INV_2D)(PJ_XY, PJ*);
+typedef PJ_XYZ (*PJ_FWD_3D)(PJ_LPZ, PJ*);
+typedef PJ_LPZ (*PJ_INV_3D)(PJ_XYZ, PJ*);
+
+#define PROJ_STR_HELPER(x) #x
+#define PROJ_STR(x) PROJ_STR_HELPER(x)
+
+#define PJ_MAKE_KERNEL(name) PJkernel<decltype(name)*>{ PROJ_STR(name), &name }
+
 struct PJhost
 {
     /*************************************************************************************
@@ -434,12 +471,12 @@ struct PJhost
     **************************************************************************************/
 
 
-    PJ_XY  (*fwd)(PJ_LP,    PJ *) = nullptr;
-    PJ_LP  (*inv)(PJ_XY,    PJ *) = nullptr;
-    PJ_XYZ (*fwd3d)(PJ_LPZ, PJ *) = nullptr;
-    PJ_LPZ (*inv3d)(PJ_XYZ, PJ *) = nullptr;
-    PJ_OPERATOR fwd4d = nullptr;
-    PJ_OPERATOR inv4d = nullptr;
+    PJkernel<PJ_FWD_2D>   fwd;
+    PJkernel<PJ_INV_2D>   inv;
+    PJkernel<PJ_FWD_3D>   fwd3d;
+    PJkernel<PJ_INV_3D>   inv3d;
+    PJkernel<PJ_OPERATOR> fwd4d;
+    PJkernel<PJ_OPERATOR> inv4d;
 
     PJ_DESTRUCTOR destructor = nullptr;
     void   (*reassign_context)(PJ*, PJ_CONTEXT*) = nullptr;

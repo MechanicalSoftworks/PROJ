@@ -129,10 +129,10 @@ PJ *TRANSFORMATION(hgridshift,0) {
     P->host->destructor = destructor;
     P->host->reassign_context = reassign_context;
 
-    P->host->fwd4d  = forward_4d;
-    P->host->inv4d  = reverse_4d;
-    P->host->fwd3d  = forward_3d;
-    P->host->inv3d  = reverse_3d;
+    P->host->fwd4d  = PJ_MAKE_KERNEL(forward_4d);
+    P->host->inv4d  = PJ_MAKE_KERNEL(reverse_4d);
+    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
+    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
     P->host->fwd    = nullptr;
     P->host->inv    = nullptr;
 

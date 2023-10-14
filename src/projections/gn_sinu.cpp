@@ -112,8 +112,8 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
 static void setup(PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     P->es = 0;
-    P->host->inv = gn_sinu_s_inverse;
-    P->host->fwd = gn_sinu_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(gn_sinu_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(gn_sinu_s_forward);
 
     Q->C_y = sqrt((Q->m + 1.) / Q->n);
     Q->C_x = Q->C_y/(Q->m + 1.);
@@ -131,8 +131,8 @@ PJ *PROJECTION(sinu) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
     if (P->es != 0.0) {
-        P->host->inv = gn_sinu_e_inverse;
-        P->host->fwd = gn_sinu_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(gn_sinu_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(gn_sinu_e_forward);
     } else {
         Q->n = 1.;
         Q->m = 0.;

@@ -296,15 +296,15 @@ PJ *PROJECTION(aeqd) {
         Q->cosph0 = cos(P->phi0);
     }
     if (P->es == 0.0) {
-        P->host->inv = aeqd_s_inverse;
-        P->host->fwd = aeqd_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(aeqd_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(aeqd_s_forward);
     } else {
         if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
             return pj_default_destructor (P, 0);
         if (pj_param(P->host->ctx, P->host->params, "bguam").i) {
             Q->M1 = pj_mlfn(P->phi0, Q->sinph0, Q->cosph0, Q->en);
-            P->host->inv = e_guam_inv;
-            P->host->fwd = e_guam_fwd;
+            P->host->inv = PJ_MAKE_KERNEL(e_guam_inv);
+            P->host->fwd = PJ_MAKE_KERNEL(e_guam_fwd);
         } else {
             switch (Q->mode) {
             case N_POLE:
@@ -321,8 +321,8 @@ PJ *PROJECTION(aeqd) {
                 Q->He *= Q->cosph0;
                 break;
             }
-            P->host->inv = aeqd_e_inverse;
-            P->host->fwd = aeqd_e_forward;
+            P->host->inv = PJ_MAKE_KERNEL(aeqd_e_inverse);
+            P->host->fwd = PJ_MAKE_KERNEL(aeqd_e_forward);
         }
     }
 

@@ -74,8 +74,8 @@ static PJ_LP mbtfpq_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 PJ *PROJECTION(mbtfpq) {
 
     P->es = 0.;
-    P->host->inv = mbtfpq_s_inverse;
-    P->host->fwd = mbtfpq_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(mbtfpq_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(mbtfpq_s_forward);
 
     return P;
 }

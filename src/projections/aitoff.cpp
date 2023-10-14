@@ -179,8 +179,8 @@ static PJ_LP aitoff_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
 
 static PJ *setup(PJ *P) {
-    P->host->inv = aitoff_s_inverse;
-    P->host->fwd = aitoff_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(aitoff_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(aitoff_s_forward);
     P->es = 0.;
     return P;
 }

@@ -59,7 +59,7 @@ PJ *PROJECTION(vandg2) {
     P->opaque = Q;
 
     Q->vdg3 = 0;
-    P->host->fwd = vandg2_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(vandg2_s_forward);
 
     return P;
 }
@@ -72,7 +72,7 @@ PJ *PROJECTION(vandg3) {
 
     Q->vdg3 = 1;
     P->es = 0.;
-    P->host->fwd = vandg2_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(vandg2_s_forward);
 
     return P;
 }

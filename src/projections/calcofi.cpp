@@ -152,11 +152,11 @@ PJ *PROJECTION(calcofi) {
     P->over = 1;
 
     if (P->es != 0.0) { /* ellipsoid */
-        P->host->inv = calcofi_e_inverse;
-        P->host->fwd = calcofi_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(calcofi_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(calcofi_e_forward);
     } else { /* sphere */
-        P->host->inv = calcofi_s_inverse;
-        P->host->fwd = calcofi_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(calcofi_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(calcofi_s_forward);
     }
     return P;
 }

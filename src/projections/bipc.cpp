@@ -174,8 +174,8 @@ PJ *PROJECTION(bipc) {
     P->opaque = Q;
 
     Q->noskew = pj_param(P->host->ctx, P->host->params, "bns").i;
-    P->host->inv = bipc_s_inverse;
-    P->host->fwd = bipc_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(bipc_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(bipc_s_forward);
     P->es = 0.;
     return P;
 }

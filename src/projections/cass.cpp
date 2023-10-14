@@ -119,8 +119,8 @@ PJ *PROJECTION(cass) {
 
     /* Spheroidal? */
     if (0==P->es) {
-        P->host->inv = cass_s_inverse;
-        P->host->fwd = cass_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(cass_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(cass_s_forward);
         return P;
     }
 
@@ -138,8 +138,8 @@ PJ *PROJECTION(cass) {
     Q->m0 = pj_mlfn (P->phi0,  sin (P->phi0),  cos (P->phi0), Q->en);
     if (pj_param_exists(P->host->params, "hyperbolic"))
         Q->hyperbolic = true;
-    P->host->inv = cass_e_inverse;
-    P->host->fwd = cass_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(cass_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(cass_e_forward);
 
     return P;
 }

@@ -298,16 +298,16 @@ PJ *PROJECTION(ortho) {
         Q->mode = EQUIT;
     if( P->es == 0 )
     {
-        P->host->inv = ortho_s_inverse;
-        P->host->fwd = ortho_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(ortho_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(ortho_s_forward);
     }
     else
     {
         Q->nu0 = 1.0 / sqrt(1.0 - P->es * Q->sinph0 * Q->sinph0);
         Q->y_shift = P->es * Q->nu0 * Q->sinph0 * Q->cosph0;
         Q->y_scale = 1.0 / sqrt(1.0 - P->es * Q->cosph0 * Q->cosph0);
-        P->host->inv = ortho_e_inverse;
-        P->host->fwd = ortho_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(ortho_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(ortho_e_forward);
     }
 
     return P;

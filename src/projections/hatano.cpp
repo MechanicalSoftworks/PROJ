@@ -76,8 +76,8 @@ static PJ_LP hatano_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
 PJ *PROJECTION(hatano) {
     P->es = 0.;
-    P->host->inv = hatano_s_inverse;
-    P->host->fwd = hatano_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(hatano_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(hatano_s_forward);
 
     return P;
 }

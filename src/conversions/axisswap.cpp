@@ -271,16 +271,16 @@ PJ *CONVERSION(axisswap,0) {
 
     /* only map fwd/inv functions that are possible with the given axis setup */
     if (n == 4) {
-        P->host->fwd4d = forward_4d;
-        P->host->inv4d = reverse_4d;
+        P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
+        P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
     }
     if (n == 3 && Q->axis[0] < 3 && Q->axis[1] < 3 && Q->axis[2] < 3) {
-        P->host->fwd3d  = forward_3d;
-        P->host->inv3d  = reverse_3d;
+        P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
+        P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
     }
     if (n == 2 && Q->axis[0] < 2 && Q->axis[1] < 2) {
-        P->host->fwd    = forward_2d;
-        P->host->inv    = reverse_2d;
+        P->host->fwd    = PJ_MAKE_KERNEL(forward_2d);
+        P->host->inv    = PJ_MAKE_KERNEL(reverse_2d);
     }
 
 

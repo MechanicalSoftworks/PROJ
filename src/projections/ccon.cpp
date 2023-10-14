@@ -102,8 +102,8 @@ PJ *PROJECTION(ccon) {
     Q->ctgphi1 = Q->cosphi1/Q->sinphi1;
 
 
-    P->host->inv = ccon_inverse;
-    P->host->fwd = ccon_forward;
+    P->host->inv = PJ_MAKE_KERNEL(ccon_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(ccon_forward);
 
     return P;
 }

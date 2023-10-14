@@ -402,12 +402,12 @@ PJ *OPERATION(pipeline,0) {
         return destructor (P, PROJ_ERR_INVALID_OP_WRONG_SYNTAX); /* ERROR: nested pipelines */
     }
 
-    P->host->fwd4d  =  pipeline_forward_4d;
-    P->host->inv4d  =  pipeline_reverse_4d;
-    P->host->fwd3d  =  pipeline_forward_3d;
-    P->host->inv3d  =  pipeline_reverse_3d;
-    P->host->fwd    =  pipeline_forward;
-    P->host->inv    =  pipeline_reverse;
+    P->host->fwd4d  =  PJ_MAKE_KERNEL(pipeline_forward_4d);
+    P->host->inv4d  =  PJ_MAKE_KERNEL(pipeline_reverse_4d);
+    P->host->fwd3d  =  PJ_MAKE_KERNEL(pipeline_forward_3d);
+    P->host->inv3d  =  PJ_MAKE_KERNEL(pipeline_reverse_3d);
+    P->host->fwd    =  PJ_MAKE_KERNEL(pipeline_forward);
+    P->host->inv    =  PJ_MAKE_KERNEL(pipeline_reverse);
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
 
@@ -684,15 +684,15 @@ static PJ *setup_pushpop(PJ *P) {
 
 
 PJ *OPERATION(push, 0) {
-    P->host->fwd4d = push;
-    P->host->inv4d = pop;
+    P->host->fwd4d = PJ_MAKE_KERNEL(push);
+    P->host->inv4d = PJ_MAKE_KERNEL(pop);
 
     return setup_pushpop(P);
 }
 
 PJ *OPERATION(pop, 0) {
-    P->host->inv4d = push;
-    P->host->fwd4d = pop;
+    P->host->inv4d = PJ_MAKE_KERNEL(push);
+    P->host->fwd4d = PJ_MAKE_KERNEL(pop);
 
     return setup_pushpop(P);
 }

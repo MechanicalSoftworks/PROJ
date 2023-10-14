@@ -112,8 +112,8 @@ PJ *PROJECTION(tpeqd) {
     Q->r2z0 = 0.5 / Q->z02;
     Q->z02 *= Q->z02;
 
-    P->host->inv = tpeqd_s_inverse;
-    P->host->fwd = tpeqd_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(tpeqd_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(tpeqd_s_forward);
     P->es = 0.;
 
     return P;

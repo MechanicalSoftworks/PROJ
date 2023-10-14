@@ -148,8 +148,8 @@ PJ *PROJECTION(eqearth) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
     P->host->destructor = destructor;
-    P->host->fwd = eqearth_e_forward;
-    P->host->inv = eqearth_e_inverse;
+    P->host->fwd = PJ_MAKE_KERNEL(eqearth_e_forward);
+    P->host->inv = PJ_MAKE_KERNEL(eqearth_e_inverse);
     Q->rqda = 1.0;
 
     /* Ellipsoidal case */

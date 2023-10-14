@@ -23,7 +23,7 @@ static PJ_XY larr_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 PJ *PROJECTION(larr) {
 
     P->es = 0;
-    P->host->fwd = larr_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(larr_s_forward);
 
     return P;
 }

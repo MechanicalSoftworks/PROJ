@@ -69,7 +69,7 @@ PJ *PROJECTION(fouc_s) {
 
     Q->n1 = 1. - Q->n;
     P->es = 0;
-    P->host->inv = fouc_s_s_inverse;
-    P->host->fwd = fouc_s_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(fouc_s_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(fouc_s_s_forward);
     return P;
 }

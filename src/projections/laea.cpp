@@ -297,15 +297,15 @@ PJ *PROJECTION(laea) {
             Q->xmf *= Q->dd;
             break;
         }
-        P->host->inv = laea_e_inverse;
-        P->host->fwd = laea_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(laea_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(laea_e_forward);
     } else {
         if (Q->mode == OBLIQ) {
             Q->sinb1 = sin(P->phi0);
             Q->cosb1 = cos(P->phi0);
         }
-        P->host->inv = laea_s_inverse;
-        P->host->fwd = laea_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(laea_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(laea_s_forward);
     }
 
     return P;

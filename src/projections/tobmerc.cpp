@@ -41,7 +41,7 @@ static PJ_LP tobmerc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inve
 }
 
 PJ *PROJECTION(tobmerc) {
-    P->host->inv = tobmerc_s_inverse;
-    P->host->fwd = tobmerc_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(tobmerc_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(tobmerc_s_forward);
     return P;
 }

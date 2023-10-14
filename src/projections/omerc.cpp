@@ -266,8 +266,8 @@ PJ *PROJECTION(omerc) {
     F = 0.5 * gamma0;
     Q->v_pole_n = Q->ArB * log(tan(M_FORTPI - F));
     Q->v_pole_s = Q->ArB * log(tan(M_FORTPI + F));
-    P->host->inv = omerc_e_inverse;
-    P->host->fwd = omerc_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(omerc_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(omerc_e_forward);
 
     return P;
 }

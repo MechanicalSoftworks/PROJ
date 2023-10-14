@@ -38,8 +38,8 @@ static PJ_LP gall_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 PJ *PROJECTION(gall) {
     P->es = 0.0;
 
-    P->host->inv = gall_s_inverse;
-    P->host->fwd = gall_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(gall_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(gall_s_forward);
 
     return P;
 }

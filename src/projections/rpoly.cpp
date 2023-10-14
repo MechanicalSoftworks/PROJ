@@ -56,7 +56,7 @@ PJ *PROJECTION(rpoly) {
         Q->fxa = 0.5 / Q->fxb;
     }
     P->es = 0.;
-    P->host->fwd = rpoly_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(rpoly_s_forward);
 
     return P;
 }

@@ -85,8 +85,8 @@ PJ *PROJECTION(hammer) {
     Q->m /= Q->w;
 
     P->es = 0.;
-    P->host->fwd = hammer_s_forward;
-    P->host->inv = hammer_s_inverse;
+    P->host->fwd = PJ_MAKE_KERNEL(hammer_s_forward);
+    P->host->inv = PJ_MAKE_KERNEL(hammer_s_inverse);
 
     return P;
 }

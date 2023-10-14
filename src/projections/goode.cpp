@@ -81,8 +81,8 @@ PJ *PROJECTION(goode) {
     if (Q->sinu == nullptr || Q->moll == nullptr)
         return destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
-    P->host->fwd = goode_s_forward;
-    P->host->inv = goode_s_inverse;
+    P->host->fwd = PJ_MAKE_KERNEL(goode_s_forward);
+    P->host->inv = PJ_MAKE_KERNEL(goode_s_inverse);
 
     return P;
 }

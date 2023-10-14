@@ -84,8 +84,8 @@ PJ *PROJECTION(oea) {
     Q->two_r_m = 2. * Q->rm;
     Q->hm = 0.5 * Q->m;
     Q->hn = 0.5 * Q->n;
-    P->host->fwd = oea_s_forward;
-    P->host->inv = oea_s_inverse;
+    P->host->fwd = PJ_MAKE_KERNEL(oea_s_forward);
+    P->host->inv = PJ_MAKE_KERNEL(oea_s_inverse);
     P->es = 0.;
 
     return P;

@@ -49,8 +49,8 @@ PJ *PROJECTION(eqc) {
         proj_log_error(P, _("Invalid value for lat_ts: |lat_ts| should be <= 90°"));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }
-    P->host->inv = eqc_s_inverse;
-    P->host->fwd = eqc_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(eqc_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(eqc_s_forward);
     P->es = 0.;
 
     return P;

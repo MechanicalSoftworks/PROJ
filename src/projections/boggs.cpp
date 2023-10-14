@@ -39,6 +39,6 @@ static PJ_XY boggs_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 
 PJ *PROJECTION(boggs) {
     P->es = 0.;
-    P->host->fwd = boggs_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(boggs_s_forward);
     return P;
 }

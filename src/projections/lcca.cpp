@@ -158,8 +158,8 @@ PJ *PROJECTION(lcca) {
     Q->r0 = N0 / tan0;
     Q->C = 1. / (6. * R0 * N0);
 
-    P->host->inv = lcca_e_inverse;
-    P->host->fwd = lcca_e_forward;
+    P->host->inv = PJ_MAKE_KERNEL(lcca_e_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(lcca_e_forward);
     P->host->destructor = destructor;
 
     return P;

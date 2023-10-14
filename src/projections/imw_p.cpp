@@ -231,8 +231,8 @@ PJ *PROJECTION(imw_p) {
     Q->Pp = (m2 * x1 - m1 * x2) * t;
     Q->Qp = (x2 - x1) * t;
 
-    P->host->fwd = imw_p_e_forward;
-    P->host->inv = imw_p_e_inverse;
+    P->host->fwd = PJ_MAKE_KERNEL(imw_p_e_forward);
+    P->host->inv = PJ_MAKE_KERNEL(imw_p_e_inverse);
     P->host->destructor = destructor;
 
     return P;

@@ -45,8 +45,8 @@ static PJ_LP eck3_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 
 static PJ *setup(PJ *P) {
     P->es = 0.;
-    P->host->inv = eck3_s_inverse;
-    P->host->fwd = eck3_s_forward;
+    P->host->inv = PJ_MAKE_KERNEL(eck3_s_inverse);
+    P->host->fwd = PJ_MAKE_KERNEL(eck3_s_forward);
     return P;
 }
 

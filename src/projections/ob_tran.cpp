@@ -267,11 +267,19 @@ PJ *PROJECTION(ob_tran) {
     if (fabs(phip) > TOL) { /* oblique */
         Q->cphip = cos(phip);
         Q->sphip = sin(phip);
-        P->host->fwd = Q->link->host->fwd ? o_forward : nullptr;
-        P->host->inv = Q->link->host->inv ? o_inverse : nullptr;
+        if (Q->link->host->fwd) {
+            P->host->fwd = PJ_MAKE_KERNEL(o_forward);
+        }
+        if (Q->link->host->inv) {
+            P->host->inv = PJ_MAKE_KERNEL(o_inverse);
+        }
     } else { /* transverse */
-        P->host->fwd = Q->link->host->fwd ? t_forward : nullptr;
-        P->host->inv = Q->link->host->inv ? t_inverse : nullptr;
+        if (Q->link->host->fwd) {
+            P->host->fwd = PJ_MAKE_KERNEL(t_forward);
+        }
+        if (Q->link->host->inv) {
+            P->host->inv = PJ_MAKE_KERNEL(t_inverse);
+        }
     }
 
     /* Support some rather speculative test cases, where the rotated projection */

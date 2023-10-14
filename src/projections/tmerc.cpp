@@ -606,13 +606,13 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
                 return nullptr;
             if( P->es == 0 )
             {
-                P->host->inv = tmerc_spherical_inv;
-                P->host->fwd = tmerc_spherical_fwd;
+                P->host->inv = PJ_MAKE_KERNEL(tmerc_spherical_inv);
+                P->host->fwd = PJ_MAKE_KERNEL(tmerc_spherical_fwd);
             }
             else
             {
-                P->host->inv = approx_e_inv;
-                P->host->fwd = approx_e_fwd;
+                P->host->inv = PJ_MAKE_KERNEL(approx_e_inv);
+                P->host->fwd = PJ_MAKE_KERNEL(approx_e_fwd);
             }
             break;
         }
@@ -620,8 +620,8 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
         case TMercAlgo::PODER_ENGSAGER:
         {
             setup_exact(P);
-            P->host->inv = exact_e_inv;
-            P->host->fwd = exact_e_fwd;
+            P->host->inv = PJ_MAKE_KERNEL(exact_e_inv);
+            P->host->fwd = PJ_MAKE_KERNEL(exact_e_fwd);
             break;
         }
 
@@ -632,8 +632,8 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
                 return nullptr;
             setup_exact(P);
 
-            P->host->inv = auto_e_inv;
-            P->host->fwd = auto_e_fwd;
+            P->host->inv = PJ_MAKE_KERNEL(auto_e_inv);
+            P->host->fwd = PJ_MAKE_KERNEL(auto_e_fwd);
             break;
         }
     }

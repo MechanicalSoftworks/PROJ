@@ -89,7 +89,7 @@ PJ *PROJECTION(bertin1953) {
     Q->sin_delta_gamma = 0.;
 
     P->es = 0.;
-    P->host->fwd = bertin1953_s_forward;
+    P->host->fwd = PJ_MAKE_KERNEL(bertin1953_s_forward);
 
     return P;
 }

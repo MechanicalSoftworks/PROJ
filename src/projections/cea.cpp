@@ -98,11 +98,11 @@ PJ *PROJECTION(cea) {
             return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
 
         Q->qp = pj_qsfn(1., P->e, P->one_es);
-        P->host->inv = cea_e_inverse;
-        P->host->fwd = cea_e_forward;
+        P->host->inv = PJ_MAKE_KERNEL(cea_e_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(cea_e_forward);
     } else {
-        P->host->inv = cea_s_inverse;
-        P->host->fwd = cea_s_forward;
+        P->host->inv = PJ_MAKE_KERNEL(cea_s_inverse);
+        P->host->fwd = PJ_MAKE_KERNEL(cea_s_forward);
     }
 
     return P;
