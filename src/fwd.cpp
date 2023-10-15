@@ -178,6 +178,32 @@ static inline PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
     return coord;
 }
 
+static inline PJ_XY pj_dispatch_fwd(PJ_COORD coo, PJ* P)
+{
+#ifdef PROJ_OPENCL
+    return pj_double_dispatch_fwd(coo.lp, P, P->fwd);
+#else
+    return P->host->fwd(coo.lp, P);
+#endif
+}
+
+static inline PJ_XYZ pj_dispatch_fwd3d(PJ_COORD coo, PJ* P)
+{
+#ifdef PROJ_OPENCL
+    return pj_double_dispatch_fwd3d(coo.lpz, P, P->fwd3d);
+#else
+    return P->host->fwd3d(coo.lpz, P);
+#endif
+}
+
+static inline PJ_COORD pj_dispatch_fwd4d(PJ_COORD coo, PJ* P)
+{
+#ifdef PROJ_OPENCL
+    return pj_double_dispatch_fwd4d(coo.lpz, P, P->fwd3d);
+#else
+    return P->host->fwd4d(coo, P);
+#endif
+}
 
 PJ_XY pj_fwd(PJ_LP lp, PJ *P) {
     PJ_COORD coo = {{0,0,0,0}};
@@ -192,18 +218,18 @@ PJ_XY pj_fwd(PJ_LP lp, PJ *P) {
         return proj_coord_error ().xy;
 
     /* Do the transformation, using the lowest dimensional transformer available */
-    if (P->host->fwd)
+    if (P->fwd[0])
     {
-        const auto xy = P->host->fwd(coo.lp, P);
-        coo.xy = xy;
+        coo.xy = pj_dispatch_fwd(coo, P);
     }
-    else if (P->host->fwd3d)
+    else if (P->fwd3d[0])
     {
-        const auto xyz = P->host->fwd3d (coo.lpz, P);
-        coo.xyz = xyz;
+        coo.xyz = pj_dispatch_fwd3d(coo, P);
     }
-    else if (P->host->fwd4d)
-        coo = P->host->fwd4d (coo, P);
+    else if (P->fwd4d[0])
+    {
+        coo = pj_dispatch_fwd4d(coo, P);
+    }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
         return proj_coord_error ().xy;
@@ -232,17 +258,17 @@ PJ_XYZ pj_fwd3d(PJ_LPZ lpz, PJ *P) {
         return proj_coord_error ().xyz;
 
     /* Do the transformation, using the lowest dimensional transformer feasible */
-    if (P->host->fwd3d)
+    if (P->fwd3d[0])
     {
-        const auto xyz = P->host->fwd3d(coo.lpz, P);
-        coo.xyz = xyz;
+        coo.xyz = pj_dispatch_fwd3d(coo, P);
     }
-    else if (P->host->fwd4d)
-        coo = P->host->fwd4d (coo, P);
-    else if (P->host->fwd)
+    else if (P->fwd4d[0])
     {
-        const auto xy = P->host->fwd (coo.lp, P);
-        coo.xy = xy;
+        coo = pj_dispatch_fwd4d(coo, P);
+    }
+    else if (P->fwd[0])
+    {
+        coo.xy = pj_dispatch_fwd(coo, P);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
@@ -271,16 +297,16 @@ PJ_COORD pj_fwd4d (PJ_COORD coo, PJ *P) {
 
     /* Call the highest dimensional converter available */
     if (P->host->fwd4d)
-        coo = P->host->fwd4d (coo, P);
+    {
+        coo = pj_dispatch_fwd4d(coo, P);
+    }
     else if (P->host->fwd3d)
     {
-        const auto xyz = P->host->fwd3d (coo.lpz, P);
-        coo.xyz  = xyz;
+        coo.xyz  = pj_dispatch_fwd3d(coo, P);
     }
     else if (P->host->fwd)
     {
-        const auto xy = P->host->fwd (coo.lp, P);
-        coo.xy  = xy;
+        coo.xy  = pj_dispatch_fwd(coo, P);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);

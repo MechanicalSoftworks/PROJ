@@ -212,6 +212,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
     auto pj = pj_new(ctx);
     if (pj) {
         pj->host->ctx = ctx;
+        pj->shared_ctx = ctx->shared;
         pj->host->descr = "ISO-19111 object";
         pj->host->iso_obj = objIn;
         try {

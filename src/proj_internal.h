@@ -296,7 +296,7 @@ PJ_OPERATOR:
     PJ to the PJ_COORD, and returning the resulting PJ_COORD.
 
 *****************************************************************************/
-typedef    PJ       *(* PJ_CONSTRUCTOR) (PJ *);
+typedef    PJ       *(* PJ_CONSTRUCTOR) (PJ *, PJ_CONTEXT *);
 typedef    PJ       *(* PJ_DESTRUCTOR)  (PJ *, int);
 typedef    PJ_COORD  (* PJ_OPERATOR)    (PJ_COORD, PJ *);
 /****************************************************************************/
@@ -434,6 +434,12 @@ typedef PJ_LPZ (*PJ_INV_3D)(PJ_XYZ, PJ*);
 
 #define PJ_MAKE_KERNEL(name) PJkernel<decltype(name)*>{ PROJ_STR(name), &name }
 
+struct PJscan
+{
+    std::set<const char*> functions;
+    std::set<const char*> files;
+};
+
 struct PJhost
 {
     /*************************************************************************************
@@ -454,6 +460,8 @@ struct PJhost
     char *def_shape = nullptr;
     char *def_spherification = nullptr;
     char *def_ellps = nullptr;
+
+    const char *file = nullptr;
 
     /*************************************************************************************
 
@@ -480,6 +488,8 @@ struct PJhost
 
     PJ_DESTRUCTOR destructor = nullptr;
     void   (*reassign_context)(PJ*, PJ_CONTEXT*) = nullptr;
+
+    void   (*scan)(PJ*, PJscan& s) = nullptr;
 
     /*************************************************************************************
      ISO-19111 interface
@@ -533,6 +543,31 @@ struct PJconsts {
     struct geod_geodesic *geod = nullptr;    /* For geodesic computations */
     void *opaque = nullptr;                  /* Projection specific parameters, Defined in PJ_*.c */
     int inverted = 0;                        /* Tell high level API functions to swap inv/fwd */
+
+
+    /*************************************************************************************
+
+                          F U N C T I O N    P O I N T E R S
+
+    **************************************************************************************
+
+        For projection xxx, these are pointers to functions in the corresponding
+        PJ_xxx.c file.
+
+        pj_init() delegates the setup of these to pj_projection_specific_setup_xxx(),
+        a name which is currently hidden behind the magic curtain of the PROJECTION
+        macro.
+
+    **************************************************************************************/
+
+    /* These are the names of the functions.
+     * They're populated after construction and are used by OpenCL to lookup the functions a kernel needs to run.*/
+    char    fwd[256] = { 0 };
+    char    inv[256] = { 0 };
+    char    fwd3d[256] = { 0 };
+    char    inv3d[256] = { 0 };
+    char    fwd4d[256] = { 0 };
+    char    inv4d[256] = { 0 };
 
 
     /*************************************************************************************
@@ -865,11 +900,12 @@ C_NAMESPACE PJ *pj_##name (PJ *P, PJ_CONTEXT *ctx) {         \
     P = pj_new(ctx);                                         \
     if (nullptr==P)                                          \
         return nullptr;                                      \
-    P->host->short_name = #name;                                   \
-    P->host->descr = des_##name;                                   \
+    P->host->short_name = #name;                             \
+    P->host->descr = des_##name;                             \
     P->need_ellps = NEED_ELLPS;                              \
     P->left  = PJ_IO_UNITS_RADIANS;                          \
     P->right = PJ_IO_UNITS_CLASSIC;                          \
+    P->host->file = __FILE__;                                \
     return P;                                                \
 }                                                            \
                                                              \
@@ -956,6 +992,10 @@ std::string pj_double_quote_string_param_if_needed(const std::string& str);
 
 PJ *pj_create_internal (PJ_CONTEXT *ctx, const char *definition);
 PJ *pj_create_argv_internal (PJ_CONTEXT *ctx, int argc, char **argv);
+
+void pj_scan_recursive(PJ* P, PJscan& s);
+void pj_scan_local(PJ* P, PJscan& s);
+void pj_scan_nop(PJ* P, PJscan& s);
 
 // For use by projinfo
 void pj_load_ini(PJ_CONTEXT* ctx);

@@ -230,6 +230,7 @@ set(SRC_LIBPROJ_CORE
   mlfn.cpp
   msfn.cpp
   mutex.cpp
+  opencl.cpp
   param.cpp
   phi2.cpp
   pipeline.cpp

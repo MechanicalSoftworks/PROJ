@@ -409,6 +409,14 @@ paralist *pj_expand_init(PJ_CONTEXT *ctx, paralist *init) {
 /*      large enough to hold projection specific parameters.            */
 /************************************************************************/
 
+static void copy_kernel_names(PJ *P) {
+    if (P->host->fwd) strcpy(P->fwd, P->host->fwd.name);
+    if (P->host->inv) strcpy(P->inv, P->host->inv.name);
+    if (P->host->fwd3d) strcpy(P->fwd3d, P->host->fwd3d.name);
+    if (P->host->inv3d) strcpy(P->inv3d, P->host->inv3d.name);
+    if (P->host->fwd4d) strcpy(P->fwd4d, P->host->fwd4d.name);
+    if (P->host->inv4d) strcpy(P->inv4d, P->host->inv4d.name);
+}
 
 static PJ_CONSTRUCTOR locate_constructor (const char *name) {
     int i;
@@ -529,7 +537,7 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
     append_default_ellipsoid_to_paralist (start);
 
     /* Allocate projection structure */
-    PIN = proj(nullptr);
+    PIN = proj(nullptr, ctx);
     if (nullptr==PIN) {
         free_params (ctx, start, PROJ_ERR_OTHER /*ENOMEM*/);
         return nullptr;
@@ -537,12 +545,14 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
 
 
     PIN->host->ctx = ctx;
+    PIN->shared_ctx = ctx->shared;
     PIN->host->params = start;
     PIN->is_latlong = 0;
     PIN->is_geocent = 0;
     PIN->is_long_wrap_set = 0;
     PIN->long_wrap_center = 0.0;
     strcpy( PIN->axis, "enu" );
+    copy_kernel_names(PIN);
 
     /* Set datum parameters. Similarly to +init parameters we want to expand    */
     /* +datum parameters as late as possible when dealing with pipelines.       */
@@ -773,11 +783,12 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
 
     /* Projection specific initialization */
     err = proj_errno_reset (PIN);
-    PIN = proj(PIN);
+    PIN = proj(PIN, ctx);
     if (proj_errno (PIN)) {
         proj_destroy(PIN);
         return nullptr;
     }
+    copy_kernel_names(PIN);
     proj_errno_restore (PIN, err);
     return PIN;
 }

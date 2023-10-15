@@ -161,6 +161,17 @@ static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
         proj_assign_context(step.pj, ctx);
 }
 
+static void pipeline_scan(PJ* P, PJscan& s)
+{
+    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
+    for (auto& step : pipeline->steps)
+    {
+        if (!step.omit_fwd)
+        {
+            pj_scan_recursive(step.pj, s);
+        }
+    }
+}
 
 static PJ_COORD pipeline_forward_4d (PJ_COORD point, PJ *P) {
     auto pipeline = static_cast<struct Pipeline*>(P->opaque);
@@ -410,6 +421,7 @@ PJ *OPERATION(pipeline,0) {
     P->host->inv    =  PJ_MAKE_KERNEL(pipeline_reverse);
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
+    P->host->scan   = pipeline_scan;
 
     /* Currently, the pipeline driver is a raw bit mover, enabling other operations */
     /* to collaborate efficiently. All prep/fin stuff is done at the step levels. */
@@ -678,6 +690,8 @@ static PJ *setup_pushpop(PJ *P) {
 
     P->left  = PJ_IO_UNITS_WHATEVER;
     P->right = PJ_IO_UNITS_WHATEVER;
+
+    P->host->scan = pj_scan_nop;
 
     return P;
 }

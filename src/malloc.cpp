@@ -157,7 +157,7 @@ PJ *proj_destroy(PJ *P) {
 
 /*****************************************************************************/
 // cppcheck-suppress uninitMemberVar
-PJhost::PJhost() : destructor(pj_default_destructor) {}
+PJhost::PJhost() : destructor(pj_default_destructor), scan(pj_scan_recursive) {}
 /*****************************************************************************/
 
 /*****************************************************************************/
