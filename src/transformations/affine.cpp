@@ -110,7 +110,7 @@ static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
 }
 
 static struct pj_opaque_affine * initQ(PJ_CONTEXT *ctx) {
-    struct pj_opaque_affine *Q = static_cast<struct pj_opaque_affine *>(svm_calloc(ctx, 1, sizeof(struct pj_opaque_affine)));
+    struct pj_opaque_affine *Q = static_cast<struct pj_opaque_affine *>(ctx->allocator->svm_calloc(1, sizeof(struct pj_opaque_affine)));
     if (nullptr==Q)
         return nullptr;
 

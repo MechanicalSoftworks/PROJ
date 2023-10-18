@@ -28,21 +28,18 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <errno.h>
-#include <math.h>
+#include "proj_internal_shared.h"
 
-#include "proj_internal.h"
-#include <math.h>
-
+#undef INPUT_UNITS
+#undef OUTPUT_UNITS
 #define INPUT_UNITS  P->left
 #define OUTPUT_UNITS P->right
 
 
-static void fwd_prepare (PJ *P, PJ_COORD& coo) {
+static PJ_COORD fwd_prepare (PJ *P, PJ_COORD coo) {
     if (HUGE_VAL==coo.v[0] || HUGE_VAL==coo.v[1] || HUGE_VAL==coo.v[2])
     {
-        coo = proj_coord_error ();
-        return;
+        return proj_coord_error ();
     }
 
     /* The helmert datum shift will choke unless it gets a sensible 4D coordinate */
@@ -59,15 +56,13 @@ static void fwd_prepare (PJ *P, PJ_COORD& coo) {
         {
             proj_log_error(P, _("Invalid latitude"));
             proj_errno_set (P, PROJ_ERR_COORD_TRANSFM_INVALID_COORD);
-            coo = proj_coord_error ();
-            return;
+            return proj_coord_error();
         }
         if (coo.lp.lam > 10  ||  coo.lp.lam < -10)
         {
             proj_log_error(P, _("Invalid longitude"));
             proj_errno_set (P, PROJ_ERR_COORD_TRANSFM_INVALID_COORD);
-            coo = proj_coord_error ();
-            return;
+            return proj_coord_error();
         }
 
 
@@ -94,7 +89,7 @@ static void fwd_prepare (PJ *P, PJ_COORD& coo) {
             coo = proj_trans (P->cart,       PJ_INV, coo); /* Go back to angular using local ellps */
         }
         if (coo.lp.lam==HUGE_VAL)
-            return;
+            return coo;
         if (P->vgridshift)
             coo = proj_trans (P->vgridshift, PJ_FWD, coo); /* Go orthometric from geometric */
 
@@ -105,18 +100,18 @@ static void fwd_prepare (PJ *P, PJ_COORD& coo) {
         if (0==P->over)
             coo.lp.lam = adjlon(coo.lp.lam);
 
-        return;
+        return coo;
     }
 
 
     /* We do not support gridshifts on cartesian input */
     if (INPUT_UNITS==PJ_IO_UNITS_CARTESIAN && P->helmert)
             coo = proj_trans (P->helmert, PJ_INV, coo);
-    return;
+    return coo;
 }
 
 
-static void fwd_finalize (PJ *P, PJ_COORD& coo) {
+static PJ_COORD fwd_finalize (PJ *P, PJ_COORD coo) {
 
     switch (OUTPUT_UNITS) {
 
@@ -166,10 +161,12 @@ static void fwd_finalize (PJ *P, PJ_COORD& coo) {
 
     if (P->axisswap)
         coo = proj_trans (P->axisswap, PJ_FWD, coo);
+
+    return coo;
 }
 
 
-static inline PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
+PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
     if (P->shared_ctx->last_errno)
         return proj_coord_error();
 
@@ -180,7 +177,7 @@ static inline PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
 
 static inline PJ_XY pj_dispatch_fwd(PJ_COORD coo, PJ* P)
 {
-#ifdef PROJ_OPENCL
+#ifdef PROJ_OPENCL_DEVICE
     return pj_double_dispatch_fwd(coo.lp, P, P->fwd);
 #else
     return P->host->fwd(coo.lp, P);
@@ -189,7 +186,7 @@ static inline PJ_XY pj_dispatch_fwd(PJ_COORD coo, PJ* P)
 
 static inline PJ_XYZ pj_dispatch_fwd3d(PJ_COORD coo, PJ* P)
 {
-#ifdef PROJ_OPENCL
+#ifdef PROJ_OPENCL_DEVICE
     return pj_double_dispatch_fwd3d(coo.lpz, P, P->fwd3d);
 #else
     return P->host->fwd3d(coo.lpz, P);
@@ -198,8 +195,8 @@ static inline PJ_XYZ pj_dispatch_fwd3d(PJ_COORD coo, PJ* P)
 
 static inline PJ_COORD pj_dispatch_fwd4d(PJ_COORD coo, PJ* P)
 {
-#ifdef PROJ_OPENCL
-    return pj_double_dispatch_fwd4d(coo.lpz, P, P->fwd3d);
+#ifdef PROJ_OPENCL_DEVICE
+    return pj_double_dispatch_fwd4d(coo, P, P->fwd3d);
 #else
     return P->host->fwd4d(coo, P);
 #endif
@@ -212,22 +209,41 @@ PJ_XY pj_fwd(PJ_LP lp, PJ *P) {
     const int last_errno = P->shared_ctx->last_errno;
     P->shared_ctx->last_errno = 0;
 
+    //
+    // * pj_fwd is called by proj_trans.
+    // * fwd_prepare+dispatch_fwd+fwd_finalize each have the ability to call proj_trans.
+    // * fwd_prepare+fwd_finalize accept the same parameter types as dispatch_fwd.
+    //      * Is it possible to include prepare+finalize in the dispatch table?
+    //      * This would mean that generated OpenCL code would simply be a bunch of dispatches
+    //          * fwd_prepare (for pipeline)
+    //          * fwd_prepare (for eqc)
+    //          * eqc_forward
+    //          * fwd_finalize (for eqc)
+    //          * inv_prepare (for unitconvert)
+    //          * unitconvert_inv
+    //          * inv_finalize (for unitconvert)
+    //          * fwd_finalize (for pipeline)
+    // 
+    //
     if (!P->skip_fwd_prepare)
-        fwd_prepare (P, coo);
+        coo = fwd_prepare (P, coo);
     if (HUGE_VAL==coo.v[0] || HUGE_VAL==coo.v[1])
         return proj_coord_error ().xy;
 
     /* Do the transformation, using the lowest dimensional transformer available */
     if (P->fwd[0])
     {
+        printf("pj_fwd(1): %s\n", P->fwd);
         coo.xy = pj_dispatch_fwd(coo, P);
     }
     else if (P->fwd3d[0])
     {
+        printf("pj_fwd(2): %s\n", P->fwd3d);
         coo.xyz = pj_dispatch_fwd3d(coo, P);
     }
     else if (P->fwd4d[0])
     {
+        printf("pj_fwd(3): %s\n", P->fwd4d);
         coo = pj_dispatch_fwd4d(coo, P);
     }
     else {
@@ -238,7 +254,7 @@ PJ_XY pj_fwd(PJ_LP lp, PJ *P) {
         return proj_coord_error ().xy;
 
     if (!P->skip_fwd_finalize)
-        fwd_finalize (P, coo);
+        coo = fwd_finalize (P, coo);
 
     return error_or_coord(P, coo, last_errno).xy;
 }
@@ -260,14 +276,17 @@ PJ_XYZ pj_fwd3d(PJ_LPZ lpz, PJ *P) {
     /* Do the transformation, using the lowest dimensional transformer feasible */
     if (P->fwd3d[0])
     {
+        printf("pj_fwd3d(1): %s\n", P->fwd3d);
         coo.xyz = pj_dispatch_fwd3d(coo, P);
     }
     else if (P->fwd4d[0])
     {
+        printf("pj_fwd3d(2): %s\n", P->fwd4d);
         coo = pj_dispatch_fwd4d(coo, P);
     }
     else if (P->fwd[0])
     {
+        printf("pj_fwd3d(3): %s\n", P->fwd);
         coo.xy = pj_dispatch_fwd(coo, P);
     }
     else {
@@ -296,16 +315,19 @@ PJ_COORD pj_fwd4d (PJ_COORD coo, PJ *P) {
         return proj_coord_error ();
 
     /* Call the highest dimensional converter available */
-    if (P->host->fwd4d)
+    if (P->fwd4d[0])
     {
+        printf("pj_fwd4d(1): %s\n", P->fwd4d);
         coo = pj_dispatch_fwd4d(coo, P);
     }
-    else if (P->host->fwd3d)
+    else if (P->fwd3d[0])
     {
+        printf("pj_fwd4d(2): %s\n", P->fwd3d);
         coo.xyz  = pj_dispatch_fwd3d(coo, P);
     }
-    else if (P->host->fwd)
+    else if (P->fwd[0])
     {
+        printf("pj_fwd4d(3): %s\n", P->fwd);
         coo.xy  = pj_dispatch_fwd(coo, P);
     }
     else {

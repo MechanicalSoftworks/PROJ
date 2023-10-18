@@ -18,7 +18,7 @@
 pj_authset(PJ_CONTEXT* ctx, double es) {
 	double t, *APA;
 
-	if ((APA = (double *)svm_malloc(ctx, APA_SIZE * sizeof(double))) != nullptr) {
+	if ((APA = (double *)ctx->allocator->svm_malloc(APA_SIZE * sizeof(double))) != nullptr) {
 		APA[0] = es * P00;
 		t = es * es;
 		APA[0] += t * P01;
@@ -33,7 +33,7 @@ pj_authset(PJ_CONTEXT* ctx, double es) {
 	void
 pj_free_authset(PJ_CONTEXT *ctx, double* apa)
 {
-	svm_free(ctx, apa);
+	ctx->allocator->svm_free(apa);
 }
 	double
 pj_authlat(double beta, double *APA) {

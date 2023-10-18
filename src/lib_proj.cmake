@@ -206,7 +206,6 @@ set(SRC_LIBPROJ_ISO19111
 set(SRC_LIBPROJ_CORE
   4D_api.cpp
   aasincos.cpp
-  adjlon.cpp
   auth.cpp
   ctx.cpp
   datum_set.cpp
@@ -237,10 +236,13 @@ set(SRC_LIBPROJ_CORE
   pj_list.h
   pr_list.cpp
   proj_internal.h
+  proj_internal_shared.h
+  proj_internal_device.h
   proj_mdist.cpp
   qsfn.cpp
   release.cpp
   rtodms.cpp
+  shared.cpp
   strerrno.cpp
   strtod.cpp
   tsfn.cpp
@@ -271,6 +273,7 @@ set(SRC_LIBPROJ_CORE
 
 set(HEADERS_LIBPROJ
   proj.h
+  proj_shared.h
   proj_experimental.h
   proj_constants.h
   proj_symbol_rename.h

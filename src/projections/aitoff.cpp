@@ -187,7 +187,7 @@ static PJ *setup(PJ *P) {
 
 
 PJ *PROJECTION(aitoff) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -198,7 +198,7 @@ PJ *PROJECTION(aitoff) {
 
 
 PJ *PROJECTION(wintri) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;

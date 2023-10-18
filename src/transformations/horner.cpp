@@ -89,8 +89,8 @@
 PROJ_HEAD(horner, "Horner polynomial evaluation");
 
 /* make horner.h interface with proj's memory management */
-#define horner_dealloc(ctx,x) svm_free(ctx,x)
-#define horner_calloc(ctx,n,x) svm_calloc(ctx,n,x)
+#define horner_dealloc(ctx,x) ctx->allocator->svm_free(x)
+#define horner_calloc(ctx,n,x) ctx->allocator->svm_calloc(n,x)
 
 namespace { // anonymous namespace
 struct horner {

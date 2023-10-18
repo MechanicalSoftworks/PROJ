@@ -27,20 +27,18 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
-#include <errno.h>
-#include <math.h>
 
-#include "proj_internal.h"
-#include <math.h>
+#include "proj_internal_shared.h"
 
+#undef INPUT_UNITS
+#undef OUTPUT_UNITS
 #define INPUT_UNITS  P->right
 #define OUTPUT_UNITS P->left
 
-static void inv_prepare (PJ *P, PJ_COORD& coo) {
+static PJ_COORD inv_prepare (PJ *P, PJ_COORD coo) {
     if (coo.v[0] == HUGE_VAL || coo.v[1] == HUGE_VAL || coo.v[2] == HUGE_VAL) {
         proj_errno_set (P, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
-        coo = proj_coord_error ();
-        return;
+        return proj_coord_error ();
     }
 
     /* The helmert datum shift will choke unless it gets a sensible 4D coordinate */
@@ -74,7 +72,7 @@ static void inv_prepare (PJ *P, PJ_COORD& coo) {
         coo.xyz.y = P->to_meter  * coo.xyz.y - P->y0;
         coo.xyz.z = P->vto_meter * coo.xyz.z - P->z0;
         if (INPUT_UNITS==PJ_IO_UNITS_PROJECTED)
-            return;
+            return coo;
 
         /* Classic proj.4 functions expect plane coordinates in units of the semimajor axis  */
         /* Multiplying by ra, rather than dividing by a because the CalCOFI projection       */
@@ -88,11 +86,13 @@ static void inv_prepare (PJ *P, PJ_COORD& coo) {
         coo.lpz.z = P->vto_meter * coo.lpz.z - P->z0;
         break;
     }
+
+    return coo;
 }
 
 
 
-static void inv_finalize (PJ *P, PJ_COORD& coo) {
+static PJ_COORD inv_finalize (PJ *P, PJ_COORD coo) {
     if (coo.xyz.x == HUGE_VAL) {
         proj_errno_set (P, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
         coo = proj_coord_error ();
@@ -110,7 +110,7 @@ static void inv_finalize (PJ *P, PJ_COORD& coo) {
         if (P->vgridshift)
             coo = proj_trans (P->vgridshift, PJ_INV, coo); /* Go geometric from orthometric */
         if (coo.lp.lam==HUGE_VAL)
-            return;
+            return coo;
         if (P->hgridshift)
             coo = proj_trans (P->hgridshift, PJ_FWD, coo);
         else if (P->helmert || (P->cart_wgs84 != nullptr && P->cart != nullptr)) {
@@ -120,45 +120,40 @@ static void inv_finalize (PJ *P, PJ_COORD& coo) {
             coo = proj_trans (P->cart_wgs84, PJ_INV, coo); /* Go back to angular using WGS84 ellps */
         }
         if (coo.lp.lam==HUGE_VAL)
-            return;
+            return coo;
 
         /* If input latitude was geocentrical, convert back to geocentrical */
         if (P->geoc)
             coo = pj_geocentric_latitude (P, PJ_FWD, coo);
     }
+
+    return coo;
 }
 
-static inline PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
-    if (P->shared_ctx->last_errno)
-        return proj_coord_error();
-
-    P->shared_ctx->last_errno = last_errno;
-
-    return coord;
-}
+extern PJ_COORD error_or_coord(PJ* P, PJ_COORD coord, int last_errno);
 
 static inline PJ_LP pj_dispatch_inv(PJ_COORD coo, PJ* P)
 {
-#ifdef PROJ_OPENCL
-    return pj_double_dispatch_inv(coo.lp, P, P->inv);
+#ifdef PROJ_OPENCL_DEVICE
+    return pj_double_dispatch_inv(coo.xy, P, P->inv);
 #else
-    return P->host->inv(coo.lp, P);
+    return P->host->inv(coo.xy, P);
 #endif
 }
 
 static inline PJ_LPZ pj_dispatch_inv3d(PJ_COORD coo, PJ* P)
 {
-#ifdef PROJ_OPENCL
-    return pj_double_dispatch_inv3d(coo.lpz, P, P->inv3d);
+#ifdef PROJ_OPENCL_DEVICE
+    return pj_double_dispatch_inv3d(coo.xyz, P, P->inv3d);
 #else
-    return P->host->inv3d(coo.lpz, P);
+    return P->host->inv3d(coo.xyz, P);
 #endif
 }
 
 static inline PJ_COORD pj_dispatch_inv4d(PJ_COORD coo, PJ* P)
 {
-#ifdef PROJ_OPENCL
-    return pj_double_dispatch_inv4d(coo.lpz, P, P->inv3d);
+#ifdef PROJ_OPENCL_DEVICE
+    return pj_double_dispatch_inv4d(coo, P, P->inv3d);
 #else
     return P->host->inv4d(coo, P);
 #endif
@@ -172,21 +167,24 @@ PJ_LP pj_inv(PJ_XY xy, PJ *P) {
     P->shared_ctx->last_errno = 0;
 
     if (!P->skip_inv_prepare)
-        inv_prepare (P, coo);
+        coo = inv_prepare (P, coo);
     if (HUGE_VAL==coo.v[0])
         return proj_coord_error ().lp;
 
     /* Do the transformation, using the lowest dimensional transformer available */
     if (P->inv[0])
     {
+        printf("pj_inv(1): %s\n", P->inv);
         coo.lp = pj_dispatch_inv(coo, P);
     }
     else if (P->inv3d[0])
     {
+        printf("pj_inv(2): %s\n", P->inv3d);
         coo.lpz = pj_dispatch_inv3d(coo, P);
     }
     else if (P->inv4d[0])
     {
+        printf("pj_inv(3): %s\n", P->inv4d);
         coo = pj_dispatch_inv4d(coo, P);
     }
     else {
@@ -197,7 +195,7 @@ PJ_LP pj_inv(PJ_XY xy, PJ *P) {
         return proj_coord_error ().lp;
 
     if (!P->skip_inv_finalize)
-        inv_finalize (P, coo);
+        coo = inv_finalize (P, coo);
 
     return error_or_coord(P, coo, last_errno).lp;
 }
@@ -219,14 +217,17 @@ PJ_LPZ pj_inv3d (PJ_XYZ xyz, PJ *P) {
     /* Do the transformation, using the lowest dimensional transformer feasible */
     if (P->inv3d[0])
     {
+        printf("pj_inv3d(1): %s\n", P->inv3d);
         coo.lpz = pj_dispatch_inv3d(coo, P);
     }
     else if (P->inv4d[0])
     {
+        printf("pj_inv3d(2): %s\n", P->inv4d);
         coo = pj_dispatch_inv4d(coo, P);
     }
-    else if (P->host->inv)
+    else if (P->inv[0])
     {
+        printf("pj_inv3d(3): %s\n", P->inv);
         coo.lp = pj_dispatch_inv(coo, P);
     }
     else {
@@ -257,14 +258,17 @@ PJ_COORD pj_inv4d (PJ_COORD coo, PJ *P) {
     /* Call the highest dimensional converter available */
     if (P->inv4d[0])
     {
+        printf("pj_inv4d(3): %s\n", P->inv4d);
         coo = pj_dispatch_inv4d(coo, P);
     }
     else if (P->inv3d[0])
     {
+        printf("pj_inv4d(3): %s\n", P->inv3d);
         coo.lpz = pj_dispatch_inv3d(coo, P);
     }
     else if (P->inv[0])
     {
+        printf("pj_inv4d(3): %s\n", P->inv);
         coo.lp = pj_dispatch_inv(coo, P);
     }
     else {

@@ -125,7 +125,7 @@ PJ *PROJECTION(cass) {
     }
 
     /* otherwise it's ellipsoidal */
-    auto Q = static_cast<struct cass_data*>(svm_calloc (P->host->ctx, 1, sizeof (struct cass_data)));
+    auto Q = static_cast<struct cass_data*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct cass_data)));
     P->opaque = Q;
     if (nullptr==P->opaque)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);

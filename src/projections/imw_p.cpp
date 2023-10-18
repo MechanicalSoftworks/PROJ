@@ -181,7 +181,7 @@ static PJ *destructor (PJ *P, int errlev) {
 PJ *PROJECTION(imw_p) {
     double del, sig, s, t, x1, x2, T2, y1, m1, m2, y2;
     int err;
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque)));
+    struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct pj_opaque)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;

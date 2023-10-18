@@ -480,7 +480,7 @@ static PJ_COORD helmert_reverse_4d (PJ_COORD point, PJ *P) {
 
 
 static PJ* init_helmert_six_parameters(PJ* P) {
-    struct pj_opaque_helmert *Q = static_cast<struct pj_opaque_helmert*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque_helmert)));
+    struct pj_opaque_helmert *Q = static_cast<struct pj_opaque_helmert*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct pj_opaque_helmert)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;

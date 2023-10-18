@@ -85,9 +85,50 @@ void proj_assign_context( PJ* pj, PJ_CONTEXT *ctx )
 /*                          createDefault()                             */
 /************************************************************************/
 
-pj_ctx pj_ctx::createDefault(pj_compute *compute)
+/**********************************************************************/
+static void default_map(void* user, void* ptr, int map)
+/**********************************************************************/
 {
-    pj_ctx ctx(compute);
+    (void)user;
+    (void)ptr;
+    (void)map;
+}
+
+/**********************************************************************/
+static void* default_malloc(void* user, size_t sz)
+/**********************************************************************/
+{
+    (void)user;
+    return malloc(sz);
+}
+
+/**********************************************************************/
+static void* default_calloc(void* user, size_t n, size_t sz)
+/**********************************************************************/
+{
+    (void)user;
+    return calloc(n, sz);
+}
+
+/**********************************************************************/
+static void default_free(void* user, void* ptr)
+/**********************************************************************/
+{
+    if (ptr)
+    {
+        (void)user;
+        free(ptr);
+    }
+}
+
+pj_ctx pj_ctx::createDefault(pj_allocator *allocator)
+{
+    static pj_allocator defaultAllocator{ nullptr, default_malloc, default_calloc, default_free, default_map };
+
+    if (nullptr==allocator)
+        allocator = &defaultAllocator;
+
+    pj_ctx ctx(allocator);
     ctx.debug_level = PJ_LOG_ERROR;
     ctx.logger = pj_stderr_logger;
     NS_PROJ::FileManager::fillDefaultNetworkInterface(&ctx);
@@ -147,18 +188,10 @@ void pj_ctx::set_ca_bundle_path(const std::string& ca_bundle_path_in)
 /*                  pj_ctx(PJ_CONTEXT *ctx)                             */
 /************************************************************************/
 
-pj_ctx::pj_ctx(pj_compute *c) :
-    compute(c)
+pj_ctx::pj_ctx(pj_allocator *a) :
+    allocator(a)
 {
-    // Default context isn't OpenCL enabled.
-    if (compute)
-    {
-        shared = svm_new<pj_ctx_shared>(this);
-    }
-    else
-    {
-        shared = new pj_ctx_shared;
-    }
+    shared = allocator->svm_new<pj_ctx_shared>();
 }
 
 /************************************************************************/
@@ -166,12 +199,12 @@ pj_ctx::pj_ctx(pj_compute *c) :
 /************************************************************************/
 
 pj_ctx::pj_ctx(const pj_ctx& other) :
-    pj_ctx(other, other.compute)
+    pj_ctx(other, other.allocator)
 {}
 
-pj_ctx::pj_ctx(const pj_ctx& other, pj_compute *c) :
+pj_ctx::pj_ctx(const pj_ctx& other, pj_allocator *a) :
     debug_level(other.debug_level),
-    compute(c),
+    allocator(a),
     logger(other.logger),
     logger_app_data(other.logger_app_data),
     cpp_context(other.cpp_context ? other.cpp_context->clone(this) : nullptr),
@@ -193,15 +226,7 @@ pj_ctx::pj_ctx(const pj_ctx& other, pj_compute *c) :
 {
     set_search_paths(other.search_paths);
 
-    // Default context isn't OpenCL enabled.
-    if (compute)
-    {
-        shared = svm_new<pj_ctx_shared>(this);
-    }
-    else
-    {
-        shared = new pj_ctx_shared;
-    }
+    shared = allocator->svm_new<pj_ctx_shared>();
 
     *shared = *other.shared;
 }
@@ -227,15 +252,7 @@ pj_ctx::~pj_ctx()
     delete[] c_compat_paths;
     proj_context_delete_cpp_context(cpp_context);
 
-    // Default context isn't OpenCL enabled.
-    if (compute)
-    {
-        svm_delete(this, shared);
-    }
-    else
-    {
-        delete compute;
-    }
+    allocator->svm_delete(shared);
 }
 
 /************************************************************************/
@@ -246,7 +263,7 @@ pj_ctx::~pj_ctx()
 PJ_CONTEXT* proj_context_clone (PJ_CONTEXT *ctx)
 {
     if (nullptr==ctx)
-        return proj_context_create(nullptr);
+        return proj_context_create();
 
     return new (std::nothrow) pj_ctx(*ctx);
 }

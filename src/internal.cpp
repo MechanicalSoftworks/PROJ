@@ -47,91 +47,20 @@
 using namespace NS_PROJ::internal;
 
 enum pj_io_units pj_left (PJ *P) {
-    enum pj_io_units u = P->inverted? P->right: P->left;
+    int u = P->inverted? P->right: P->left;
     if (u==PJ_IO_UNITS_CLASSIC)
         return PJ_IO_UNITS_PROJECTED;
-    return u;
+    return static_cast<enum pj_io_units>(u);
 }
 
 enum pj_io_units pj_right (PJ *P) {
-    enum pj_io_units u = P->inverted? P->left: P->right;
+    int u = P->inverted? P->left: P->right;
     if (u==PJ_IO_UNITS_CLASSIC)
         return PJ_IO_UNITS_PROJECTED;
-    return u;
+    return static_cast<enum pj_io_units>(u);
 }
 
 
-/* Work around non-constness of MSVC HUGE_VAL by providing functions rather than constants */
-PJ_COORD proj_coord_error (void) {
-    PJ_COORD c;
-    c.v[0] = c.v[1] = c.v[2] = c.v[3] = HUGE_VAL;
-    return c;
-}
-
-
-
-/**************************************************************************************/
-PJ_COORD pj_approx_2D_trans (PJ *P, PJ_DIRECTION direction, PJ_COORD coo) {
-/***************************************************************************************
-Behave mostly as proj_trans, but attempt to use 2D interfaces only.
-Used in gie.c, to enforce testing 2D code, and by PJ_pipeline.c to implement
-chained calls starting out with a call to its 2D interface.
-***************************************************************************************/
-    if (nullptr==P)
-        return coo;
-    if (P->inverted)
-        direction = static_cast<PJ_DIRECTION>(-direction);
-    switch (direction) {
-        case PJ_FWD:
-        {
-            const auto xy = pj_fwd (coo.lp, P);
-            coo.xy = xy;
-            return coo;
-        }
-        case PJ_INV:
-        {
-            const auto lp = pj_inv (coo.xy, P);
-            coo.lp = lp;
-            return coo;
-        }
-        case PJ_IDENT:
-            break;
-    }
-    return coo;
-}
-
-
-/**************************************************************************************/
-PJ_COORD pj_approx_3D_trans (PJ *P, PJ_DIRECTION direction, PJ_COORD coo) {
-/***************************************************************************************
-Companion to pj_approx_2D_trans.
-
-Behave mostly as proj_trans, but attempt to use 3D interfaces only.
-Used in gie.c, to enforce testing 3D code, and by PJ_pipeline.c to implement
-chained calls starting out with a call to its 3D interface.
-***************************************************************************************/
-    if (nullptr==P)
-        return coo;
-    if (P->inverted)
-        direction = static_cast<PJ_DIRECTION>(-direction);
-    switch (direction) {
-        case PJ_FWD:
-        {
-            const auto xyz = pj_fwd3d (coo.lpz, P);
-            coo.xyz = xyz;
-            return coo;
-        }
-        case PJ_INV:
-        {
-            const auto lpz = pj_inv3d (coo.xyz, P);
-            coo.lpz = lpz;
-            return coo;
-        }
-        case PJ_IDENT:
-            break;
-    }
-    return coo;
-}
 
 /**************************************************************************************/
 int pj_has_inverse(PJ *P) {
@@ -405,20 +334,4 @@ array.
     catch( const std::exception& ) {
         return nullptr;
     }
-}
-
-
-
-/*****************************************************************************/
-void proj_context_errno_set (struct pj_ctx_shared *ctx, int err) {
-/******************************************************************************
-Raise an error directly on a context, without going through a PJ belonging
-to that context.
-******************************************************************************/
-    if (nullptr==ctx)
-        ctx = pj_get_default_ctx()->shared;
-    ctx->last_errno = err;
-    if( err == 0 )
-        return;
-    errno = err;
 }

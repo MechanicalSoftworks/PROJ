@@ -262,124 +262,6 @@ int pj_get_suggested_operation(PJ_CONTEXT*,
     return iBest;
 }
 
-/**************************************************************************************/
-PJ_COORD proj_trans (PJ *P, PJ_DIRECTION direction, PJ_COORD coord) {
-/***************************************************************************************
-Apply the transformation P to the coordinate coord, preferring the 4D interfaces if
-available.
-
-See also pj_approx_2D_trans and pj_approx_3D_trans in pj_internal.c, which work
-similarly, but prefers the 2D resp. 3D interfaces if available.
-***************************************************************************************/
-    if (nullptr==P || direction == PJ_IDENT)
-        return coord;
-    if (P->inverted)
-        direction = opposite_direction(direction);
-
-    if( !P->host->alternativeCoordinateOperations.empty() ) {
-        constexpr int N_MAX_RETRY = 2;
-        int iExcluded[N_MAX_RETRY] = {-1, -1};
-
-        const int nOperations = static_cast<int>(
-            P->host->alternativeCoordinateOperations.size());
-
-        // We may need several attempts. For example the point at
-        // lon=-111.5 lat=45.26 falls into the bounding box of the Canadian
-        // ntv2_0.gsb grid, except that it is not in any of the subgrids, being
-        // in the US. We thus need another retry that will select the conus
-        // grid.
-        for( int iRetry = 0; iRetry <= N_MAX_RETRY; iRetry++ )
-        {
-            // Do a first pass and select the operations that match the area of use
-            // and has the best accuracy.
-            int iBest = pj_get_suggested_operation(P->host->ctx,
-                                                   P->host->alternativeCoordinateOperations,
-                                                   iExcluded,
-                                                   direction,
-                                                   coord);
-            if( iBest < 0 ) {
-                break;
-            }
-            if( iRetry > 0 ) {
-                const int oldErrno = proj_errno_reset(P);
-                if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
-                    pj_log(P->host->ctx, PJ_LOG_DEBUG, proj_context_errno_string(P->host->ctx, oldErrno));
-                }
-                pj_log(P->host->ctx, PJ_LOG_DEBUG,
-                    "Did not result in valid result. "
-                    "Attempting a retry with another operation.");
-            }
-
-            const auto& alt = P->host->alternativeCoordinateOperations[iBest];
-            if( P->iCurCoordOp != iBest ) {
-                if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
-                    std::string msg("Using coordinate operation ");
-                    msg += alt.name;
-                    pj_log(P->host->ctx, PJ_LOG_DEBUG, msg.c_str());
-                }
-                P->iCurCoordOp = iBest;
-            }
-            PJ_COORD res = direction == PJ_FWD ?
-                        pj_fwd4d( coord, alt.pj ) : pj_inv4d( coord, alt.pj );
-            if( proj_errno(alt.pj) == PROJ_ERR_OTHER_NETWORK_ERROR ) {
-                return proj_coord_error ();
-            }
-            if( res.xyzt.x != HUGE_VAL ) {
-                return res;
-            }
-            if( iRetry == N_MAX_RETRY ) {
-                break;
-            }
-            iExcluded[iRetry] = iBest;
-        }
-
-        // In case we did not find an operation whose area of use is compatible
-        // with the input coordinate, then goes through again the list, and
-        // use the first operation that does not require grids.
-        NS_PROJ::io::DatabaseContextPtr dbContext;
-        try
-        {
-            if( P->host->ctx->cpp_context ) {
-                dbContext = P->host->ctx->cpp_context->getDatabaseContext().as_nullable();
-            }
-        }
-        catch( const std::exception& ) {}
-        for( int i = 0; i < nOperations; i++ ) {
-            const auto &alt = P->host->alternativeCoordinateOperations[i];
-            auto coordOperation = dynamic_cast<
-            NS_PROJ::operation::CoordinateOperation*>(alt.pj->host->iso_obj.get());
-            if( coordOperation ) {
-                if( coordOperation->gridsNeeded(dbContext, true).empty() ) {
-                    if( P->iCurCoordOp != i ) {
-                        if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
-                            std::string msg("Using coordinate operation ");
-                            msg += alt.name;
-                            msg += " as a fallback due to lack of more "
-                                   "appropriate operations";
-                            pj_log(P->host->ctx, PJ_LOG_DEBUG, msg.c_str());
-                        }
-                        P->iCurCoordOp = i;
-                    }
-                    if( direction == PJ_FWD ) {
-                        return pj_fwd4d( coord, alt.pj );
-                    }
-                    else {
-                        return pj_inv4d( coord, alt.pj );
-                    }
-                }
-            }
-        }
-
-        proj_errno_set (P, PROJ_ERR_COORD_TRANSFM_NO_OPERATION);
-        return proj_coord_error ();
-    }
-
-    if (direction == PJ_FWD)
-        return pj_fwd4d (coord, P);
-    else
-        return pj_inv4d (coord, P);
-}
-
 
 
 /*****************************************************************************/
@@ -579,34 +461,6 @@ size_t proj_trans_generic (
     return i;
 }
 
-
-/*************************************************************************************/
-PJ_COORD pj_geocentric_latitude (const PJ *P, PJ_DIRECTION direction, PJ_COORD coord) {
-/**************************************************************************************
-    Convert geographical latitude to geocentric (or the other way round if
-    direction = PJ_INV)
-
-    The conversion involves a call to the tangent function, which goes through the
-    roof at the poles, so very close (the last centimeter) to the poles no
-    conversion takes place and the input latitude is copied directly to the output.
-
-    Fortunately, the geocentric latitude converges to the geographical at the
-    poles, so the difference is negligible.
-
-    For the spherical case, the geographical latitude equals the geocentric, and
-    consequently, the input is copied directly to the output.
-**************************************************************************************/
-    const double limit = M_HALFPI - 1e-9;
-    PJ_COORD res = coord;
-    if ((coord.lp.phi > limit) || (coord.lp.phi < -limit) || (P->es==0))
-        return res;
-    if (direction==PJ_FWD)
-        res.lp.phi = atan (P->one_es * tan (coord.lp.phi) );
-    else
-        res.lp.phi = atan (P->rone_es * tan (coord.lp.phi) );
-
-    return res;
-}
 
 double proj_torad (double angle_in_degrees) { return PJ_TORAD (angle_in_degrees);}
 double proj_todeg (double angle_in_radians) { return PJ_TODEG (angle_in_radians);}
@@ -1977,22 +1831,6 @@ int proj_context_errno (PJ_CONTEXT *ctx) {
 }
 
 /*****************************************************************************/
-int proj_errno_set (const PJ *P, int err) {
-/******************************************************************************
-    Set context-errno, bubble it up to the thread local errno, return err
-******************************************************************************/
-    /* Use proj_errno_reset to explicitly clear the error status */
-    if (0==err)
-        return 0;
-
-    /* For P==0 err goes to the default context */
-    proj_context_errno_set (pj_get_ctx ((PJ *) P)->shared, err);
-    errno = err;
-
-    return err;
-}
-
-/*****************************************************************************/
 int proj_errno_restore (const PJ *P, int err) {
 /******************************************************************************
     Use proj_errno_restore when the current function succeeds, but the
@@ -2045,32 +1883,24 @@ int proj_errno_reset (const PJ *P) {
 }
 
 
-#ifdef PROJ_OPENCL
-
-PJ_COMPUTE PROJ_DLL* proj_compute_create(cl_context ctx)
+PJ_ALLOCATOR PROJ_DLL* proj_allocator_create(void *user, PROJ_SVM_MALLOC_FUNCTION svm_malloc, PROJ_SVM_CALLOC_FUNCTION svm_calloc, PROJ_SVM_FREE_FUNCTION svm_free, PROJ_SVM_UPDATE_FUNCTION svm_map)
 {
-    return new (std::nothrow) pj_compute{ ctx };
+    return new (std::nothrow) pj_allocator{ user, svm_malloc, svm_calloc, svm_free, svm_map };
 }
 
-#else
-
-PJ_COMPUTE PROJ_DLL* proj_compute_create()
+PJ_ALLOCATOR PROJ_DLL* proj_allocator_destroy(PJ_ALLOCATOR* allocator)
 {
-    return new (std::nothrow) pj_compute{};
-}
-
-#endif
-
-PJ_COMPUTE PROJ_DLL* proj_compute_destroy(PJ_COMPUTE* compute)
-{
-    delete compute;
+    delete allocator;
     return nullptr;
 }
 
 
 /* Create a new context based on the default context */
-PJ_CONTEXT *proj_context_create (PJ_COMPUTE *compute) {
-    return new (std::nothrow) pj_ctx(*pj_get_default_ctx(), compute);
+PJ_CONTEXT *proj_context_create () {
+    return new (std::nothrow) pj_ctx(*pj_get_default_ctx());
+}
+PJ_CONTEXT* proj_context_create_using_allocator(PJ_ALLOCATOR* allocator) {
+    return new (std::nothrow) pj_ctx(*pj_get_default_ctx(), allocator);
 }
 
 

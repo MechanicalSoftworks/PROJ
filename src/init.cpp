@@ -776,7 +776,7 @@ pj_init_ctx_with_allow_init_epsg(PJ_CONTEXT *ctx, int argc, char **argv, int all
         PIN->from_greenwich = 0.0;
 
     /* Private object for the geodesic functions */
-    PIN->geod = static_cast<struct geod_geodesic*>(svm_calloc (PIN->host->ctx, 1, sizeof (struct geod_geodesic)));
+    PIN->geod = static_cast<struct geod_geodesic*>(PIN->host->ctx->allocator->svm_calloc (1, sizeof (struct geod_geodesic)));
     if (nullptr==PIN->geod)
         return pj_default_destructor (PIN, PROJ_ERR_OTHER /*ENOMEM*/);
     geod_init(PIN->geod, PIN->a,  (1 - sqrt (1 - PIN->es)));

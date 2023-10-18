@@ -26,7 +26,7 @@
 double *pj_enfn(PJ_CONTEXT *ctx, double es) {
     double t, *en;
 
-    en = (double *) svm_malloc(ctx, EN_SIZE * sizeof (double));
+    en = (double *) ctx->allocator->svm_malloc(EN_SIZE * sizeof (double));
     if (nullptr==en)
         return nullptr;
 
@@ -41,7 +41,7 @@ double *pj_enfn(PJ_CONTEXT *ctx, double es) {
 
 void pj_free_en(PJ_CONTEXT *ctx, double* en)
 {
-    svm_free(ctx, en);
+    ctx->allocator->svm_free(en);
 }
 
 double

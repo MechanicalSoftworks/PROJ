@@ -10481,7 +10481,7 @@ PROJStringParser::createFromPROJString(const std::string &projString) {
             /* We create a new context so as to avoid messing up with the */
             /* errorno of the main context, when trying to find the likely */
             /* missing epsg file */
-            auto ctx = proj_context_create(nullptr);
+            auto ctx = proj_context_create();
             if (!ctx) {
                 throw ParsingException("out of memory");
             }
@@ -10584,7 +10584,7 @@ PROJStringParser::createFromPROJString(const std::string &projString) {
             }
         }
 
-        auto ctx = d->ctx_ ? d->ctx_ : proj_context_create(nullptr);
+        auto ctx = d->ctx_ ? d->ctx_ : proj_context_create();
         if (!ctx) {
             throw ParsingException("out of memory");
         }
@@ -10719,7 +10719,7 @@ PROJStringParser::createFromPROJString(const std::string &projString) {
     Logger logger;
     bool valid;
 
-    auto pj_context = d->ctx_ ? d->ctx_ : proj_context_create(nullptr);
+    auto pj_context = d->ctx_ ? d->ctx_ : proj_context_create();
     if (!pj_context) {
         throw ParsingException("out of memory");
     }

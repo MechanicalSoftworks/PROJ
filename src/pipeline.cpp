@@ -96,46 +96,41 @@ Thomas Knudsen, thokn@sdfe.dk, 2016-05-20
 
 #define PJ_LIB__
 
-#include <math.h>
-#include <stddef.h>
-#include <string.h>
-#include <stack>
-#include <vector>
+#ifndef PROJ_OPENCL_DEVICE
+#   include "geodesic.h"
+#endif
 
-#include "geodesic.h"
-#include "proj.h"
-#include "proj_internal.h"
+#include "proj_internal_shared.h"
 
 PROJ_HEAD(pipeline,         "Transformation pipeline manager");
 PROJ_HEAD(pop, "Retrieve coordinate value from pipeline stack");
 PROJ_HEAD(push, "Save coordinate value on pipeline stack");
 
-/* Projection specific elements for the PJ object */
-namespace { // anonymous namespace
+struct PipelineStep {
+    PJ_FIELD(PJ*,  pj,       nullptr);
+    PJ_FIELD(bool, omit_fwd, false);
+    PJ_FIELD(bool, omit_inv, false);
 
-struct Step {
-    PJ* pj = nullptr;
-    bool omit_fwd = false;
-    bool omit_inv = false;
-
-    Step(PJ* pjIn, bool omitFwdIn, bool omitInvIn):
+#ifdef __cplusplus
+    PipelineStep(PJ* pjIn, bool omitFwdIn, bool omitInvIn) :
         pj(pjIn), omit_fwd(omitFwdIn), omit_inv(omitInvIn) {}
-    Step(Step&& other): pj(std::move(other.pj)),
-                        omit_fwd(other.omit_fwd),
-                        omit_inv(other.omit_inv) { other.pj = nullptr; }
-    Step(const Step&) = delete;
-    Step& operator=(const Step&) = delete;
+#endif
+};
 
-    ~Step() {
-        proj_destroy(pj);
-    }
+struct PipelineStack {
+    PJ_FIELD(double*, ptr,      nullptr);
+    PJ_FIELD(size_t,  size,     0);
+    PJ_FIELD(size_t,  max_size, 0);
 };
 
 struct Pipeline {
-    char **argv = nullptr;
-    char **current_argv = nullptr;
-    std::vector<Step> steps{};
-    std::stack<double> stack[4];
+    PJ_FIELD(char**, argv,         nullptr);
+    PJ_FIELD(char**, current_argv, nullptr);
+
+    PJ_FIELD(struct PipelineStep*, steps,      nullptr);
+    PJ_FIELD(size_t,               step_count, 0);
+
+    struct PipelineStack stack[4];
 };
 
 struct PushPop {
@@ -144,7 +139,53 @@ struct PushPop {
     bool v3;
     bool v4;
 };
-} // anonymous namespace
+
+#ifndef PROJ_OPENCL_DEVICE
+
+static void PipelineStackNew(struct pj_allocator* allocator, struct PipelineStack* stack, size_t n)
+{
+    stack->size = 0;
+    stack->max_size = n;
+    stack->ptr = (double*)allocator->svm_calloc(n, sizeof(stack->ptr[0]));
+}
+
+static void PipelineStackDelete(struct pj_allocator* allocator, struct PipelineStack* stack)
+{
+    stack->size = 0;
+    stack->max_size = 0;
+    allocator->svm_free(stack->ptr);
+    stack->ptr = nullptr;
+}
+
+#endif
+
+static double PipelineStackTop(struct PipelineStack* stack)
+{
+    return stack->size
+        ? stack->ptr[stack->size - 1]
+        : 0.0;
+}
+
+static int PipelineStackEmpty(struct PipelineStack* stack)
+{
+    return !stack->size;
+}
+
+static void PipelineStackPush(struct PipelineStack* stack, double d)
+{
+    if (stack->size < stack->max_size)
+    {
+        stack->ptr[stack->size++] = d;
+    }
+}
+
+static void PipelineStackPop(struct PipelineStack* stack)
+{
+    if (stack->size)
+    {
+        --stack->size;
+    }
+}
 
 
 static PJ_COORD pipeline_forward_4d (PJ_COORD point, PJ *P);
@@ -154,32 +195,55 @@ static PJ_LPZ    pipeline_reverse_3d (PJ_XYZ xyz, PJ *P);
 static PJ_XY     pipeline_forward (PJ_LP lp, PJ *P);
 static PJ_LP     pipeline_reverse (PJ_XY xy, PJ *P);
 
+#ifndef PROJ_OPENCL_DEVICE
+
 static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
 {
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for( auto& step: pipeline->steps )
-        proj_assign_context(step.pj, ctx);
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for (size_t i = 0; i < pipeline->step_count; ++i)
+        proj_assign_context(pipeline->steps[i].pj, ctx);
 }
 
 static void pipeline_scan(PJ* P, PJscan& s)
 {
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for (auto& step : pipeline->steps)
+    pj_scan_local(P, s);
+
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for (size_t i = 0; i < pipeline->step_count; ++i)
     {
-        if (!step.omit_fwd)
+        struct PipelineStep* step = pipeline->steps + i;
+        if (!step->omit_fwd || !step->omit_inv)
         {
-            pj_scan_recursive(step.pj, s);
+            pj_scan_recursive(step->pj, s);
         }
     }
 }
 
-static PJ_COORD pipeline_forward_4d (PJ_COORD point, PJ *P) {
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for( auto& step: pipeline->steps )
+static void pipeline_map_svm_ptrs(PJ* P, bool map)
+{
+    pj_map_svm_ptrs(P, map);
+
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for (size_t i = 0; i < pipeline->step_count; ++i)
     {
-        if( !step.omit_fwd )
+        struct PipelineStep* step = pipeline->steps + i;
+        if (!step->omit_fwd || !step->omit_inv)
         {
-            point = proj_trans (step.pj, PJ_FWD, point);
+            step->pj->host->map_svm(step->pj, map);
+        }
+    }
+}
+
+#endif
+
+static PJ_COORD pipeline_forward_4d (PJ_COORD point, PJ *P) {
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for(size_t i = 0; i < pipeline->step_count; ++i)
+    {
+        struct PipelineStep* step = pipeline->steps + i;
+        if( !step->omit_fwd )
+        {
+            point = proj_trans (step->pj, PJ_FWD, point);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -191,14 +255,13 @@ static PJ_COORD pipeline_forward_4d (PJ_COORD point, PJ *P) {
 
 
 static PJ_COORD pipeline_reverse_4d (PJ_COORD point, PJ *P) {
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for( auto iterStep = pipeline->steps.rbegin();
-              iterStep != pipeline->steps.rend(); ++iterStep )
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for(size_t i = pipeline->step_count; i > 0; --i)
     {
-        const auto& step = *iterStep;
-        if( !step.omit_inv )
+        struct PipelineStep* step = pipeline->steps + i - 1;
+        if( !step->omit_inv )
         {
-            point = proj_trans (step.pj, PJ_INV, point);
+            point = proj_trans (step->pj, PJ_INV, point);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -214,12 +277,13 @@ static PJ_COORD pipeline_reverse_4d (PJ_COORD point, PJ *P) {
 static PJ_XYZ pipeline_forward_3d (PJ_LPZ lpz, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.lpz = lpz;
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for( auto& step: pipeline->steps )
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for(size_t i = 0; i < pipeline->step_count; ++i)
     {
-        if( !step.omit_fwd )
+        struct PipelineStep* step = pipeline->steps + i;
+        if( !step->omit_fwd )
         {
-            point = pj_approx_3D_trans (step.pj, PJ_FWD, point);
+            point = pj_approx_3D_trans (step->pj, PJ_FWD, point);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -233,14 +297,13 @@ static PJ_XYZ pipeline_forward_3d (PJ_LPZ lpz, PJ *P) {
 static PJ_LPZ pipeline_reverse_3d (PJ_XYZ xyz, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.xyz = xyz;
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for( auto iterStep = pipeline->steps.rbegin();
-              iterStep != pipeline->steps.rend(); ++iterStep )
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for(size_t i = pipeline->step_count; i > 0; --i)
     {
-        const auto& step = *iterStep;
-        if( !step.omit_inv )
+        struct PipelineStep* step = pipeline->steps + i - 1;
+        if( !step->omit_inv )
         {
-            point = proj_trans (step.pj, PJ_INV, point);
+            point = proj_trans (step->pj, PJ_INV, point);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -256,12 +319,13 @@ static PJ_LPZ pipeline_reverse_3d (PJ_XYZ xyz, PJ *P) {
 static PJ_XY pipeline_forward (PJ_LP lp, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.lp = lp;
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for( auto& step: pipeline->steps )
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for(size_t i = 0; i < pipeline->step_count; ++i)
     {
-        if( !step.omit_fwd )
+        struct PipelineStep* step = pipeline->steps + i;
+        if( !step->omit_fwd )
         {
-            point = pj_approx_2D_trans (step.pj, PJ_FWD, point);
+            point = pj_approx_2D_trans (step->pj, PJ_FWD, point);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -275,14 +339,13 @@ static PJ_XY pipeline_forward (PJ_LP lp, PJ *P) {
 static PJ_LP pipeline_reverse (PJ_XY xy, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.xy = xy;
-    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
-    for( auto iterStep = pipeline->steps.rbegin();
-               iterStep != pipeline->steps.rend(); ++iterStep )
+    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    for(size_t i = pipeline->step_count; i > 0; --i)
     {
-        const auto& step = *iterStep;
-        if( !step.omit_inv )
+        struct PipelineStep* step = pipeline->steps + i - 1;
+        if( !step->omit_inv )
         {
-            point = pj_approx_2D_trans (step.pj, PJ_INV, point);
+            point = pj_approx_2D_trans (step->pj, PJ_INV, point);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -293,7 +356,7 @@ static PJ_LP pipeline_reverse (PJ_XY xy, PJ *P) {
 }
 
 
-
+#ifndef PROJ_OPENCL_DEVICE
 
 static PJ *destructor (PJ *P, int errlev) {
     if (nullptr==P)
@@ -307,7 +370,23 @@ static PJ *destructor (PJ *P, int errlev) {
     free (pipeline->argv);
     free (pipeline->current_argv);
 
-    svm_delete(P->host->ctx, pipeline);
+    for (size_t i = 0; i < pipeline->step_count; ++i)
+    {
+        proj_destroy(pipeline->steps[i].pj);
+    }
+    P->host->ctx->allocator->svm_free(pipeline->steps);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        PipelineStackDelete(P->host->ctx->allocator, pipeline->stack + i);
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+        P->host->ctx->allocator->svm_free(pipeline->stack[i].ptr);
+    }
+
+    P->host->ctx->allocator->svm_delete(pipeline);
     P->opaque = nullptr;
 
     return pj_default_destructor(P, errlev);
@@ -422,6 +501,7 @@ PJ *OPERATION(pipeline,0) {
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
     P->host->scan   = pipeline_scan;
+    P->host->map_svm = pipeline_map_svm_ptrs;
 
     /* Currently, the pipeline driver is a raw bit mover, enabling other operations */
     /* to collaborate efficiently. All prep/fin stuff is done at the step levels. */
@@ -431,7 +511,7 @@ PJ *OPERATION(pipeline,0) {
     P->skip_inv_finalize = 1;
 
 
-    P->opaque  = svm_new<Pipeline>(P->host->ctx);
+    P->opaque  = P->host->ctx->allocator->svm_new<Pipeline>();
     if (nullptr==P->opaque)
         return destructor(P, PROJ_ERR_INVALID_OP /* ENOMEM */);
 
@@ -478,6 +558,7 @@ PJ *OPERATION(pipeline,0) {
 
     /* Now loop over all steps, building a new set of arguments for each init */
     i_current_step = i_first_step;
+    std::vector<PipelineStep> steps;
     for (i = 0;  i < nsteps;  i++) {
         int j;
         int  current_argc = 0;
@@ -506,7 +587,7 @@ PJ *OPERATION(pipeline,0) {
         P->host->ctx->pipelineInitRecursiongCounter ++;
         next_step = pj_create_argv_internal (P->host->ctx, current_argc, current_argv);
         P->host->ctx->pipelineInitRecursiongCounter --;
-        proj_log_trace (P, "Pipeline: Step %d (%s) at %p", i, current_argv[0], next_step);
+        proj_log_trace (P, "Pipeline: PipelineStep %d (%s) at %p", i, current_argv[0], next_step);
 
         if (nullptr==next_step) {
             /* The step init failed, but possibly without setting errno. If so, we say "malformed" */
@@ -530,13 +611,13 @@ PJ *OPERATION(pipeline,0) {
 
         bool omit_fwd = pj_param(P->host->ctx, next_step->host->params, "bomit_fwd").i != 0;
         bool omit_inv = pj_param(P->host->ctx, next_step->host->params, "bomit_inv").i != 0;
-        pipeline->steps.emplace_back(next_step, omit_fwd, omit_inv);
+        steps.emplace_back(next_step, omit_fwd, omit_inv);
 
         proj_log_trace (P, "Pipeline at [%p]:    step at [%p] (%s) done", P, next_step, current_argv[0]);
     }
 
     /* Require a forward path through the pipeline */
-    for( auto& step: pipeline->steps) {
+    for( auto& step: steps) {
         PJ *Q = step.pj;
         if ( ( Q->inverted && (Q->host->inv || Q->host->inv3d || Q->host->fwd4d) ) ||
              (!Q->inverted && (Q->host->fwd || Q->host->fwd3d || Q->host->fwd4d) ) ) {
@@ -548,7 +629,7 @@ PJ *OPERATION(pipeline,0) {
     }
 
     /* determine if an inverse operation is possible */
-    for( auto& step: pipeline->steps) {
+    for( auto& step: steps) {
         PJ *Q = step.pj;
         if ( pj_has_inverse(Q) ) {
             continue;
@@ -568,9 +649,9 @@ PJ *OPERATION(pipeline,0) {
     /* as it will result in deg->rad conversions in cs2cs and other applications.       */
 
     for (i=nsteps-2; i>=0; --i) {
-        auto pj = pipeline->steps[i].pj;
+        auto pj = steps[i].pj;
         if (pj_left(pj) == PJ_IO_UNITS_WHATEVER && pj_right(pj) == PJ_IO_UNITS_WHATEVER) {
-            const auto right_pj = pipeline->steps[i+1].pj;
+            const auto right_pj = steps[i+1].pj;
             const auto right_pj_left = pj_left(right_pj);
             const auto right_pj_right = pj_right(right_pj);
             if (right_pj_left != right_pj_right || right_pj_left != PJ_IO_UNITS_WHATEVER )
@@ -582,9 +663,9 @@ PJ *OPERATION(pipeline,0) {
     }
 
     for (i=1; i<nsteps; i++) {
-        auto pj = pipeline->steps[i].pj;
+        auto pj = steps[i].pj;
         if (pj_left(pj) == PJ_IO_UNITS_WHATEVER && pj_right(pj) == PJ_IO_UNITS_WHATEVER) {
-            const auto left_pj = pipeline->steps[i-1].pj;
+            const auto left_pj = steps[i-1].pj;
             const auto left_pj_left = pj_left(left_pj);
             const auto left_pj_right = pj_right(left_pj);
             if (left_pj_left != left_pj_right || left_pj_right != PJ_IO_UNITS_WHATEVER )
@@ -597,8 +678,8 @@ PJ *OPERATION(pipeline,0) {
 
     /* Check that units between each steps match each other, fail if they don't */
     for (i = 0; i + 1 < nsteps; i++) {
-        enum pj_io_units curr_step_output = pj_right (pipeline->steps[i].pj);
-        enum pj_io_units next_step_input  = pj_left  (pipeline->steps[i+1].pj);
+        enum pj_io_units curr_step_output = pj_right (steps[i].pj);
+        enum pj_io_units next_step_input  = pj_left  (steps[i+1].pj);
 
         if ( curr_step_output == PJ_IO_UNITS_WHATEVER || next_step_input == PJ_IO_UNITS_WHATEVER )
             continue;
@@ -612,28 +693,40 @@ PJ *OPERATION(pipeline,0) {
     proj_log_trace (P, "Pipeline: %d steps built. Determining i/o characteristics", nsteps);
 
     /* Determine forward input (= reverse output) data type */
-    P->left = pj_left (pipeline->steps.front().pj);
+    P->left = pj_left (steps.front().pj);
 
     /* Now, correspondingly determine forward output (= reverse input) data type */
-    P->right = pj_right (pipeline->steps.back().pj);
+    P->right = pj_right (steps.back().pj);
+
+    pipeline->step_count = steps.size();
+    pipeline->steps = (PipelineStep*)P->host->ctx->allocator->svm_calloc(pipeline->step_count, sizeof(PipelineStep));
+    memcpy(pipeline->steps, steps.data(), sizeof(steps[0]) * pipeline->step_count);
+
+    for (i = 0; i < 4; ++i)
+    {
+        PipelineStackNew(P->host->ctx->allocator, pipeline->stack + i, 128);
+    }
+
     return P;
 }
+
+#endif // !PROJ_OPENCL_DEVICE
 
 static PJ_COORD push(PJ_COORD point, PJ *P) {
     if (P->parent == nullptr)
         return point;
 
-    struct Pipeline *pipeline = static_cast<struct Pipeline*>(P->parent->opaque);
-    struct PushPop *pushpop = static_cast<struct PushPop*>(P->opaque);
+    struct Pipeline *pipeline = (struct Pipeline*)(P->parent->opaque);
+    struct PushPop *pushpop = (struct PushPop*)(P->opaque);
 
     if (pushpop->v1)
-        pipeline->stack[0].push(point.v[0]);
+        PipelineStackPush(pipeline->stack + 0, point.v[0]);
     if (pushpop->v2)
-        pipeline->stack[1].push(point.v[1]);
+        PipelineStackPush(pipeline->stack + 1, point.v[1]);
     if (pushpop->v3)
-        pipeline->stack[2].push(point.v[2]);
+        PipelineStackPush(pipeline->stack + 2, point.v[2]);
     if (pushpop->v4)
-        pipeline->stack[3].push(point.v[3]);
+        PipelineStackPush(pipeline->stack + 3, point.v[3]);
 
     return point;
 }
@@ -642,36 +735,36 @@ static PJ_COORD pop(PJ_COORD point, PJ *P) {
     if (P->parent == nullptr)
         return point;
 
-    struct Pipeline *pipeline = static_cast<struct Pipeline*>(P->parent->opaque);
-    struct PushPop *pushpop = static_cast<struct PushPop*>(P->opaque);
+    struct Pipeline *pipeline = (struct Pipeline*)(P->parent->opaque);
+    struct PushPop *pushpop = (struct PushPop*)(P->opaque);
 
-    if (pushpop->v1 && !pipeline->stack[0].empty()) {
-            point.v[0] = pipeline->stack[0].top();
-            pipeline->stack[0].pop();
+    if (pushpop->v1 && !PipelineStackEmpty(pipeline->stack + 0)) {
+            point.v[0] = PipelineStackTop(pipeline->stack + 0);
+            PipelineStackPop(pipeline->stack + 0);
     }
 
-    if (pushpop->v2 && !pipeline->stack[1].empty()) {
-            point.v[1] = pipeline->stack[1].top();
-            pipeline->stack[1].pop();
+    if (pushpop->v2 && !PipelineStackEmpty(pipeline->stack + 1)) {
+            point.v[1] = PipelineStackTop(pipeline->stack + 1);
+            PipelineStackPop(pipeline->stack + 1);
     }
 
-    if (pushpop->v3 && !pipeline->stack[2].empty()) {
-            point.v[2] = pipeline->stack[2].top();
-            pipeline->stack[2].pop();
+    if (pushpop->v3 && !PipelineStackEmpty(pipeline->stack + 2)) {
+            point.v[2] = PipelineStackTop(pipeline->stack + 2);
+            PipelineStackPop(pipeline->stack + 2);
     }
 
-    if (pushpop->v4 && !pipeline->stack[3].empty()) {
-            point.v[3] = pipeline->stack[3].top();
-            pipeline->stack[3].pop();
+    if (pushpop->v4 && !PipelineStackEmpty(pipeline->stack + 3)) {
+            point.v[3] = PipelineStackTop(pipeline->stack + 3);
+            PipelineStackPop(pipeline->stack + 3);
     }
 
     return point;
 }
 
-
+#ifndef PROJ_OPENCL_DEVICE
 
 static PJ *setup_pushpop(PJ *P) {
-    auto pushpop = static_cast<struct PushPop*>(svm_calloc (P->host->ctx, 1, sizeof(struct PushPop)));
+    auto pushpop = static_cast<struct PushPop*>(P->host->ctx->allocator->svm_calloc (1, sizeof(struct PushPop)));
     P->opaque = pushpop;
     if (nullptr==P->opaque)
         return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
@@ -710,3 +803,5 @@ PJ *OPERATION(pop, 0) {
 
     return setup_pushpop(P);
 }
+
+#endif // !PROJ_OPENCL_DEVICE

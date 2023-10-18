@@ -65,36 +65,21 @@ Last update: 2017-05-16
 
 #define PJ_LIB__
 
-#include <errno.h>
-#include <math.h>
-#include <string.h>
-#include <time.h>
-
-#include "proj_internal.h"
-#include <math.h>
+#include "../proj_internal_shared.h"
 
 PROJ_HEAD(unitconvert, "Unit conversion");
 
-typedef double (*tconvert)(double);
-
-namespace { // anonymous namespace
 struct TIME_UNITS {
-    const char  *id;        /* units keyword */
-    tconvert     t_in;      /* unit -> mod. julian date function pointer */
-    tconvert     t_out;     /* mod. julian date > unit function pointer */
-    const char  *name;      /* comments */
+    cl_constant char  *id;        /* units keyword */
+    cl_constant char  *name;      /* comments */
 };
-} // anonymous namespace
 
-namespace { // anonymous namespace
 struct pj_opaque_unitconvert {
     int     t_in_id;        /* time unit id for the time input unit   */
     int     t_out_id;       /* time unit id for the time output unit  */
     double  xy_factor;      /* unit conversion factor for horizontal components */
     double  z_factor;       /* unit conversion factor for vertical components */
 };
-} // anonymous namespace
-
 
 /***********************************************************************/
 static int is_leap_year(long year) {
@@ -272,12 +257,42 @@ static double mjd_to_yyyymmdd(double mjd) {
 }
 
 static const struct TIME_UNITS time_units[] = {
-    {"mjd",         mjd_to_mjd,         mjd_to_mjd,         "Modified julian date"},
-    {"decimalyear", decimalyear_to_mjd, mjd_to_decimalyear, "Decimal year"},
-    {"gps_week",    gps_week_to_mjd,    mjd_to_gps_week,    "GPS Week"},
-    {"yyyymmdd",    yyyymmdd_to_mjd,    mjd_to_yyyymmdd,    "YYYYMMDD date"},
-    {nullptr,          nullptr,               nullptr,               nullptr}
+    {"mjd",         "Modified julian date"},
+    {"decimalyear", "Decimal year"},
+    {"gps_week",    "GPS Week"},
+    {"yyyymmdd",    "YYYYMMDD date"},
+    {nullptr,       nullptr}
 };
+
+/* unit -> mod. julian date function pointer */
+static double tconvert_in(int i, double d)
+{
+    switch (i)
+    {
+        case 0: return mjd_to_mjd(d);
+        case 1: return decimalyear_to_mjd(d);
+        case 2: return gps_week_to_mjd(d);
+        case 3: return yyyymmdd_to_mjd(d);
+        default: break;
+    }
+
+    return -1.0;
+}
+
+/* mod. julian date > unit function pointer */
+static double tconvert_out(int i, double d)
+{
+    switch (i)
+    {
+        case 0: return mjd_to_mjd(d);
+        case 1: return mjd_to_decimalyear(d);
+        case 2: return mjd_to_gps_week(d);
+        case 3: return mjd_to_yyyymmdd(d);
+        default: break;
+    }
+
+    return -1.0;
+}
 
 
 /***********************************************************************/
@@ -322,7 +337,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
     point.lpz = lpz;
 
     /* take care of the horizontal components in the 2D function */
-    const auto xy = forward_2d(point.lp, P);
+    const PJ_XY xy = forward_2d(point.lp, P);
     point.xy = xy;
 
     point.xyz.z *= Q->z_factor;
@@ -340,7 +355,7 @@ static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
     point.xyz = xyz;
 
     /* take care of the horizontal components in the 2D function */
-    const auto lp = reverse_2d(point.xy, P);
+    const PJ_LP lp = reverse_2d(point.xy, P);
     point.lp = lp;
 
     point.xyz.z /= Q->z_factor;
@@ -361,9 +376,9 @@ static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
     out.xyz = forward_3d(obs.lpz, P);
 
     if (Q->t_in_id >= 0)
-        out.xyzt.t = time_units[Q->t_in_id].t_in( obs.xyzt.t );
+        out.xyzt.t = tconvert_in( Q->t_in_id, obs.xyzt.t );
     if (Q->t_out_id >= 0)
-        out.xyzt.t = time_units[Q->t_out_id].t_out( out.xyzt.t );
+        out.xyzt.t = tconvert_out( Q->t_out_id, out.xyzt.t );
 
     return out;
 }
@@ -381,12 +396,14 @@ static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
     out.lpz = reverse_3d(obs.xyz, P);
 
     if (Q->t_out_id >= 0)
-        out.xyzt.t = time_units[Q->t_out_id].t_in( obs.xyzt.t );
+        out.xyzt.t = tconvert_in( Q->t_out_id, obs.xyzt.t );
     if (Q->t_in_id >= 0)
-        out.xyzt.t = time_units[Q->t_in_id].t_out( out.xyzt.t );
+        out.xyzt.t = tconvert_out( Q->t_in_id, out.xyzt.t );
 
     return out;
 }
+
+#ifndef PROJ_OPENCL_DEVICE
 
 /***********************************************************************/
 static double get_unit_conversion_factor(const char* name,
@@ -435,7 +452,7 @@ static double get_unit_conversion_factor(const char* name,
 /***********************************************************************/
 PJ *CONVERSION(unitconvert,0) {
 /***********************************************************************/
-    struct pj_opaque_unitconvert *Q = static_cast<struct pj_opaque_unitconvert*>(svm_calloc (P->host->ctx, 1, sizeof (struct pj_opaque_unitconvert)));
+    struct pj_opaque_unitconvert *Q = static_cast<struct pj_opaque_unitconvert*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct pj_opaque_unitconvert)));
     const char *s, *name;
     int i;
     double f;
@@ -584,3 +601,5 @@ PJ *CONVERSION(unitconvert,0) {
 
     return P;
 }
+
+#endif /* !PROJ_OPENCL_DEVICE */

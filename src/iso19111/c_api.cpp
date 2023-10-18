@@ -233,7 +233,7 @@ static PJ *pj_obj_create(PJ_CONTEXT *ctx, const IdentifiedObjectNNPtr &objIn) {
                     pj_calc_ellipsoid_params(pj, a, es);
                     assert(pj->geod == nullptr);
                     pj->geod = static_cast<struct geod_geodesic *>(
-                        svm_calloc(pj->host->ctx, 1, sizeof(struct geod_geodesic)));
+                        pj->host->ctx->allocator->svm_calloc(1, sizeof(struct geod_geodesic)));
                     if (pj->geod) {
                         geod_init(pj->geod, pj->a,
                                   pj->es / (1 + sqrt(pj->one_es)));
@@ -1152,7 +1152,7 @@ PJ_TYPE proj_get_type(const PJ *obj) {
         return PJ_TYPE_UNKNOWN;
     }
     if (obj->type != PJ_TYPE_UNKNOWN)
-        return obj->type;
+        return static_cast<PJ_TYPE>(obj->type);
 
     const auto getType = [&obj]() {
         auto ptr = obj->host->iso_obj.get();
@@ -1250,7 +1250,7 @@ PJ_TYPE proj_get_type(const PJ *obj) {
     };
 
     obj->type = getType();
-    return obj->type;
+    return static_cast<PJ_TYPE>(obj->type);
 }
 
 // ---------------------------------------------------------------------------
@@ -8084,12 +8084,14 @@ PJ_OPERATION_LIST::PJ_OPERATION_LIST(
 // ---------------------------------------------------------------------------
 
 PJ_OPERATION_LIST::~PJ_OPERATION_LIST() {
-    auto tmpCtxt = proj_context_create(nullptr);
+    auto tmpCtxt = proj_context_create_using_allocator(source_crs->host->ctx->allocator);
+    auto tmpCtxt2 = proj_context_create_using_allocator(target_crs->host->ctx->allocator);
     proj_assign_context(source_crs, tmpCtxt);
-    proj_assign_context(target_crs, tmpCtxt);
+    proj_assign_context(target_crs, tmpCtxt2);
     proj_destroy(source_crs);
     proj_destroy(target_crs);
     proj_context_destroy(tmpCtxt);
+    proj_context_destroy(tmpCtxt2);
 }
 
 // ---------------------------------------------------------------------------
