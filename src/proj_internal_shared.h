@@ -103,6 +103,21 @@ typedef long pj_int32;
 #define M_TWO_D_PI      M_2_PI                   /* 2/pi */
 #define M_TWOPI_HALFPI  7.85398163397448309616   /* 2.5*pi */
 
+typedef enum
+{
+    PJ_CO_YIELD,  // Return control to the dispatcher.
+    PJ_CO_DONE,   // No more work, dispatcher should pop the stack.
+                  // The 'coo' entry is also transferred to the next top.
+    PJ_CO_ERROR
+} PJcoroutine_code_t;
+
+#define PJ_YIELD(e, s)  \
+    e->step = s;        \
+    goto YIELD;         \
+p##s:
+
+struct PJstack_entry_s;
+
 #ifdef PROJ_OPENCL_DEVICE
 
 // Initialised on the host.
@@ -112,7 +127,10 @@ typedef long pj_int32;
 #   define lround round
 #   define nullptr 0
 
-#   define cl_constant __constant
+#   define cl_constant  __constant
+#   define cl_local     __local
+
+    typedef int PJ_COROUTINE;
 
 #   define PROJ_DLL
 
@@ -122,6 +140,11 @@ typedef long pj_int32;
 #   define PJ_HOST_MUTABLE mutable
 
 #   define cl_constant const
+#   define cl_local
+
+    // I'd rather have a separate build pass to support this on the host.
+    // So the coroutine system will be identical except for using function pointers on the host.
+    typedef PJcoroutine_code_t (*PJ_COROUTINE)(cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e);
 
 #   include <math.h>
 
@@ -145,6 +168,27 @@ enum pj_io_units pj_right(struct PJconsts* P);
 #define PJD_7PARAM    2
 #define PJD_GRIDSHIFT 3
 #define PJD_WGS84     4   /* WGS84 (or anything considered equivalent) */
+
+typedef struct PJstack_entry_s
+{
+    PJ_COROUTINE    fn;
+
+    // State.
+    PJ_COORD        coo;
+    PJ*             P;
+    int             step;
+    union {
+        int         i;          // Pipeline.
+        int         last_errno; // pj_fwd+pj_inv.
+    };
+} PJstack_entry_t;
+
+#define PR_CO_STACK_SIZE 16
+typedef struct PJstack_s
+{
+    PJstack_entry_t s[PR_CO_STACK_SIZE];
+    int             n = 0;
+} PJstack_t;
 
 /* Context data that's shared between the OpenCL host and evice */
 struct pj_ctx_shared {
@@ -199,6 +243,13 @@ struct PJconsts {
     PJ_FIELD(char, inv3d[256], { 0 });
     PJ_FIELD(char, fwd4d[256], { 0 });
     PJ_FIELD(char, inv4d[256], { 0 });
+
+    PJ_FIELD(PJ_COROUTINE, co_fwd, 0);
+    PJ_FIELD(PJ_COROUTINE, co_inv, 0);
+    PJ_FIELD(PJ_COROUTINE, co_fwd3d, 0);
+    PJ_FIELD(PJ_COROUTINE, co_inv3d, 0);
+    PJ_FIELD(PJ_COROUTINE, co_fwd4d, 0);
+    PJ_FIELD(PJ_COROUTINE, co_inv4d, 0);
 
 
     /*************************************************************************************
@@ -366,5 +417,23 @@ PJ_COORD pj_geocentric_latitude(const PJ* P, PJ_DIRECTION direction, PJ_COORD co
 double PROJ_DLL adjlon(double);
 void proj_context_errno_set(struct pj_ctx_shared* ctx, int err);
 struct pj_ctx_shared* pj_get_ctx_shared(const PJ*);
+
+// Coroutines.
+void stack_new(cl_local PJstack_t* stack);
+PJ_COORD stack_exec(cl_local PJstack_t* stack);
+void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE fn, PJ* P, PJ_COORD coo);
+
+void push_proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+void push_approx_3D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+void push_approx_2D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+
+PJcoroutine_code_t pj_fwd4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+PJcoroutine_code_t pj_inv4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+
+PJcoroutine_code_t pj_fwd3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+PJcoroutine_code_t pj_inv3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+
+PJcoroutine_code_t pj_fwd_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+PJcoroutine_code_t pj_inv_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
 
 #endif // !PROJ_INTERNAL_SHARED_H

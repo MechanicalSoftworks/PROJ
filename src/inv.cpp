@@ -35,18 +35,30 @@
 #define INPUT_UNITS  P->right
 #define OUTPUT_UNITS P->left
 
-static PJ_COORD inv_prepare (PJ *P, PJ_COORD coo) {
+static PJcoroutine_code_t inv_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ*         P = e->P;
+    PJ_COORD    coo = e->coo;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        case 2: goto p2;
+        default: goto ABORT;
+    }
+
     if (coo.v[0] == HUGE_VAL || coo.v[1] == HUGE_VAL || coo.v[2] == HUGE_VAL) {
         proj_errno_set (P, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
-        return proj_coord_error ();
+        goto ABORT;
     }
 
     /* The helmert datum shift will choke unless it gets a sensible 4D coordinate */
     if (HUGE_VAL==coo.v[2] && P->helmert) coo.v[2] = 0.0;
     if (HUGE_VAL==coo.v[3] && P->helmert) coo.v[3] = 0.0;
 
-    if (P->axisswap)
-        coo = proj_trans (P->axisswap, PJ_INV, coo);
+    if (P->axisswap) {
+        push_proj_trans (stack, P->axisswap, PJ_INV, coo);
+        PJ_YIELD(e, 1);
+    }
 
     /* Handle remaining possible input types */
     switch (INPUT_UNITS) {
@@ -62,7 +74,8 @@ static PJ_COORD inv_prepare (PJ *P, PJ_COORD coo) {
         coo.xyz.y *= P->to_meter;
         coo.xyz.z *= P->to_meter;
         if (P->is_geocent) {
-            coo = proj_trans (P->cart, PJ_INV, coo);
+            push_proj_trans (stack, P->cart, PJ_INV, coo);
+            PJ_YIELD(e, 2);
         }
         break;
 
@@ -72,7 +85,7 @@ static PJ_COORD inv_prepare (PJ *P, PJ_COORD coo) {
         coo.xyz.y = P->to_meter  * coo.xyz.y - P->y0;
         coo.xyz.z = P->vto_meter * coo.xyz.z - P->z0;
         if (INPUT_UNITS==PJ_IO_UNITS_PROJECTED)
-            return coo;
+            goto DONE;
 
         /* Classic proj.4 functions expect plane coordinates in units of the semimajor axis  */
         /* Multiplying by ra, rather than dividing by a because the CalCOFI projection       */
@@ -87,15 +100,38 @@ static PJ_COORD inv_prepare (PJ *P, PJ_COORD coo) {
         break;
     }
 
-    return coo;
+DONE:
+    e->coo = coo;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = coo;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 
 
-static PJ_COORD inv_finalize (PJ *P, PJ_COORD coo) {
+static PJcoroutine_code_t inv_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ*         P = e->P;
+    PJ_COORD    coo = e->coo;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        case 2: goto p2;
+        case 3: goto p3;
+        case 4: goto p4;
+        case 5: goto p5;
+        default: goto ABORT;
+    }
+
     if (coo.xyz.x == HUGE_VAL) {
         proj_errno_set (P, PROJ_ERR_COORD_TRANSFM_OUTSIDE_PROJECTION_DOMAIN);
-        coo = proj_coord_error ();
+        goto ABORT;
     }
 
     if (OUTPUT_UNITS==PJ_IO_UNITS_RADIANS) {
@@ -107,179 +143,351 @@ static PJ_COORD inv_finalize (PJ *P, PJ_COORD coo) {
         if (0==P->over)
             coo.lpz.lam = adjlon(coo.lpz.lam);
 
-        if (P->vgridshift)
-            coo = proj_trans (P->vgridshift, PJ_INV, coo); /* Go geometric from orthometric */
-        if (coo.lp.lam==HUGE_VAL)
-            return coo;
-        if (P->hgridshift)
-            coo = proj_trans (P->hgridshift, PJ_FWD, coo);
-        else if (P->helmert || (P->cart_wgs84 != nullptr && P->cart != nullptr)) {
-            coo = proj_trans (P->cart,       PJ_FWD, coo); /* Go cartesian in local frame */
-            if( P->helmert )
-                coo = proj_trans (P->helmert,    PJ_FWD, coo); /* Step into WGS84 */
-            coo = proj_trans (P->cart_wgs84, PJ_INV, coo); /* Go back to angular using WGS84 ellps */
+        if (P->vgridshift) {
+            push_proj_trans (stack, P->vgridshift, PJ_INV, coo); /* Go geometric from orthometric */
+            PJ_YIELD(e, 1);
         }
         if (coo.lp.lam==HUGE_VAL)
-            return coo;
+            goto DONE;
+        if (P->hgridshift) {
+            push_proj_trans(stack, P->hgridshift, PJ_FWD, coo);
+            PJ_YIELD(e, 2);
+        }
+        else if (P->helmert || (P->cart_wgs84 != nullptr && P->cart != nullptr)) {
+            push_proj_trans(stack, P->cart,       PJ_FWD, coo); /* Go cartesian in local frame */
+            PJ_YIELD(e, 3);
+            if( P->helmert ) {
+                push_proj_trans(stack, P->helmert,    PJ_FWD, coo); /* Step into WGS84 */
+                PJ_YIELD(e, 4);
+            }
+            push_proj_trans(stack, P->cart_wgs84, PJ_INV, coo); /* Go back to angular using WGS84 ellps */
+            PJ_YIELD(e, 5);
+        }
+        if (coo.lp.lam==HUGE_VAL)
+            goto DONE;
 
         /* If input latitude was geocentrical, convert back to geocentrical */
         if (P->geoc)
             coo = pj_geocentric_latitude (P, PJ_FWD, coo);
     }
 
-    return coo;
+DONE:
+    e->coo = coo;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = coo;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 extern PJ_COORD error_or_coord(PJ* P, PJ_COORD coord, int last_errno);
 
-static inline PJ_LP pj_dispatch_inv(PJ_COORD coo, PJ* P)
+static void push_inv_prepare(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-#ifdef PROJ_OPENCL_DEVICE
-    return pj_double_dispatch_inv(coo.xy, P, P->inv);
-#else
-    return P->host->inv(coo.xy, P);
-#endif
+    return stack_push(stack, inv_prepare_co, P, coo);
 }
 
-static inline PJ_LPZ pj_dispatch_inv3d(PJ_COORD coo, PJ* P)
+static void push_inv_finalize(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-#ifdef PROJ_OPENCL_DEVICE
-    return pj_double_dispatch_inv3d(coo.xyz, P, P->inv3d);
-#else
-    return P->host->inv3d(coo.xyz, P);
-#endif
+    return stack_push(stack, inv_finalize_co, P, coo);
 }
 
-static inline PJ_COORD pj_dispatch_inv4d(PJ_COORD coo, PJ* P)
+static PJ_COORD push_inv4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-#ifdef PROJ_OPENCL_DEVICE
-    return pj_double_dispatch_inv4d(coo, P, P->inv3d);
-#else
+    if (P->co_inv4d) {
+        // This code path is really only taken by the pipeline.
+        stack_push(stack, P->co_inv4d, P, coo);
+        return coo;
+    }
+
+    // Try to avoid dispatching a new coroutine if possible, because:
+    //  a) the coroutine stack is limited in size, and
+    //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
     return P->host->inv4d(coo, P);
-#endif
 }
 
-PJ_LP pj_inv(PJ_XY xy, PJ *P) {
-    PJ_COORD coo = {{0,0,0,0}};
-    coo.xy = xy;
+static PJ_COORD push_inv3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+{
+    if (P->co_inv3d) {
+        // This code path is really only taken by the pipeline.
+        stack_push(stack, P->co_inv3d, P, coo);
+        return coo;
+    }
 
-    const int last_errno = P->shared_ctx->last_errno;
+    PJ_COORD r = { 0, 0, 0, 0 };
+
+    // Try to avoid dispatching a new coroutine if possible, because:
+    //  a) the coroutine stack is limited in size, and
+    //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
+    r.lpz = P->host->inv3d(coo.xyz, P);
+    return r;
+}
+
+static PJ_COORD push_inv(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+{
+    if (P->co_inv) {
+        // This code path is really only taken by the pipeline.
+        stack_push(stack, P->co_inv, P, coo);
+        return coo;
+    }
+
+    PJ_COORD r = { 0, 0, 0, 0 };
+
+    // Try to avoid dispatching a new coroutine if possible, because:
+    //  a) the coroutine stack is limited in size, and
+    //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
+    r.lp = P->host->inv(coo.xy, P);
+    return r;
+}
+
+PJcoroutine_code_t pj_inv_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    int         last_errno = e->last_errno;
+    PJ*         P = e->P;
+    PJ_COORD    coo = e->coo;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        case 2: goto p2;
+        case 3: goto p3;
+        case 4: goto p4;
+        case 5: goto p5;
+        default: goto ABORT;
+    }
+
+    coo.xy = e->coo.xy;
+    last_errno = P->shared_ctx->last_errno;
     P->shared_ctx->last_errno = 0;
 
-    if (!P->skip_inv_prepare)
-        coo = inv_prepare (P, coo);
+    if (!P->skip_inv_prepare) {
+        push_inv_prepare(stack, P, coo);
+        PJ_YIELD(e, 1);
+    }
     if (HUGE_VAL==coo.v[0])
-        return proj_coord_error ().lp;
+        goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer available */
-    if (P->inv[0])
+    if (P->co_inv || P->inv[0])
     {
-        printf("pj_inv(1): %s\n", P->inv);
-        coo.lp = pj_dispatch_inv(coo, P);
+        coo.lp = push_inv(stack, P, coo).lp;
+        PJ_YIELD(e, 2);
     }
-    else if (P->inv3d[0])
+    else if (P->co_inv3d || P->inv3d[0])
     {
-        printf("pj_inv(2): %s\n", P->inv3d);
-        coo.lpz = pj_dispatch_inv3d(coo, P);
+        coo.lpz = push_inv3d(stack, P, coo).lpz;
+        PJ_YIELD(e, 3);
     }
-    else if (P->inv4d[0])
+    else if (P->co_inv4d || P->inv4d[0])
     {
-        printf("pj_inv(3): %s\n", P->inv4d);
-        coo = pj_dispatch_inv4d(coo, P);
+        coo = push_inv4d(stack, P, coo);
+        PJ_YIELD(e, 4);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
-        return proj_coord_error ().lp;
+        goto ABORT;
     }
     if (HUGE_VAL==coo.v[0])
-        return proj_coord_error ().lp;
+        goto ABORT;
 
-    if (!P->skip_inv_finalize)
-        coo = inv_finalize (P, coo);
+    if (!P->skip_inv_finalize) {
+        push_inv_finalize (stack, P, coo);
+        PJ_YIELD(e, 5);
+    }
 
-    return error_or_coord(P, coo, last_errno).lp;
+    coo.lp = error_or_coord(P, coo, last_errno).lp;
+
+//DONE:
+    e->coo = coo;
+    e->last_errno = last_errno;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = coo;
+    e->last_errno = last_errno;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo.xy = proj_coord_error().xy;
+    return PJ_CO_ERROR;
 }
 
 
 
-PJ_LPZ pj_inv3d (PJ_XYZ xyz, PJ *P) {
-    PJ_COORD coo = {{0,0,0,0}};
-    coo.xyz = xyz;
+PJcoroutine_code_t pj_inv3d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    int         last_errno = e->last_errno;
+    PJ*         P = e->P;
+    PJ_COORD    coo = e->coo;
 
-    const int last_errno = P->shared_ctx->last_errno;
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        case 2: goto p2;
+        case 3: goto p3;
+        case 4: goto p4;
+        case 5: goto p5;
+        default: goto ABORT;
+    }
+
+    coo.xyz = e->coo.xyz;
+    last_errno = P->shared_ctx->last_errno;
     P->shared_ctx->last_errno = 0;
 
-    if (!P->skip_inv_prepare)
-         inv_prepare (P, coo);
+    if (!P->skip_inv_prepare) {
+         push_inv_prepare (stack, P, coo);
+         PJ_YIELD(e, 1);
+    }
     if (HUGE_VAL==coo.v[0])
-        return proj_coord_error ().lpz;
+        goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer feasible */
-    if (P->inv3d[0])
+    if (P->co_inv3d || P->inv3d[0])
     {
-        printf("pj_inv3d(1): %s\n", P->inv3d);
-        coo.lpz = pj_dispatch_inv3d(coo, P);
+        coo.lpz = push_inv3d(stack, P, coo).lpz;
+        PJ_YIELD(e, 2);
     }
-    else if (P->inv4d[0])
+    else if (P->co_inv4d || P->inv4d[0])
     {
-        printf("pj_inv3d(2): %s\n", P->inv4d);
-        coo = pj_dispatch_inv4d(coo, P);
+        coo = push_inv4d(stack, P, coo);
+        PJ_YIELD(e, 3);
     }
-    else if (P->inv[0])
+    else if (P->co_inv || P->inv[0])
     {
-        printf("pj_inv3d(3): %s\n", P->inv);
-        coo.lp = pj_dispatch_inv(coo, P);
+        coo.lp = push_inv(stack, P, coo).lp;
+        PJ_YIELD(e, 4);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
-        return proj_coord_error ().lpz;
+        goto ABORT;
     }
     if (HUGE_VAL==coo.v[0])
-        return proj_coord_error ().lpz;
+        goto ABORT;
 
-    if (!P->skip_inv_finalize)
-        inv_finalize (P, coo);
+    if (!P->skip_inv_finalize) {
+        push_inv_finalize(stack, P, coo);
+        PJ_YIELD(e, 5);
+    }
 
-    return error_or_coord(P, coo, last_errno).lpz;
+    coo.lpz = error_or_coord(P, coo, last_errno).lpz;
+
+//DONE:
+    e->coo = coo;
+    e->last_errno = last_errno;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = coo;
+    e->last_errno = last_errno;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo.xyz = proj_coord_error().xyz;
+    return PJ_CO_ERROR;
 }
 
 
 
-PJ_COORD pj_inv4d (PJ_COORD coo, PJ *P) {
+PJcoroutine_code_t pj_inv4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    int         last_errno = e->last_errno;
+    PJ*         P = e->P;
+    PJ_COORD    coo = e->coo;
 
-    const int last_errno = P->shared_ctx->last_errno;
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        case 2: goto p2;
+        case 3: goto p3;
+        case 4: goto p4;
+        case 5: goto p5;
+        default: goto ABORT;
+    }
+
+    last_errno = P->shared_ctx->last_errno;
     P->shared_ctx->last_errno = 0;
 
-    if (!P->skip_inv_prepare)
-        inv_prepare (P, coo);
+    if (!P->skip_inv_prepare) {
+        push_inv_prepare(stack, P, coo);
+        PJ_YIELD(e, 1);
+    }
     if (HUGE_VAL==coo.v[0])
-        return proj_coord_error ();
+        goto ABORT;
 
     /* Call the highest dimensional converter available */
-    if (P->inv4d[0])
+    if (P->co_inv4d || P->inv4d[0])
     {
-        printf("pj_inv4d(3): %s\n", P->inv4d);
-        coo = pj_dispatch_inv4d(coo, P);
+        coo = push_inv4d(stack, P, coo);
+        PJ_YIELD(e, 2);
     }
-    else if (P->inv3d[0])
+    else if (P->co_inv3d || P->inv3d[0])
     {
-        printf("pj_inv4d(3): %s\n", P->inv3d);
-        coo.lpz = pj_dispatch_inv3d(coo, P);
+        coo.lpz = push_inv3d(stack, P, coo).lpz;
+        PJ_YIELD(e, 3);
     }
-    else if (P->inv[0])
+    else if (P->co_inv || P->inv[0])
     {
-        printf("pj_inv4d(3): %s\n", P->inv);
-        coo.lp = pj_dispatch_inv(coo, P);
+        coo.lp = push_inv(stack, P, coo).lp;
+        PJ_YIELD(e, 4);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
-        return proj_coord_error ();
+        goto ABORT;
     }
     if (HUGE_VAL==coo.v[0])
-        return proj_coord_error ();
+        goto ABORT;
 
-    if (!P->skip_inv_finalize)
-        inv_finalize (P, coo);
+    if (!P->skip_inv_finalize) {
+        push_inv_finalize(stack, P, coo);
+        PJ_YIELD(e, 5);
+    }
 
-    return error_or_coord(P, coo, last_errno);
+    coo = error_or_coord(P, coo, last_errno);
+
+//DONE:
+    e->coo = coo;
+    e->last_errno = last_errno;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = coo;
+    e->last_errno = last_errno;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
+}
+
+PJ_COORD pj_inv4d(PJ_COORD coo, PJ* P) {
+    PJstack_t   stack;
+
+    stack_new(&stack);
+    stack_push(&stack, pj_inv4d_co, P, coo);
+
+    return stack_exec(&stack);
+}
+
+PJ_LPZ pj_inv3d(PJ_XYZ xyz, PJ* P) {
+    PJstack_t   stack;
+    PJ_COORD    coo = { 0 };
+    coo.xyz = xyz;
+
+    stack_new(&stack);
+    stack_push(&stack, pj_inv4d_co, P, coo);
+
+    return stack_exec(&stack).lpz;
+}
+
+PJ_LP PROJ_DLL pj_inv(PJ_XY xy, PJ* P) {
+    PJstack_t   stack;
+    PJ_COORD    coo = { 0 };
+    coo.xy = xy;
+
+    stack_new(&stack);
+
+    stack_push(&stack, pj_inv_co, P, coo);
+
+    return stack_exec(&stack).lp;
 }

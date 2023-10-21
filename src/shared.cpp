@@ -116,12 +116,15 @@ available.
 See also pj_approx_2D_trans and pj_approx_3D_trans in pj_internal.c, which work
 similarly, but prefers the 2D resp. 3D interfaces if available.
 ***************************************************************************************/
-    if (nullptr==P || direction == PJ_IDENT)
-        return coord;
-    if (P->inverted)
-        direction = opposite_direction(direction);
+    PJstack_t stack;
 
-#ifndef PROJ_OPENCL_DEVICE
+    stack_new(&stack);
+
+    push_proj_trans(&stack, P, direction, coord);
+
+    return stack_exec(&stack);
+
+#if 0
     if( !P->host->alternativeCoordinateOperations.empty() ) {
         constexpr int N_MAX_RETRY = 2;
         int iExcluded[N_MAX_RETRY] = {-1, -1};
@@ -220,11 +223,6 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
         return proj_coord_error ();
     }
 #endif
-
-    if (direction == PJ_FWD)
-        return pj_fwd4d (coord, P);
-    else
-        return pj_inv4d (coord, P);
 }
 
 /**************************************************************************************/
@@ -234,26 +232,17 @@ Behave mostly as proj_trans, but attempt to use 2D interfaces only.
 Used in gie.c, to enforce testing 2D code, and by PJ_pipeline.c to implement
 chained calls starting out with a call to its 2D interface.
 ***************************************************************************************/
-    if (nullptr==P)
+    PJstack_t stack;
+    if (nullptr==P || direction == PJ_IDENT)
         return coo;
-    if (P->inverted)
-        direction = (PJ_DIRECTION)(-direction);
-    switch (direction) {
-        case PJ_FWD:
-        {
-            const PJ_XY xy = pj_fwd (coo.lp, P);
-            coo.xy = xy;
-            return coo;
-        }
-        case PJ_INV:
-        {
-            const PJ_LP lp = pj_inv (coo.xy, P);
-            coo.lp = lp;
-            return coo;
-        }
-        case PJ_IDENT:
-            break;
-    }
+
+    stack_new(&stack);
+
+    push_approx_3D_trans(&stack, P, direction, coo);
+
+    coo = stack_exec(&stack);
+    coo.xyzt.z = coo.xyzt.t = 0.0;
+
     return coo;
 }
 
@@ -266,25 +255,117 @@ Behave mostly as proj_trans, but attempt to use 3D interfaces only.
 Used in gie.c, to enforce testing 3D code, and by PJ_pipeline.c to implement
 chained calls starting out with a call to its 3D interface.
 ***************************************************************************************/
-    if (nullptr==P)
+    PJstack_t stack;
+    if (nullptr== P || direction == PJ_IDENT)
         return coo;
-    if (P->inverted)
-        direction = (PJ_DIRECTION)(-direction);
-    switch (direction) {
-        case PJ_FWD:
-        {
-            const PJ_XYZ xyz = pj_fwd3d (coo.lpz, P);
-            coo.xyz = xyz;
-            return coo;
-        }
-        case PJ_INV:
-        {
-            const PJ_LPZ lpz = pj_inv3d (coo.xyz, P);
-            coo.lpz = lpz;
-            return coo;
-        }
-        case PJ_IDENT:
-            break;
-    }
+
+    stack_new(&stack);
+
+    push_approx_3D_trans(&stack, P, direction, coo);
+
+    coo = stack_exec(&stack);
+    coo.xyzt.t = 0.0;
+
     return coo;
+}
+
+void stack_new(cl_local PJstack_t* stack)
+{
+    stack->n = 0;
+}
+
+PJ_COORD stack_exec(cl_local PJstack_t* stack)
+{
+    // Default to an error value.
+    PJ_COORD coo = { -1, -1, -1, -1 };
+
+    while (stack->n > 0)
+    {
+        cl_local PJstack_entry_t* top = stack->s + stack->n - 1;
+
+        switch (top->fn(stack, top))
+        {
+            case PJ_CO_YIELD:
+            {
+                // Nothing to do. We have a new top we need to run!
+                break;
+            }
+
+            case PJ_CO_DONE:
+            {
+                --stack->n;
+                
+                // Transfer state back to the caller.
+                if (!stack->n)
+                {
+                    coo = top->coo;
+                }
+                else
+                {
+                    (top - 1)->coo = top->coo;
+                }
+
+                break;
+            }
+
+            case PJ_CO_ERROR:
+            {
+                stack->n = 0;
+                break;
+            }
+        }
+    }
+
+    return coo;
+}
+
+void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE fn, PJ* P, PJ_COORD coo)
+{
+    cl_local PJstack_entry_t* e = stack->s + stack->n;
+    
+    if (stack->n == PR_CO_STACK_SIZE)
+    {
+        stack->n = 0;
+        return;
+    }
+
+    e->fn = fn;
+    e->coo = coo;
+    e->P = P;
+
+    e->step = 0;
+    e->i = 0;
+    e->last_errno = 0;
+
+    ++stack->n;
+}
+
+void push_proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+{
+    if (nullptr == P || direction == PJ_IDENT)
+        return;
+    if (P->inverted)
+        direction = opposite_direction(direction);
+
+    stack_push(stack, direction == PJ_FWD ? pj_fwd4d_co : pj_inv4d_co, P, coord);
+}
+
+void push_approx_2D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+{
+    if (nullptr == P || direction == PJ_IDENT)
+        return;
+    if (P->inverted)
+        direction = opposite_direction(direction);
+
+    stack_push(stack, direction == PJ_FWD ? pj_fwd_co : pj_inv_co, P, coord);
+}
+
+void push_approx_3D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+{
+    if (nullptr == P || direction == PJ_IDENT)
+        return;
+    if (P->inverted)
+        direction = opposite_direction(direction);
+
+    stack_push(stack, direction == PJ_FWD ? pj_fwd3d_co : pj_inv3d_co, P, coord);
 }

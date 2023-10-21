@@ -188,13 +188,6 @@ static void PipelineStackPop(struct PipelineStack* stack)
 }
 
 
-static PJ_COORD pipeline_forward_4d (PJ_COORD point, PJ *P);
-static PJ_COORD pipeline_reverse_4d (PJ_COORD point, PJ *P);
-static PJ_XYZ    pipeline_forward_3d (PJ_LPZ lpz, PJ *P);
-static PJ_LPZ    pipeline_reverse_3d (PJ_XYZ xyz, PJ *P);
-static PJ_XY     pipeline_forward (PJ_LP lp, PJ *P);
-static PJ_LP     pipeline_reverse (PJ_XY xy, PJ *P);
-
 #ifndef PROJ_OPENCL_DEVICE
 
 static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
@@ -236,123 +229,269 @@ static void pipeline_map_svm_ptrs(PJ* P, bool map)
 
 #endif
 
-static PJ_COORD pipeline_forward_4d (PJ_COORD point, PJ *P) {
+static PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ*         P = e->P;
     struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for(size_t i = 0; i < pipeline->step_count; ++i)
+    PJ_COORD    point = e->coo;
+    size_t      i = e->i;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        default: goto ABORT;
+    }
+
+    i = 0;
+
+    for(; i < pipeline->step_count; ++i)
     {
         struct PipelineStep* step = pipeline->steps + i;
         if( !step->omit_fwd )
         {
-            point = proj_trans (step->pj, PJ_FWD, point);
+            push_proj_trans (stack, step->pj, PJ_FWD, point);
+            PJ_YIELD(e, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
         }
     }
 
-    return point;
+//DONE:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 
-static PJ_COORD pipeline_reverse_4d (PJ_COORD point, PJ *P) {
+static PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ*         P = e->P;
     struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for(size_t i = pipeline->step_count; i > 0; --i)
+    PJ_COORD    point = e->coo;
+    size_t      i = e->i;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        default: goto ABORT;
+    }
+
+    i = pipeline->step_count;
+
+    for(; i > 0; --i)
     {
         struct PipelineStep* step = pipeline->steps + i - 1;
         if( !step->omit_inv )
         {
-            point = proj_trans (step->pj, PJ_INV, point);
+            push_proj_trans (stack, step->pj, PJ_INV, point);
+            PJ_YIELD(e, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
         }
     }
 
-    return point;
+//DONE:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 
 
 
-static PJ_XYZ pipeline_forward_3d (PJ_LPZ lpz, PJ *P) {
-    PJ_COORD point = {{0,0,0,0}};
-    point.lpz = lpz;
+static PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ*         P = e->P;
     struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for(size_t i = 0; i < pipeline->step_count; ++i)
+    PJ_COORD    point = e->coo;
+    size_t      i = e->i;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        default: goto ABORT;
+    }
+
+    i = 0;
+    point.lpzt.t = 0;
+
+    for(; i < pipeline->step_count; ++i)
     {
         struct PipelineStep* step = pipeline->steps + i;
         if( !step->omit_fwd )
         {
-            point = pj_approx_3D_trans (step->pj, PJ_FWD, point);
+            push_approx_3D_trans (stack, step->pj, PJ_FWD, point);
+            PJ_YIELD(e, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
         }
     }
 
-    return point.xyz;
+//DONE:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 
-static PJ_LPZ pipeline_reverse_3d (PJ_XYZ xyz, PJ *P) {
-    PJ_COORD point = {{0,0,0,0}};
-    point.xyz = xyz;
+static PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ*         P = e->P;
     struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for(size_t i = pipeline->step_count; i > 0; --i)
+    PJ_COORD    point = e->coo;
+    size_t      i = e->i;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        default: goto ABORT;
+    }
+
+    i = pipeline->step_count;
+    point.xyzt.t = 0;
+
+    for(; i > 0; --i)
     {
         struct PipelineStep* step = pipeline->steps + i - 1;
         if( !step->omit_inv )
         {
-            point = proj_trans (step->pj, PJ_INV, point);
+            push_proj_trans (stack, step->pj, PJ_INV, point);
+            PJ_YIELD(e, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
         }
     }
 
-    return point.lpz;
+//DONE:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 
 
 
-static PJ_XY pipeline_forward (PJ_LP lp, PJ *P) {
-    PJ_COORD point = {{0,0,0,0}};
-    point.lp = lp;
+static PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ* P = e->P;
     struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for(size_t i = 0; i < pipeline->step_count; ++i)
+    PJ_COORD    point = e->coo;
+    size_t      i = e->i;
+
+    switch (e->step) {
+    case 0: break;
+    case 1: goto p1;
+    default: goto ABORT;
+    }
+
+    i = 0;
+    point.lpzt.z = point.lpzt.t = 0;
+
+    for (; i < pipeline->step_count; ++i)
     {
         struct PipelineStep* step = pipeline->steps + i;
         if( !step->omit_fwd )
         {
-            point = pj_approx_2D_trans (step->pj, PJ_FWD, point);
+            push_approx_2D_trans (stack, step->pj, PJ_FWD, point);
+            PJ_YIELD(e, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
         }
     }
 
-    return point.xy;
+//DONE:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 
-static PJ_LP pipeline_reverse (PJ_XY xy, PJ *P) {
-    PJ_COORD point = {{0,0,0,0}};
-    point.xy = xy;
+static PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+    PJ*         P = e->P;
     struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for(size_t i = pipeline->step_count; i > 0; --i)
+    PJ_COORD    point = e->coo;
+    size_t      i = e->i;
+
+    switch (e->step) {
+        case 0: break;
+        case 1: goto p1;
+        default: goto ABORT;
+    }
+
+    i = pipeline->step_count;
+    point.xyz.z = point.xyzt.t = 0;
+
+    for(; i > 0; --i)
     {
         struct PipelineStep* step = pipeline->steps + i - 1;
         if( !step->omit_inv )
         {
-            point = pj_approx_2D_trans (step->pj, PJ_INV, point);
+            push_approx_2D_trans (stack, step->pj, PJ_INV, point);
+            PJ_YIELD(e, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
         }
     }
 
-    return point.lp;
+//DONE:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_DONE;
+
+YIELD:
+    e->coo = point;
+    e->i = (int)i;
+    return PJ_CO_YIELD;
+
+ABORT:
+    e->coo = proj_coord_error();
+    return PJ_CO_ERROR;
 }
 
 
@@ -492,12 +631,12 @@ PJ *OPERATION(pipeline,0) {
         return destructor (P, PROJ_ERR_INVALID_OP_WRONG_SYNTAX); /* ERROR: nested pipelines */
     }
 
-    P->host->fwd4d  =  PJ_MAKE_KERNEL(pipeline_forward_4d);
-    P->host->inv4d  =  PJ_MAKE_KERNEL(pipeline_reverse_4d);
-    P->host->fwd3d  =  PJ_MAKE_KERNEL(pipeline_forward_3d);
-    P->host->inv3d  =  PJ_MAKE_KERNEL(pipeline_reverse_3d);
-    P->host->fwd    =  PJ_MAKE_KERNEL(pipeline_forward);
-    P->host->inv    =  PJ_MAKE_KERNEL(pipeline_reverse);
+    P->co_fwd4d  =  &pipeline_forward_4d_co;
+    P->co_inv4d  =  &pipeline_reverse_4d_co;
+    P->co_fwd3d  =  &pipeline_forward_3d_co;
+    P->co_inv3d  =  &pipeline_reverse_3d_co;
+    P->co_fwd    =  &pipeline_forward_co;
+    P->co_inv    =  &pipeline_reverse_co;
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
     P->host->scan   = pipeline_scan;
