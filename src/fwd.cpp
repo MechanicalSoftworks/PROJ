@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include "proj_internal_shared.h"
+#include "proj_kernel.h"
 
 #undef INPUT_UNITS
 #undef OUTPUT_UNITS
@@ -154,6 +154,7 @@ static PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local P
     switch (e->step) {
         case 0: break;
         case 1: goto p1;
+        case 2: goto p2;
         default: goto ABORT;
     }
 
@@ -163,7 +164,8 @@ static PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local P
     case PJ_IO_UNITS_CARTESIAN:
 
         if (P->is_geocent) {
-            coo = proj_trans (P->cart, PJ_FWD, coo);
+            push_proj_trans (stack, P->cart, PJ_FWD, coo);
+            PJ_YIELD(e, 1);
         }
         coo.xyz.x *= P->fr_meter;
         coo.xyz.y *= P->fr_meter;
@@ -205,7 +207,7 @@ static PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local P
 
     if (P->axisswap) {
         push_proj_trans(stack, P->axisswap, PJ_FWD, coo);
-        PJ_YIELD(e, 1);
+        PJ_YIELD(e, 2);
     }
 
 //DONE:
@@ -223,33 +225,33 @@ ABORT:
 
 static void push_fwd_prepare(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-    return stack_push(stack, fwd_prepare_co, P, coo);
+    return stack_push(stack, PJ_FUNCTION_PTR(fwd_prepare_co), P, coo);
 }
 
 static void push_fwd_finalize(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-    return stack_push(stack, fwd_finalize_co, P, coo);
+    return stack_push(stack, PJ_FUNCTION_PTR(fwd_finalize_co), P, coo);
 }
 
 static PJ_COORD push_fwd4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
     if (P->co_fwd4d) {
         // This code path is really only taken by the pipeline.
-        stack_push(stack, P->co_fwd4d, P, coo);
+        stack_push(stack, PJ_GET_COROUTINE(P, co_fwd4d), P, coo);
         return coo;
     }
 
     // Try to avoid dispatching a new coroutine if possible, because:
     //  a) the coroutine stack is limited in size, and
     //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
-    return P->host->fwd4d(coo, P);
+    return proj_dispatch_fwd4d(PJ_GET_COROUTINE(P, fwd4d), coo, P);
 }
 
 static PJ_COORD push_fwd3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
     if (P->co_fwd3d) {
         // This code path is really only taken by the pipeline.
-        stack_push(stack, P->co_fwd3d, P, coo);
+        stack_push(stack, PJ_GET_COROUTINE(P, co_fwd3d), P, coo);
         return coo;
     }
 
@@ -258,41 +260,15 @@ static PJ_COORD push_fwd3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     // Try to avoid dispatching a new coroutine if possible, because:
     //  a) the coroutine stack is limited in size, and
     //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
-    r.xyz = P->host->fwd3d(coo.lpz, P);
+    r.xyz = proj_dispatch_fwd3d(PJ_GET_COROUTINE(P, fwd3d), coo.lpz, P);
     return r;
 }
-
-//
-// TODO: Add a preprocessor definition for each function that OpenCL needs to dispatch
-//          -Dpipeline_forward3d_co_id = X
-//          -Dpipeline_forward4d_co_id = X+1
-//          ...
-// TODO: Function pointers can be acquired with:
-//          #ifdef PROJ_OPENCL_DEVICE
-//          #   define PROJ_FUNCTION_PTR(x) x##_id
-//          #else
-//          #   define PROJ_FUNCTION_PTR(x) &x
-//          #endif
-// TODO: Functions can be dispatched with:
-//          PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE fn, cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e) {
-//          #ifdef PROJ_OPENCL_DEVICE
-//              switch (fn) {
-//                  case X  : return pipeline_forward3d_co(stack, e);
-//                  case X+1: return pipeline_forward4d_co(stack, e);
-//              }
-//          #else
-//              return fn(stack, e);
-//          #endif
-//          }
-// TODO: Does it make sense to have different dispatch tables for coroutines, 4D, 3D and 2D functions?
-//          * Ensures they take and return specific types.
-//
 
 static PJ_COORD push_fwd(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
     if (P->co_fwd) {
         // This code path is really only taken by the pipeline.
-        stack_push(stack, P->co_fwd, P, coo);
+        stack_push(stack, PJ_GET_COROUTINE(P, co_fwd), P, coo);
         return coo;
     }
 
@@ -301,7 +277,7 @@ static PJ_COORD push_fwd(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     // Try to avoid dispatching a new coroutine if possible, because:
     //  a) the coroutine stack is limited in size, and
     //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
-    r.xy = P->host->fwd(coo.lp, P);
+    r.xy = proj_dispatch_fwd(PJ_GET_COROUTINE(P, fwd), coo.lp, P);
     return r;
 }
 
@@ -341,17 +317,17 @@ PJcoroutine_code_t pj_fwd_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t
         goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer available */
-    if (P->co_fwd || P->fwd[0])
+    if (P->fwd || P->co_fwd)
     {
         coo.xy = push_fwd(stack, P, coo).xy;
         PJ_YIELD(e, 2);
     }
-    else if (P->co_fwd3d || P->fwd3d[0])
+    else if (P->fwd3d || P->co_fwd3d)
     {
         coo.xyz = push_fwd3d(stack, P, coo).xyz;
         PJ_YIELD(e, 3);
     }
-    else if (P->co_fwd4d || P->fwd4d[0])
+    else if (P->fwd4d || P->co_fwd4d)
     {
         coo = push_fwd4d(stack, P, coo);
         PJ_YIELD(e, 4);
@@ -414,17 +390,17 @@ PJcoroutine_code_t pj_fwd3d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
         goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer feasible */
-    if (P->co_fwd3d || P->fwd3d[0])
+    if (P->fwd3d || P->co_fwd3d)
     {
         coo.xyz = push_fwd3d(stack, P, coo).xyz;
         PJ_YIELD(e, 2);
     }
-    else if (P->co_fwd4d || P->fwd4d[0])
+    else if (P->fwd4d || P->co_fwd4d)
     {
         coo = push_fwd4d(stack, P, coo);
         PJ_YIELD(e, 3);
     }
-    else if (P->co_fwd || P->fwd[0])
+    else if (P->fwd || P->co_fwd)
     {
         coo.xy = push_fwd(stack, P, coo).xy;
         PJ_YIELD(e, 4);
@@ -484,17 +460,17 @@ PJcoroutine_code_t pj_fwd4d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
         goto ABORT;
 
     /* Call the highest dimensional converter available */
-    if (P->co_fwd4d || P->fwd4d[0])
+    if (P->fwd4d || P->co_fwd4d)
     {
         coo = push_fwd4d(stack, P, coo);
         PJ_YIELD(e, 2);
     }
-    else if (P->co_fwd3d || P->fwd3d[0])
+    else if (P->fwd3d || P->co_fwd3d)
     {
         coo = push_fwd3d(stack, P, coo);
         PJ_YIELD(e, 3);
     }
-    else if (P->co_fwd || P->fwd[0])
+    else if (P->fwd || P->co_fwd)
     {
         coo = push_fwd(stack, P, coo);
         PJ_YIELD(e, 4);
@@ -528,11 +504,13 @@ ABORT:
     return PJ_CO_ERROR;
 }
 
+#ifndef PROJ_OPENCL_DEVICE
+
 PJ_COORD pj_fwd4d(PJ_COORD coo, PJ* P) {
     PJstack_t   stack;
 
     stack_new(&stack);
-    stack_push(&stack, pj_fwd4d_co, P, coo);
+    stack_push(&stack, PJ_FUNCTION_PTR(pj_fwd4d_co), P, coo);
 
     return stack_exec(&stack);
 }
@@ -543,7 +521,7 @@ PJ_XYZ pj_fwd3d(PJ_LPZ lpz, PJ* P) {
     coo.lpz = lpz;
 
     stack_new(&stack);
-    stack_push(&stack, pj_fwd4d_co, P, coo);
+    stack_push(&stack, PJ_FUNCTION_PTR(pj_fwd3d_co), P, coo);
 
     return stack_exec(&stack).xyz;
 }
@@ -555,7 +533,17 @@ PJ_XY PROJ_DLL pj_fwd(PJ_LP lp, PJ* P) {
 
     stack_new(&stack);
 
-    stack_push(&stack, pj_fwd_co, P, coo);
+    stack_push(&stack, PJ_FUNCTION_PTR(pj_fwd_co), P, coo);
 
     return stack_exec(&stack).xy;
 }
+
+void pj_scan_fwd(PJscan& s) {
+    s.add_co(PJ_MAKE_KERNEL(fwd_prepare_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(fwd_finalize_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(pj_fwd_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(pj_fwd3d_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(pj_fwd4d_co), __FILE__);
+}
+
+#endif

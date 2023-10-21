@@ -59,6 +59,8 @@
 
 #include <string>
 #include <vector>
+#include <set>
+#include <map>
 #include <new>
 
 #include "proj.h"
@@ -322,13 +324,44 @@ typedef PJ_LPZ (*PJ_INV_3D)(PJ_XYZ, PJ*);
 
 #define PJ_MAKE_KERNEL(name) PJkernel<decltype(name)*>{ PROJ_STR(name), &name }
 
+typedef std::map<std::string, int> PJfunction_to_id;
+
 struct PJscan
 {
-    std::set<const char*> fwd, inv;
-    std::set<const char*> fwd3d, inv3d;
-    std::set<const char*> fwd4d, inv4d;
+    int next_co_id = 0;
+    int next_fwd_id = 1000;
+    int next_inv_id = 2000;
+    int next_fwd3d_id = 3000;
+    int next_inv3d_id = 4000;
+    int next_fwd4d_id = 5000;
+    int next_inv4d_id = 6000;
 
-    std::set<const char*> files;
+    PJfunction_to_id co;
+    PJfunction_to_id fwd, inv;
+    PJfunction_to_id fwd3d, inv3d;
+    PJfunction_to_id fwd4d, inv4d;
+
+    std::set<std::string> files;
+    
+    void add_co(const PJkernel<PJ_COROUTINE>& k, const char* file) { add_internal(k, file, co, next_co_id, files); }
+    void add_fwd(const PJkernel<PJ_FWD_2D>& k, const char* file) { add_internal(k, file, fwd, next_fwd_id, files); }
+    void add_inv(const PJkernel<PJ_INV_2D>& k, const char* file) { add_internal(k, file, inv, next_inv_id, files); }
+    void add_fwd(const PJkernel<PJ_FWD_3D>& k, const char* file) { add_internal(k, file, fwd3d, next_fwd3d_id, files); }
+    void add_inv(const PJkernel<PJ_INV_3D>& k, const char* file) { add_internal(k, file, inv3d, next_inv3d_id, files); }
+    void add_fwd4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { add_internal(k, file, fwd4d, next_fwd4d_id, files); }
+    void add_inv4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { add_internal(k, file, inv4d, next_inv4d_id, files); }
+
+    static std::string definitions_for(const PJfunction_to_id& m);
+
+    template<typename T>
+    static void add_internal(const PJkernel<T>& k, const char* file, PJfunction_to_id& m, int& next_id, std::set<std::string>& files)
+    {
+        if (k && m.try_emplace(k.name, next_id).second)
+        {
+            ++next_id;
+            files.insert(file);
+        }
+    }
 };
 
 struct PJhost
@@ -369,6 +402,12 @@ struct PJhost
 
     **************************************************************************************/
 
+    PJkernel<PJ_COROUTINE>   co_fwd;
+    PJkernel<PJ_COROUTINE>   co_inv;
+    PJkernel<PJ_COROUTINE>   co_fwd3d;
+    PJkernel<PJ_COROUTINE>   co_inv3d;
+    PJkernel<PJ_COROUTINE>   co_fwd4d;
+    PJkernel<PJ_COROUTINE>   co_inv4d;
 
     PJkernel<PJ_FWD_2D>   fwd;
     PJkernel<PJ_INV_2D>   inv;
@@ -710,6 +749,7 @@ void pj_scan_recursive(PJ* P, PJscan& s);
 void pj_scan_local(PJ* P, PJscan& s);
 void pj_scan_nop(PJ* P, PJscan& s);
 std::string pj_create_opencl_source_from_scan(PJscan& s);
+std::string pj_create_opencl_definitions_from_scan(PJscan& s);
 void pj_map_svm_ptrs(PJ* P, bool map);
 
 // For use by projinfo
@@ -797,6 +837,14 @@ void pj_stderr_logger( void *, int, const char * );
 int pj_find_file(PJ_CONTEXT * ctx, const char *short_filename,
                  char* out_full_filename, size_t out_full_filename_size);
 
+void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE fn, PJ* P, PJ_COORD coo);
 
+PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE fn, struct PJstack_s* stack, struct PJstack_entry_s* e);
+PJ_XY proj_dispatch_fwd(PJ_FWD_2D fn, PJ_LP lp, PJ* P);
+PJ_LP proj_dispatch_inv(PJ_INV_2D fn, PJ_XY xy, PJ* P);
+PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D fn, PJ_LPZ lpz, PJ* P);
+PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D fn, PJ_XYZ xyz, PJ* P);
+PJ_COORD proj_dispatch_fwd4d(PJ_OPERATOR fn, PJ_COORD coo, PJ* P);
+PJ_COORD proj_dispatch_inv4d(PJ_OPERATOR fn, PJ_COORD coo, PJ* P);
 
 #endif /* ndef PROJ_INTERNAL_H */

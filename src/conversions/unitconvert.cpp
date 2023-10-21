@@ -65,7 +65,7 @@ Last update: 2017-05-16
 
 #define PJ_LIB__
 
-#include "../proj_internal_shared.h"
+#include "../proj_kernel.h"
 
 PROJ_HEAD(unitconvert, "Unit conversion");
 

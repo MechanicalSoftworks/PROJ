@@ -118,19 +118,29 @@ p##s:
 
 struct PJstack_entry_s;
 
+// These are generated using the results of PJscan. Transmitted to the kernel at compile time.
+typedef int PJ_COROUTINE_ID;
+typedef int PJ_FWD_2D_ID;
+typedef int PJ_INV_2D_ID;
+typedef int PJ_FWD_3D_ID;
+typedef int PJ_INV_3D_ID;
+typedef int PJ_FWD_4D_ID;
+typedef int PJ_INV_4D_ID;
+
 #ifdef PROJ_OPENCL_DEVICE
 
 // Initialised on the host.
 #   define PJ_FIELD(type, name, value) type name
 #   define PJ_HOST_MUTABLE
 
+#   define PJ_FUNCTION_PTR(name)        name##_id
+#   define PJ_GET_COROUTINE(P, type)    P->type
+
 #   define lround round
 #   define nullptr 0
 
 #   define cl_constant  __constant
 #   define cl_local     __local
-
-    typedef int PJ_COROUTINE;
 
 #   define PROJ_DLL
 
@@ -139,14 +149,15 @@ struct PJstack_entry_s;
 #   define PJ_FIELD(type, name, value) type name = value
 #   define PJ_HOST_MUTABLE mutable
 
+#   define PJ_FUNCTION_PTR(name)       &name
+#   define PJ_GET_COROUTINE(P, type)    P->host->type.fn
+
 #   define cl_constant const
 #   define cl_local
 
-    // I'd rather have a separate build pass to support this on the host.
-    // So the coroutine system will be identical except for using function pointers on the host.
-    typedef PJcoroutine_code_t (*PJ_COROUTINE)(cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e);
-
 #   include <math.h>
+
+    typedef PJcoroutine_code_t(*PJ_COROUTINE)(cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e);
 
 #endif
 
@@ -171,7 +182,11 @@ enum pj_io_units pj_right(struct PJconsts* P);
 
 typedef struct PJstack_entry_s
 {
+#ifdef PROJ_OPENCL_DEVICE
+    PJ_COROUTINE_ID fn;
+#else
     PJ_COROUTINE    fn;
+#endif
 
     // State.
     PJ_COORD        coo;
@@ -187,7 +202,7 @@ typedef struct PJstack_entry_s
 typedef struct PJstack_s
 {
     PJstack_entry_t s[PR_CO_STACK_SIZE];
-    int             n = 0;
+    int             n;
 } PJstack_t;
 
 /* Context data that's shared between the OpenCL host and evice */
@@ -235,21 +250,19 @@ struct PJconsts {
 
     **************************************************************************************/
 
-    /* These are the names of the functions.
-     * They're populated after construction and are used by OpenCL to lookup the functions a kernel needs to run.*/
-    PJ_FIELD(char, fwd[256], { 0 });
-    PJ_FIELD(char, inv[256], { 0 });
-    PJ_FIELD(char, fwd3d[256], { 0 });
-    PJ_FIELD(char, inv3d[256], { 0 });
-    PJ_FIELD(char, fwd4d[256], { 0 });
-    PJ_FIELD(char, inv4d[256], { 0 });
+    PJ_FIELD(PJ_COROUTINE_ID, co_fwd, 0);
+    PJ_FIELD(PJ_COROUTINE_ID, co_inv, 0);
+    PJ_FIELD(PJ_COROUTINE_ID, co_fwd3d, 0);
+    PJ_FIELD(PJ_COROUTINE_ID, co_inv3d, 0);
+    PJ_FIELD(PJ_COROUTINE_ID, co_fwd4d, 0);
+    PJ_FIELD(PJ_COROUTINE_ID, co_inv4d, 0);
 
-    PJ_FIELD(PJ_COROUTINE, co_fwd, 0);
-    PJ_FIELD(PJ_COROUTINE, co_inv, 0);
-    PJ_FIELD(PJ_COROUTINE, co_fwd3d, 0);
-    PJ_FIELD(PJ_COROUTINE, co_inv3d, 0);
-    PJ_FIELD(PJ_COROUTINE, co_fwd4d, 0);
-    PJ_FIELD(PJ_COROUTINE, co_inv4d, 0);
+    PJ_FIELD(PJ_FWD_2D_ID, fwd, 0);
+    PJ_FIELD(PJ_INV_2D_ID, inv, 0);
+    PJ_FIELD(PJ_FWD_3D_ID, fwd3d, 0);
+    PJ_FIELD(PJ_INV_3D_ID, inv3d, 0);
+    PJ_FIELD(PJ_FWD_4D_ID, fwd4d, 0);
+    PJ_FIELD(PJ_INV_4D_ID, inv4d, 0);
 
 
     /*************************************************************************************
@@ -421,7 +434,6 @@ struct pj_ctx_shared* pj_get_ctx_shared(const PJ*);
 // Coroutines.
 void stack_new(cl_local PJstack_t* stack);
 PJ_COORD stack_exec(cl_local PJstack_t* stack);
-void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE fn, PJ* P, PJ_COORD coo);
 
 void push_proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 void push_approx_3D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);

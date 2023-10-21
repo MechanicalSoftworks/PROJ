@@ -1,6 +1,6 @@
 #define PJ_LIB__
 
-#include "../proj_internal_shared.h"
+#include "../proj_kernel.h"
 
 struct pj_opaque_eqc {
     double rc;

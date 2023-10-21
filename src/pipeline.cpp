@@ -100,7 +100,7 @@ Thomas Knudsen, thokn@sdfe.dk, 2016-05-20
 #   include "geodesic.h"
 #endif
 
-#include "proj_internal_shared.h"
+#include "proj_kernel.h"
 
 PROJ_HEAD(pipeline,         "Transformation pipeline manager");
 PROJ_HEAD(pop, "Retrieve coordinate value from pipeline stack");
@@ -631,12 +631,12 @@ PJ *OPERATION(pipeline,0) {
         return destructor (P, PROJ_ERR_INVALID_OP_WRONG_SYNTAX); /* ERROR: nested pipelines */
     }
 
-    P->co_fwd4d  =  &pipeline_forward_4d_co;
-    P->co_inv4d  =  &pipeline_reverse_4d_co;
-    P->co_fwd3d  =  &pipeline_forward_3d_co;
-    P->co_inv3d  =  &pipeline_reverse_3d_co;
-    P->co_fwd    =  &pipeline_forward_co;
-    P->co_inv    =  &pipeline_reverse_co;
+    P->host->co_fwd4d  =  PJ_MAKE_KERNEL(pipeline_forward_4d_co);
+    P->host->co_inv4d  =  PJ_MAKE_KERNEL(pipeline_reverse_4d_co);
+    P->host->co_fwd3d  =  PJ_MAKE_KERNEL(pipeline_forward_3d_co);
+    P->host->co_inv3d  =  PJ_MAKE_KERNEL(pipeline_reverse_3d_co);
+    P->host->co_fwd    =  PJ_MAKE_KERNEL(pipeline_forward_co);
+    P->host->co_inv    =  PJ_MAKE_KERNEL(pipeline_reverse_co);
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
     P->host->scan   = pipeline_scan;

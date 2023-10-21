@@ -1356,8 +1356,14 @@ PJ PROJ_DLL *proj_concatoperation_get_step(PJ_CONTEXT *ctx,
 
 /* ------------------------------------------------------------------------- */
 
-char PROJ_DLL  *proj_create_opencl_source(PJ* P);
-void PROJ_DLL   proj_free_opencl_source(char* src);
+struct PJopencl
+{
+    char *kernel_source;
+    char *kernel_definitions;
+};
+
+bool PROJ_DLL   proj_create_opencl(PJ* P, PJopencl* o);
+void PROJ_DLL   proj_free_opencl(PJopencl* o);
 
 void PROJ_DLL   proj_host_acquire_svm(PJ* P);
 void PROJ_DLL   proj_host_release_svm(PJ* P);

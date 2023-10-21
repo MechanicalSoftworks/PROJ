@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#include "proj_internal_shared.h"
+#include "proj_kernel.h"
 
 #undef INPUT_UNITS
 #undef OUTPUT_UNITS
@@ -188,33 +188,33 @@ extern PJ_COORD error_or_coord(PJ* P, PJ_COORD coord, int last_errno);
 
 static void push_inv_prepare(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-    return stack_push(stack, inv_prepare_co, P, coo);
+    return stack_push(stack, PJ_FUNCTION_PTR(inv_prepare_co), P, coo);
 }
 
 static void push_inv_finalize(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-    return stack_push(stack, inv_finalize_co, P, coo);
+    return stack_push(stack, PJ_FUNCTION_PTR(inv_finalize_co), P, coo);
 }
 
 static PJ_COORD push_inv4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
     if (P->co_inv4d) {
         // This code path is really only taken by the pipeline.
-        stack_push(stack, P->co_inv4d, P, coo);
+        stack_push(stack, PJ_GET_COROUTINE(P, co_inv4d), P, coo);
         return coo;
     }
 
     // Try to avoid dispatching a new coroutine if possible, because:
     //  a) the coroutine stack is limited in size, and
     //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
-    return P->host->inv4d(coo, P);
+    return proj_dispatch_inv4d(PJ_GET_COROUTINE(P, inv4d), coo, P);
 }
 
 static PJ_COORD push_inv3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
     if (P->co_inv3d) {
         // This code path is really only taken by the pipeline.
-        stack_push(stack, P->co_inv3d, P, coo);
+        stack_push(stack, PJ_GET_COROUTINE(P, co_inv3d), P, coo);
         return coo;
     }
 
@@ -223,7 +223,7 @@ static PJ_COORD push_inv3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     // Try to avoid dispatching a new coroutine if possible, because:
     //  a) the coroutine stack is limited in size, and
     //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
-    r.lpz = P->host->inv3d(coo.xyz, P);
+    r.lpz = proj_dispatch_inv3d(PJ_GET_COROUTINE(P, inv3d), coo.xyz, P);
     return r;
 }
 
@@ -231,7 +231,7 @@ static PJ_COORD push_inv(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
     if (P->co_inv) {
         // This code path is really only taken by the pipeline.
-        stack_push(stack, P->co_inv, P, coo);
+        stack_push(stack, PJ_GET_COROUTINE(P, co_inv), P, coo);
         return coo;
     }
 
@@ -240,7 +240,8 @@ static PJ_COORD push_inv(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     // Try to avoid dispatching a new coroutine if possible, because:
     //  a) the coroutine stack is limited in size, and
     //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
-    r.lp = P->host->inv(coo.xy, P);
+    r.lp = proj_dispatch_inv(PJ_GET_COROUTINE(P, inv), coo.xy, P);
+
     return r;
 }
 
@@ -271,17 +272,17 @@ PJcoroutine_code_t pj_inv_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t
         goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer available */
-    if (P->co_inv || P->inv[0])
+    if (P->inv || P->co_inv)
     {
         coo.lp = push_inv(stack, P, coo).lp;
         PJ_YIELD(e, 2);
     }
-    else if (P->co_inv3d || P->inv3d[0])
+    else if (P->inv3d || P->co_inv3d)
     {
         coo.lpz = push_inv3d(stack, P, coo).lpz;
         PJ_YIELD(e, 3);
     }
-    else if (P->co_inv4d || P->inv4d[0])
+    else if (P->inv4d || P->co_inv4d)
     {
         coo = push_inv4d(stack, P, coo);
         PJ_YIELD(e, 4);
@@ -344,17 +345,17 @@ PJcoroutine_code_t pj_inv3d_co (cl_local PJstack_t* stack, cl_local PJstack_entr
         goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer feasible */
-    if (P->co_inv3d || P->inv3d[0])
+    if (P->inv3d || P->co_inv3d)
     {
         coo.lpz = push_inv3d(stack, P, coo).lpz;
         PJ_YIELD(e, 2);
     }
-    else if (P->co_inv4d || P->inv4d[0])
+    else if (P->inv4d || P->co_inv4d)
     {
         coo = push_inv4d(stack, P, coo);
         PJ_YIELD(e, 3);
     }
-    else if (P->co_inv || P->inv[0])
+    else if (P->inv || P->co_inv)
     {
         coo.lp = push_inv(stack, P, coo).lp;
         PJ_YIELD(e, 4);
@@ -416,17 +417,17 @@ PJcoroutine_code_t pj_inv4d_co (cl_local PJstack_t* stack, cl_local PJstack_entr
         goto ABORT;
 
     /* Call the highest dimensional converter available */
-    if (P->co_inv4d || P->inv4d[0])
+    if (P->inv4d || P->co_inv4d)
     {
         coo = push_inv4d(stack, P, coo);
         PJ_YIELD(e, 2);
     }
-    else if (P->co_inv3d || P->inv3d[0])
+    else if (P->inv3d || P->co_inv3d)
     {
         coo.lpz = push_inv3d(stack, P, coo).lpz;
         PJ_YIELD(e, 3);
     }
-    else if (P->co_inv || P->inv[0])
+    else if (P->inv || P->co_inv)
     {
         coo.lp = push_inv(stack, P, coo).lp;
         PJ_YIELD(e, 4);
@@ -460,11 +461,13 @@ ABORT:
     return PJ_CO_ERROR;
 }
 
+#ifndef PROJ_OPENCL_DEVICE
+
 PJ_COORD pj_inv4d(PJ_COORD coo, PJ* P) {
     PJstack_t   stack;
 
     stack_new(&stack);
-    stack_push(&stack, pj_inv4d_co, P, coo);
+    stack_push(&stack, PJ_FUNCTION_PTR(pj_inv4d_co), P, coo);
 
     return stack_exec(&stack);
 }
@@ -475,7 +478,7 @@ PJ_LPZ pj_inv3d(PJ_XYZ xyz, PJ* P) {
     coo.xyz = xyz;
 
     stack_new(&stack);
-    stack_push(&stack, pj_inv4d_co, P, coo);
+    stack_push(&stack, PJ_FUNCTION_PTR(pj_inv4d_co), P, coo);
 
     return stack_exec(&stack).lpz;
 }
@@ -487,7 +490,17 @@ PJ_LP PROJ_DLL pj_inv(PJ_XY xy, PJ* P) {
 
     stack_new(&stack);
 
-    stack_push(&stack, pj_inv_co, P, coo);
+    stack_push(&stack, PJ_FUNCTION_PTR(pj_inv_co), P, coo);
 
     return stack_exec(&stack).lp;
 }
+
+void pj_scan_inv(PJscan& s) {
+    s.add_co(PJ_MAKE_KERNEL(inv_prepare_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(inv_finalize_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(pj_inv_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(pj_inv3d_co), __FILE__);
+    s.add_co(PJ_MAKE_KERNEL(pj_inv4d_co), __FILE__);
+}
+
+#endif
