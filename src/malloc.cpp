@@ -115,11 +115,18 @@ PJ *proj_destroy(PJ *P) {
 }
 
 /*****************************************************************************/
+void PJhost::map_svm(void* ptr, bool map)
+/*****************************************************************************/
+{
+    return ctx->allocator->svm_map(ptr, map);
+}
+
+/*****************************************************************************/
 // cppcheck-suppress uninitMemberVar
 PJhost::PJhost() :
     destructor(pj_default_destructor),
     scan(pj_scan_recursive),
-    map_svm(pj_map_svm_ptrs)
+    map_pj(pj_map_svm_ptrs)
 {}
 /*****************************************************************************/
 

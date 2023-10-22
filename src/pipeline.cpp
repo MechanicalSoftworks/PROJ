@@ -217,12 +217,14 @@ static void pipeline_map_svm_ptrs(PJ* P, bool map)
     pj_map_svm_ptrs(P, map);
 
     struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
+    P->host->map_svm(pipeline->steps, map);
+    P->host->map_svm(pipeline->stack, map);
     for (size_t i = 0; i < pipeline->step_count; ++i)
     {
         struct PipelineStep* step = pipeline->steps + i;
         if (!step->omit_fwd || !step->omit_inv)
         {
-            step->pj->host->map_svm(step->pj, map);
+            step->pj->host->map_pj(step->pj, map);
         }
     }
 }
@@ -640,7 +642,7 @@ PJ *OPERATION(pipeline,0) {
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
     P->host->scan   = pipeline_scan;
-    P->host->map_svm = pipeline_map_svm_ptrs;
+    P->host->map_pj = pipeline_map_svm_ptrs;
 
     /* Currently, the pipeline driver is a raw bit mover, enabling other operations */
     /* to collaborate efficiently. All prep/fin stuff is done at the step levels. */

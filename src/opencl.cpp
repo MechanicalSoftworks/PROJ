@@ -41,19 +41,19 @@ void pj_scan_local(PJ* P, PJscan& s) {
     Finds all the functions used by this operation, and records them so we can
     populate the OpenCL double dispatch table for this projection.
 ******************************************************************************/
-    s.add_co(P->host->co_fwd, P->host->file);
-    s.add_co(P->host->co_inv, P->host->file);
-    s.add_co(P->host->co_fwd3d, P->host->file);
-    s.add_co(P->host->co_inv3d, P->host->file);
-    s.add_co(P->host->co_fwd4d, P->host->file);
-    s.add_co(P->host->co_inv4d, P->host->file);
+    P->co_fwd = s.add_co(P->host->co_fwd, P->host->file);
+    P->co_inv = s.add_co(P->host->co_inv, P->host->file);
+    P->co_fwd3d = s.add_co(P->host->co_fwd3d, P->host->file);
+    P->co_inv3d = s.add_co(P->host->co_inv3d, P->host->file);
+    P->co_fwd4d = s.add_co(P->host->co_fwd4d, P->host->file);
+    P->co_inv4d = s.add_co(P->host->co_inv4d, P->host->file);
 
-    s.add_fwd(P->host->fwd, P->host->file);
-    s.add_inv(P->host->inv, P->host->file);
-    s.add_fwd(P->host->fwd3d, P->host->file);
-    s.add_inv(P->host->inv3d, P->host->file);
-    s.add_fwd4d(P->host->fwd4d, P->host->file);
-    s.add_inv4d(P->host->inv4d, P->host->file);
+    P->fwd = s.add_fwd(P->host->fwd, P->host->file);
+    P->inv = s.add_inv(P->host->inv, P->host->file);
+    P->fwd3d = s.add_fwd(P->host->fwd3d, P->host->file);
+    P->inv3d = s.add_inv(P->host->inv3d, P->host->file);
+    P->fwd4d = s.add_fwd4d(P->host->fwd4d, P->host->file);
+    P->inv4d = s.add_inv4d(P->host->inv4d, P->host->file);
 }
 
 /*****************************************************************************/
@@ -88,7 +88,7 @@ static std::string generate_header_list(PJscan& s) {
 static std::string generate_co_dispatch_table(const PJfunction_to_id& fns) {
     std::ostringstream oss;
 
-    oss << "PJcoroutine_code_t proj_dispatch_co(PJ_COROUTINE_ID fn, cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e) { " << std::endl;
+    oss << "PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e) { " << std::endl;
     oss << "    switch (fn) {" << std::endl;
     oss << "        default: break;" << std::endl;
     for (const auto& fn : fns)
@@ -225,10 +225,11 @@ void pj_map_svm_ptrs(PJ* P, bool map)
 {
     P->host->ctx->allocator->svm_map(P, map);
     P->host->ctx->allocator->svm_map(P->shared_ctx, map);
+    P->host->ctx->allocator->svm_map(P->opaque, map);
 
     // Nice little circular reference here. Enforce the constraint that this operation needs to happen top-down.
     //if (P->parent) {
-    //    P->parent->host->map_svm(P->parent, map);
+    //    P->parent->host->map_pj(P->parent, map);
     //}
 
     if (P->geod) {
@@ -240,34 +241,34 @@ void pj_map_svm_ptrs(PJ* P, bool map)
     }
 
     if (P->axisswap) {
-        P->axisswap->host->map_svm(P->axisswap, map);
+        P->axisswap->host->map_pj(P->axisswap, map);
     }
 
     if (P->cart) {
-        P->cart->host->map_svm(P->cart, map);
+        P->cart->host->map_pj(P->cart, map);
     }
 
     if (P->cart_wgs84) {
-        P->cart_wgs84->host->map_svm(P->cart_wgs84, map);
+        P->cart_wgs84->host->map_pj(P->cart_wgs84, map);
     }
 
     if (P->helmert) {
-        P->helmert->host->map_svm(P->helmert, map);
+        P->helmert->host->map_pj(P->helmert, map);
     }
 
     if (P->hgridshift) {
-        P->hgridshift->host->map_svm(P->hgridshift, map);
+        P->hgridshift->host->map_pj(P->hgridshift, map);
     }
 
     if (P->vgridshift) {
-        P->vgridshift->host->map_svm(P->vgridshift, map);
+        P->vgridshift->host->map_pj(P->vgridshift, map);
     }
 }
 
 void proj_host_acquire_svm(PJ* P) {
-    P->host->map_svm(P, true);
+    P->host->map_pj(P, true);
 }
 
 void proj_host_release_svm(PJ* P) {
-    P->host->map_svm(P, false);
+    P->host->map_pj(P, false);
 }

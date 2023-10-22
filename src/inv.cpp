@@ -198,7 +198,7 @@ static void push_inv_finalize(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 
 static PJ_COORD push_inv4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-    if (P->co_inv4d) {
+    if (PJ_GET_COROUTINE(P, co_inv4d)) {
         // This code path is really only taken by the pipeline.
         stack_push(stack, PJ_GET_COROUTINE(P, co_inv4d), P, coo);
         return coo;
@@ -212,7 +212,7 @@ static PJ_COORD push_inv4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 
 static PJ_COORD push_inv3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-    if (P->co_inv3d) {
+    if (PJ_GET_COROUTINE(P, co_inv3d)) {
         // This code path is really only taken by the pipeline.
         stack_push(stack, PJ_GET_COROUTINE(P, co_inv3d), P, coo);
         return coo;
@@ -229,7 +229,7 @@ static PJ_COORD push_inv3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 
 static PJ_COORD push_inv(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
 {
-    if (P->co_inv) {
+    if (PJ_GET_COROUTINE(P, co_inv)) {
         // This code path is really only taken by the pipeline.
         stack_push(stack, PJ_GET_COROUTINE(P, co_inv), P, coo);
         return coo;
@@ -272,17 +272,17 @@ PJcoroutine_code_t pj_inv_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t
         goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer available */
-    if (P->inv || P->co_inv)
+    if (PJ_GET_COROUTINE(P, inv) || PJ_GET_COROUTINE(P, co_inv))
     {
         coo.lp = push_inv(stack, P, coo).lp;
         PJ_YIELD(e, 2);
     }
-    else if (P->inv3d || P->co_inv3d)
+    else if (PJ_GET_COROUTINE(P, inv3d) || PJ_GET_COROUTINE(P, co_inv3d))
     {
         coo.lpz = push_inv3d(stack, P, coo).lpz;
         PJ_YIELD(e, 3);
     }
-    else if (P->inv4d || P->co_inv4d)
+    else if (PJ_GET_COROUTINE(P, inv4d) || PJ_GET_COROUTINE(P, co_inv4d))
     {
         coo = push_inv4d(stack, P, coo);
         PJ_YIELD(e, 4);
@@ -345,17 +345,17 @@ PJcoroutine_code_t pj_inv3d_co (cl_local PJstack_t* stack, cl_local PJstack_entr
         goto ABORT;
 
     /* Do the transformation, using the lowest dimensional transformer feasible */
-    if (P->inv3d || P->co_inv3d)
+    if (PJ_GET_COROUTINE(P, inv3d) || PJ_GET_COROUTINE(P, co_inv3d))
     {
         coo.lpz = push_inv3d(stack, P, coo).lpz;
         PJ_YIELD(e, 2);
     }
-    else if (P->inv4d || P->co_inv4d)
+    else if (PJ_GET_COROUTINE(P, inv4d) || PJ_GET_COROUTINE(P, co_inv4d))
     {
         coo = push_inv4d(stack, P, coo);
         PJ_YIELD(e, 3);
     }
-    else if (P->inv || P->co_inv)
+    else if (PJ_GET_COROUTINE(P, inv) || PJ_GET_COROUTINE(P, co_inv))
     {
         coo.lp = push_inv(stack, P, coo).lp;
         PJ_YIELD(e, 4);
@@ -417,17 +417,17 @@ PJcoroutine_code_t pj_inv4d_co (cl_local PJstack_t* stack, cl_local PJstack_entr
         goto ABORT;
 
     /* Call the highest dimensional converter available */
-    if (P->inv4d || P->co_inv4d)
+    if (PJ_GET_COROUTINE(P, inv4d) || PJ_GET_COROUTINE(P, co_inv4d))
     {
         coo = push_inv4d(stack, P, coo);
         PJ_YIELD(e, 2);
     }
-    else if (P->inv3d || P->co_inv3d)
+    else if (PJ_GET_COROUTINE(P, inv3d) || PJ_GET_COROUTINE(P, co_inv3d))
     {
         coo.lpz = push_inv3d(stack, P, coo).lpz;
         PJ_YIELD(e, 3);
     }
-    else if (P->inv || P->co_inv)
+    else if (PJ_GET_COROUTINE(P, inv) || PJ_GET_COROUTINE(P, co_inv))
     {
         coo.lp = push_inv(stack, P, coo).lp;
         PJ_YIELD(e, 4);

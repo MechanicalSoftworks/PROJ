@@ -328,7 +328,7 @@ typedef std::map<std::string, int> PJfunction_to_id;
 
 struct PJscan
 {
-    int next_co_id = 0;
+    int next_co_id = 1;         // Start at 1 - that leaves 0 as being "null".
     int next_fwd_id = 1000;
     int next_inv_id = 2000;
     int next_fwd3d_id = 3000;
@@ -343,24 +343,32 @@ struct PJscan
 
     std::set<std::string> files;
     
-    void add_co(const PJkernel<PJ_COROUTINE>& k, const char* file) { add_internal(k, file, co, next_co_id, files); }
-    void add_fwd(const PJkernel<PJ_FWD_2D>& k, const char* file) { add_internal(k, file, fwd, next_fwd_id, files); }
-    void add_inv(const PJkernel<PJ_INV_2D>& k, const char* file) { add_internal(k, file, inv, next_inv_id, files); }
-    void add_fwd(const PJkernel<PJ_FWD_3D>& k, const char* file) { add_internal(k, file, fwd3d, next_fwd3d_id, files); }
-    void add_inv(const PJkernel<PJ_INV_3D>& k, const char* file) { add_internal(k, file, inv3d, next_inv3d_id, files); }
-    void add_fwd4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { add_internal(k, file, fwd4d, next_fwd4d_id, files); }
-    void add_inv4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { add_internal(k, file, inv4d, next_inv4d_id, files); }
+    PJ_COROUTINE_ID add_co(const PJkernel<PJ_COROUTINE>& k, const char* file) { return add_internal(k, file, co, next_co_id, files); }
+    PJ_FWD_2D_ID add_fwd(const PJkernel<PJ_FWD_2D>& k, const char* file) { return add_internal(k, file, fwd, next_fwd_id, files); }
+    PJ_INV_2D_ID add_inv(const PJkernel<PJ_INV_2D>& k, const char* file) { return add_internal(k, file, inv, next_inv_id, files); }
+    PJ_FWD_3D_ID add_fwd(const PJkernel<PJ_FWD_3D>& k, const char* file) { return add_internal(k, file, fwd3d, next_fwd3d_id, files); }
+    PJ_INV_3D_ID add_inv(const PJkernel<PJ_INV_3D>& k, const char* file) { return add_internal(k, file, inv3d, next_inv3d_id, files); }
+    PJ_FWD_4D_ID add_fwd4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { return add_internal(k, file, fwd4d, next_fwd4d_id, files); }
+    PJ_INV_4D_ID add_inv4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { return add_internal(k, file, inv4d, next_inv4d_id, files); }
 
     static std::string definitions_for(const PJfunction_to_id& m);
 
     template<typename T>
-    static void add_internal(const PJkernel<T>& k, const char* file, PJfunction_to_id& m, int& next_id, std::set<std::string>& files)
+    static auto add_internal(const PJkernel<T>& k, const char* file, PJfunction_to_id& m, int& next_id, std::set<std::string>& files)
     {
-        if (k && m.try_emplace(k.name, next_id).second)
+        if (!k)
+        {
+            return 0;
+        }
+
+        auto r = m.try_emplace(k.name, next_id);
+        if (r.second)
         {
             ++next_id;
             files.insert(file);
         }
+
+        return r.first->second;
     }
 };
 
@@ -420,7 +428,8 @@ struct PJhost
     void   (*reassign_context)(PJ*, PJ_CONTEXT*) = nullptr;
 
     void   (*scan)(PJ*, PJscan& s) = nullptr;
-    void   (*map_svm)(PJ* P, bool map) = nullptr;
+    void   (*map_pj)(PJ* P, bool map) = nullptr;
+    void   map_svm(void* ptr, bool map);
 
     /*************************************************************************************
      ISO-19111 interface
