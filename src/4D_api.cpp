@@ -1888,6 +1888,11 @@ PJ_ALLOCATOR PROJ_DLL* proj_allocator_create(void *user, PROJ_SVM_MALLOC_FUNCTIO
     return new (std::nothrow) pj_allocator{ user, svm_malloc, svm_calloc, svm_free, svm_map };
 }
 
+void PROJ_DLL proj_allocator_set_user(PJ_ALLOCATOR* a, void* user)
+{
+    a->user_data = user;
+}
+
 PJ_ALLOCATOR PROJ_DLL* proj_allocator_destroy(PJ_ALLOCATOR* allocator)
 {
     delete allocator;

@@ -287,6 +287,7 @@ typedef void (*PROJ_SVM_FREE_FUNCTION)(void* user, void* ptr);
 typedef void (*PROJ_SVM_UPDATE_FUNCTION)(void* user, void* ptr, int map);
 
 PJ_ALLOCATOR PROJ_DLL* proj_allocator_create(void *user, PROJ_SVM_MALLOC_FUNCTION svm_malloc, PROJ_SVM_CALLOC_FUNCTION svm_calloc, PROJ_SVM_FREE_FUNCTION svm_free, PROJ_SVM_UPDATE_FUNCTION svm_map);
+void PROJ_DLL proj_allocator_set_user(PJ_ALLOCATOR* a, void* user);
 PJ_ALLOCATOR PROJ_DLL* proj_allocator_destroy(PJ_ALLOCATOR* a);
 
 /**

@@ -544,13 +544,15 @@ struct projFileApiCallbackAndData
 struct pj_allocator
 {
     pj_allocator(void* u, PROJ_SVM_MALLOC_FUNCTION m, PROJ_SVM_CALLOC_FUNCTION c, PROJ_SVM_FREE_FUNCTION f, PROJ_SVM_UPDATE_FUNCTION map)
-        : m_user_data(u), m_malloc(m), m_calloc(c), m_free(f), m_map(map)
+        : user_data(u), m_malloc(m), m_calloc(c), m_free(f), m_map(map)
     {}
 
-    void* svm_malloc(size_t sz)           { return m_malloc(m_user_data, sz); }
-    void* svm_calloc(size_t n, size_t sz) { return m_calloc(m_user_data, n, sz); }
-    void svm_free(void* ptr)              { m_free(m_user_data, ptr); }
-    void svm_map(void* ptr, bool map)     { m_map(m_user_data, ptr, map); }
+    void*   user_data = nullptr;
+   
+    void* svm_malloc(size_t sz)           { return m_malloc(user_data, sz); }
+    void* svm_calloc(size_t n, size_t sz) { return m_calloc(user_data, n, sz); }
+    void svm_free(void* ptr)              { m_free(user_data, ptr); }
+    void svm_map(void* ptr, bool map)     { m_map(user_data, ptr, map); }
 
     template<typename T>
     T* svm_new()
@@ -575,8 +577,6 @@ struct pj_allocator
     }
 
 private:
-    void* const                    m_user_data = nullptr;
-
     const PROJ_SVM_MALLOC_FUNCTION m_malloc;
     const PROJ_SVM_CALLOC_FUNCTION m_calloc;
     const PROJ_SVM_FREE_FUNCTION   m_free;
