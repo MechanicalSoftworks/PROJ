@@ -1357,13 +1357,21 @@ PJ PROJ_DLL *proj_concatoperation_get_step(PJ_CONTEXT *ctx,
 
 /* ------------------------------------------------------------------------- */
 
+struct PJscan;
+typedef struct PJscan PJ_SCAN;
+
+/* A scan instance accumulates functions needed by OpenCL. */
+PJ_SCAN PROJ_DLL* proj_create_scan();
+void PROJ_DLL proj_scan(PJ_SCAN* scan, PJ* P);
+void PROJ_DLL proj_destroy_scan(PJ_SCAN* scan);
+
 struct PJopencl
 {
     char *kernel_source;
     char *kernel_definitions;
 };
 
-bool PROJ_DLL   proj_create_opencl(PJ* P, PJopencl* o);
+int PROJ_DLL    proj_create_opencl(PJ_SCAN* scan, PJopencl* o);
 void PROJ_DLL   proj_free_opencl(PJopencl* o);
 
 void PROJ_DLL   proj_host_acquire_svm(PJ* P);

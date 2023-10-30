@@ -182,16 +182,30 @@ extern void pj_scan_fwd(PJscan& s);
 extern void pj_scan_inv(PJscan& s);
 
 /*****************************************************************************/
-bool proj_create_opencl(PJ* P, PJopencl* o) {
+PJ_SCAN PROJ_DLL* proj_create_scan() {
 /*****************************************************************************/
-    PJscan s;
+    return new PJscan;
+}
 
-    P->host->scan(P, s);
-    pj_scan_fwd(s);
-    pj_scan_inv(s);
+/*****************************************************************************/
+void PROJ_DLL proj_scan(PJ_SCAN* s, PJ* P) {
+/*****************************************************************************/
+    P->host->scan(P, *s);
+    pj_scan_fwd(*s);
+    pj_scan_inv(*s);
+}
 
-    const auto src = pj_create_opencl_source_from_scan(s);
-    const auto defs = pj_create_opencl_definitions_from_scan(s);
+/*****************************************************************************/
+void PROJ_DLL proj_destroy_scan(PJ_SCAN* scan) {
+/*****************************************************************************/
+    delete scan;
+}
+
+/*****************************************************************************/
+int proj_create_opencl(PJ_SCAN* s, PJopencl* o) {
+/*****************************************************************************/
+    const auto src = pj_create_opencl_source_from_scan(*s);
+    const auto defs = pj_create_opencl_definitions_from_scan(*s);
 
     o->kernel_source = (char*)malloc(src.length() + 1);
     o->kernel_definitions = (char*)malloc(defs.length() + 1);
