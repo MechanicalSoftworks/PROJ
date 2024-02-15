@@ -94,9 +94,7 @@ double adjlon (double lon) {
     return lon;
 }
 
-PJ_DIRECTION opposite_direction(PJ_DIRECTION dir) {
-    return (PJ_DIRECTION)(-dir);
-}
+extern PJ_DIRECTION opposite_direction(PJ_DIRECTION dir);
 
 struct pj_ctx_shared* pj_get_ctx_shared(const PJ* P)
 {

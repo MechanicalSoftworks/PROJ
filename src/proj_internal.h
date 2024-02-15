@@ -308,7 +308,7 @@ struct PJkernel
     template<typename... TArgs>
     auto operator()(TArgs... args) const { return fn(std::forward<TArgs>(args)...); }
 
-    auto operator=(std::nullptr_t) { fn = nullptr; name = nullptr; return *this; }
+    auto& operator=(std::nullptr_t) { fn = nullptr; name = nullptr; return *this; }
 };
 
 template<typename T>
@@ -354,7 +354,7 @@ struct PJscan
     static std::string definitions_for(const PJfunction_to_id& m);
 
     template<typename T>
-    static auto add_internal(const PJkernel<T>& k, const char* file, PJfunction_to_id& m, int& next_id, std::set<std::string>& files)
+    static auto add_internal(const PJkernel<T>& k, const char* file, PJfunction_to_id& m, int& next_id, std::set<std::string>& files) -> int
     {
         if (!k)
         {

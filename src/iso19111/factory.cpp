@@ -6758,7 +6758,7 @@ AuthorityFactory::createFromCRSCodesWithIntermediates(
         return listTmp;
     }
 
-    const auto CheckIfHasOperations = [=](const std::string &auth_name,
+    const auto CheckIfHasOperations = [this](const std::string &auth_name,
                                           const std::string &code) {
         return !(d->run("SELECT 1 FROM coordinate_operation_view WHERE "
                         "(source_crs_auth_name = ? AND source_crs_code = ?) OR "

@@ -67,7 +67,7 @@ PJ_COORD proj_coord (double x, double y, double z, double t) {
     return res;
 }
 
-static PJ_DIRECTION opposite_direction(PJ_DIRECTION dir) {
+PJ_DIRECTION opposite_direction(PJ_DIRECTION dir) {
     return static_cast<PJ_DIRECTION>(-dir);
 }
 

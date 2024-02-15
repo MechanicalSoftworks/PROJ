@@ -232,10 +232,11 @@ static void pipeline_map_svm_ptrs(PJ* P, bool map)
 #endif
 
 static PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*         P = e->P;
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    PJ_COORD    point = e->coo;
-    size_t      i = e->i;
+    PJ*                     P = e->P;
+    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    PJ_COORD                point = e->coo;
+    size_t                  i = e->i;
+    struct PipelineStep*    step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -247,7 +248,7 @@ static PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_
 
     for(; i < pipeline->step_count; ++i)
     {
-        struct PipelineStep* step = pipeline->steps + i;
+        step = pipeline->steps + i;
         if( !step->omit_fwd )
         {
             push_proj_trans (stack, step->pj, PJ_FWD, point);
@@ -275,10 +276,11 @@ ABORT:
 
 
 static PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*         P = e->P;
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    PJ_COORD    point = e->coo;
-    size_t      i = e->i;
+    PJ*                     P = e->P;
+    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    PJ_COORD                point = e->coo;
+    size_t                  i = e->i;
+    struct PipelineStep*    step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -290,7 +292,7 @@ static PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_l
 
     for(; i > 0; --i)
     {
-        struct PipelineStep* step = pipeline->steps + i - 1;
+        step = pipeline->steps + i - 1;
         if( !step->omit_inv )
         {
             push_proj_trans (stack, step->pj, PJ_INV, point);
@@ -320,10 +322,11 @@ ABORT:
 
 
 static PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*         P = e->P;
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    PJ_COORD    point = e->coo;
-    size_t      i = e->i;
+    PJ*                     P = e->P;
+    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    PJ_COORD                point = e->coo;
+    size_t                  i = e->i;
+    struct PipelineStep*    step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -336,7 +339,7 @@ static PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_l
 
     for(; i < pipeline->step_count; ++i)
     {
-        struct PipelineStep* step = pipeline->steps + i;
+        step = pipeline->steps + i;
         if( !step->omit_fwd )
         {
             push_approx_3D_trans (stack, step->pj, PJ_FWD, point);
@@ -364,10 +367,11 @@ ABORT:
 
 
 static PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*         P = e->P;
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    PJ_COORD    point = e->coo;
-    size_t      i = e->i;
+    PJ*                     P = e->P;
+    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    PJ_COORD                point = e->coo;
+    size_t                  i = e->i;
+    struct PipelineStep*    step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -380,7 +384,7 @@ static PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_l
 
     for(; i > 0; --i)
     {
-        struct PipelineStep* step = pipeline->steps + i - 1;
+        step = pipeline->steps + i - 1;
         if( !step->omit_inv )
         {
             push_proj_trans (stack, step->pj, PJ_INV, point);
@@ -410,10 +414,11 @@ ABORT:
 
 
 static PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ* P = e->P;
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    PJ_COORD    point = e->coo;
-    size_t      i = e->i;
+    PJ*                     P = e->P;
+    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    PJ_COORD                point = e->coo;
+    size_t                  i = e->i;
+    struct PipelineStep*    step = nullptr;
 
     switch (e->step) {
     case 0: break;
@@ -426,7 +431,7 @@ static PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_loca
 
     for (; i < pipeline->step_count; ++i)
     {
-        struct PipelineStep* step = pipeline->steps + i;
+        step = pipeline->steps + i;
         if( !step->omit_fwd )
         {
             push_approx_2D_trans (stack, step->pj, PJ_FWD, point);
@@ -454,10 +459,11 @@ ABORT:
 
 
 static PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*         P = e->P;
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    PJ_COORD    point = e->coo;
-    size_t      i = e->i;
+    PJ*                     P = e->P;
+    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    PJ_COORD                point = e->coo;
+    size_t                  i = e->i;
+    struct PipelineStep*    step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -470,7 +476,7 @@ static PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_loca
 
     for(; i > 0; --i)
     {
-        struct PipelineStep* step = pipeline->steps + i - 1;
+        step = pipeline->steps + i - 1;
         if( !step->omit_inv )
         {
             push_approx_2D_trans (stack, step->pj, PJ_INV, point);

@@ -203,8 +203,8 @@ pj_ctx::pj_ctx(const pj_ctx& other) :
 {}
 
 pj_ctx::pj_ctx(const pj_ctx& other, pj_allocator *a) :
-    debug_level(other.debug_level),
     allocator(a),
+    debug_level(other.debug_level),
     logger(other.logger),
     logger_app_data(other.logger_app_data),
     cpp_context(other.cpp_context ? other.cpp_context->clone(this) : nullptr),
