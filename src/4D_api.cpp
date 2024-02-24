@@ -67,9 +67,7 @@ PJ_COORD proj_coord (double x, double y, double z, double t) {
     return res;
 }
 
-PJ_DIRECTION opposite_direction(PJ_DIRECTION dir) {
-    return static_cast<PJ_DIRECTION>(-dir);
-}
+extern PJ_DIRECTION opposite_direction(PJ_DIRECTION dir);
 
 /*****************************************************************************/
 int proj_angular_input (PJ *P, enum PJ_DIRECTION dir) {
