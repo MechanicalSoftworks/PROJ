@@ -40,15 +40,10 @@
 
 #define PJ_LIB__
 
-#include <errno.h>
-#include <math.h>
-
-#include "proj.h"
-#include "proj_internal.h"
+#include "../proj_kernel.h"
 
 /* The six cube faces. */
-namespace { // anonymous namespace
-enum Face {
+enum Face_qsc {
     FACE_FRONT  = 0,
     FACE_RIGHT  = 1,
     FACE_BACK   = 2,
@@ -56,35 +51,30 @@ enum Face {
     FACE_TOP    = 4,
     FACE_BOTTOM = 5
 };
-} // anonymous namespace
 
-namespace { // anonymous namespace
-struct pj_opaque {
-        enum Face face;
+struct pj_opaque_qsc {
+        enum Face_qsc face;
         double a_squared;
         double b;
         double one_minus_f;
         double one_minus_f_squared;
 };
-} // anonymous namespace
 PROJ_HEAD(qsc, "Quadrilateralized Spherical Cube") "\n\tAzi, Sph";
 
 #define EPS10 1.e-10
 
 /* The four areas on a cube face. AREA_0 is the area of definition,
  * the other three areas are counted counterclockwise. */
-namespace { // anonymous namespace
-enum Area {
+enum Area_qsc {
     AREA_0 = 0,
     AREA_1 = 1,
     AREA_2 = 2,
     AREA_3 = 3
 };
-} // anonymous namespace
 
 /* Helper function for forward projection: compute the theta angle
  * and determine the area number. */
-static double qsc_fwd_equat_face_theta(double phi, double y, double x, enum Area *area) {
+static double qsc_fwd_equat_face_theta(double phi, double y, double x, enum Area_qsc *area) {
     double theta;
     if (phi < EPS10) {
         *area = AREA_0;
@@ -121,11 +111,11 @@ static double qsc_shift_lon_origin(double lon, double offset) {
 
 static PJ_XY qsc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
+    struct pj_opaque_qsc *Q = (struct pj_opaque_qsc*)P->opaque;
     double lat, lon;
     double theta, phi;
     double t, mu; /* nu; */
-    enum Area area;
+    enum Area_qsc area;
 
     /* Convert the geodetic latitude to a geocentric latitude.
      * This corresponds to the shift from the ellipsoid to the sphere
@@ -237,7 +227,7 @@ static PJ_XY qsc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward 
 
 static PJ_LP qsc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
+    struct pj_opaque_qsc *Q = (struct pj_opaque_qsc*)P->opaque;
     double mu, nu, cosmu, tannu;
     double tantheta, theta, cosphi, phi;
     double t;
@@ -375,9 +365,10 @@ static PJ_LP qsc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse 
     return lp;
 }
 
+#ifndef PROJ_OPENCL_DEVICE
 
 PJ *PROJECTION(qsc) {
-    struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct pj_opaque)));
+    struct pj_opaque_qsc *Q = static_cast<struct pj_opaque_qsc*>(P->host->ctx->allocator->svm_calloc (1, sizeof (struct pj_opaque_qsc)));
     if (nullptr==Q)
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = Q;
@@ -407,3 +398,5 @@ PJ *PROJECTION(qsc) {
 
     return P;
 }
+
+#endif /* !PROJ_OPENCL_DEVICE */
