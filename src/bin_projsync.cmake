@@ -10,4 +10,4 @@ target_link_libraries(bin_projsync PRIVATE ${PROJ_LIBRARIES})
 target_compile_options(bin_projsync PRIVATE ${PROJ_CXX_WARN_FLAGS})
 
 install(TARGETS bin_projsync
-  DESTINATION ${BINDIR})
+  DESTINATION ${BINDIR}/$<CONFIG>)

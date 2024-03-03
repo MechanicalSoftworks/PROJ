@@ -13,5 +13,5 @@ target_compile_options(gie PRIVATE ${PROJ_CXX_WARN_FLAGS})
 
 if(BUILD_GIE)
   install(TARGETS gie
-    DESTINATION ${BINDIR})
+    DESTINATION ${BINDIR}/$<CONFIG>)
 endif()

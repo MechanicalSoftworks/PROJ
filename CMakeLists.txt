@@ -178,26 +178,6 @@ endif()
 message(STATUS "nlohmann/json: ${NLOHMANN_JSON}")
 
 ################################################################################
-# Check for sqlite3
-################################################################################
-
-find_program(EXE_SQLITE3 sqlite3)
-if(NOT EXE_SQLITE3)
-  message(SEND_ERROR "sqlite3 binary not found!")
-endif()
-
-find_package(Sqlite3 REQUIRED)
-if(NOT SQLITE3_FOUND)
-  message(SEND_ERROR "sqlite3 dependency not found!")
-endif()
-
-# Would build and run with older versions, but with horrible performance
-# See https://github.com/OSGeo/PROJ/issues/1718
-if("${SQLITE3_VERSION}" VERSION_LESS "3.11")
-  message(SEND_ERROR "sqlite3 >= 3.11 required!")
-endif()
-
-################################################################################
 # Check for libtiff
 ################################################################################
 
@@ -205,13 +185,7 @@ option(ENABLE_TIFF "Enable TIFF support to read some grids" ON)
 mark_as_advanced(ENABLE_TIFF)
 set(TIFF_ENABLED FALSE)
 if(ENABLE_TIFF)
-  find_package(TIFF REQUIRED)
-  if(TIFF_FOUND)
-    set(TIFF_ENABLED TRUE)
-  else()
-    message(SEND_ERROR
-      "libtiff dependency not found! Use ENABLE_TIFF=OFF to force it off")
-  endif()
+  set(TIFF_ENABLED TRUE)
 else()
   message(WARNING
     "TIFF support is not enabled and will result in the inability to read "

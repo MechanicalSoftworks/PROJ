@@ -11,4 +11,4 @@ target_link_libraries(cs2cs PRIVATE ${PROJ_LIBRARIES})
 target_compile_options(cs2cs PRIVATE ${PROJ_CXX_WARN_FLAGS})
 
 install(TARGETS cs2cs
-  DESTINATION ${BINDIR})
+  DESTINATION ${BINDIR}/$<CONFIG>)

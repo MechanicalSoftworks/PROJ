@@ -10,7 +10,7 @@ target_link_libraries(binprojinfo PRIVATE ${PROJ_LIBRARIES})
 target_compile_options(binprojinfo PRIVATE ${PROJ_CXX_WARN_FLAGS})
 
 install(TARGETS binprojinfo
-  DESTINATION ${BINDIR})
+  DESTINATION ${BINDIR}/$<CONFIG>)
 
 if(CURL_ENABLED)
   target_compile_definitions(binprojinfo PRIVATE -DCURL_ENABLED)

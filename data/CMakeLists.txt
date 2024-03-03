@@ -36,7 +36,7 @@ include(sql_filelist.cmake)
 add_custom_command(
   OUTPUT ${PROJ_DB}
   COMMAND ${CMAKE_COMMAND} -E remove -f ${PROJ_DB}
-  COMMAND ${CMAKE_COMMAND} "-DALL_SQL_IN=${ALL_SQL_IN}" "-DEXE_SQLITE3=${EXE_SQLITE3}" "-DPROJ_DB=${PROJ_DB}" "-DPROJ_VERSION=${PROJ_VERSION}"
+  COMMAND ${CMAKE_COMMAND} "-DALL_SQL_IN=${ALL_SQL_IN}" "-DEXE_SQLITE3=$<TARGET_FILE:shell_app>" "-DPROJ_DB=${PROJ_DB}" "-DPROJ_VERSION=${PROJ_VERSION}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/generate_proj_db.cmake"
   COMMAND ${CMAKE_COMMAND} -E copy ${PROJ_DB} ${CMAKE_CURRENT_BINARY_DIR}/for_tests
   DEPENDS ${SQL_FILES} "${CMAKE_CURRENT_SOURCE_DIR}/generate_proj_db.cmake"
@@ -46,6 +46,7 @@ add_custom_command(
 )
 
 add_custom_target(generate_proj_db ALL DEPENDS ${PROJ_DB})
+add_dependencies(generate_proj_db shell_app)
 
 if(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
   foreach(FILE ${CONFIG_FILES} ${PROJ_DICTIONARY} ${GRIDSHIFT_FILES})

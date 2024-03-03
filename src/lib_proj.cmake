@@ -457,19 +457,18 @@ if(USE_THREAD AND Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   target_link_libraries(proj PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-target_include_directories(proj PRIVATE ${SQLITE3_INCLUDE_DIR})
-target_link_libraries(proj PRIVATE ${SQLITE3_LIBRARY})
-
 if(NLOHMANN_JSON STREQUAL "external")
   target_compile_definitions(proj PRIVATE EXTERNAL_NLOHMANN_JSON)
   target_link_libraries(proj
     PRIVATE $<BUILD_INTERFACE:nlohmann_json::nlohmann_json>)
 endif()
 
+target_link_libraries(proj PRIVATE SQLite3)
+add_dependencies(proj shell_app)
+
 if(TIFF_ENABLED)
   target_compile_definitions(proj PRIVATE -DTIFF_ENABLED)
-  target_include_directories(proj PRIVATE ${TIFF_INCLUDE_DIR})
-  target_link_libraries(proj PRIVATE ${TIFF_LIBRARY})
+  target_link_libraries(proj PRIVATE tiff)
 endif()
 
 if(CURL_ENABLED)
@@ -498,9 +497,9 @@ endif()
 ##############################################
 install(TARGETS proj
   EXPORT targets
-  RUNTIME DESTINATION ${BINDIR}
-  LIBRARY DESTINATION ${LIBDIR}
-  ARCHIVE DESTINATION ${LIBDIR}
+  RUNTIME DESTINATION ${BINDIR}/$<CONFIG>
+  LIBRARY DESTINATION ${LIBDIR}/$<CONFIG>
+  ARCHIVE DESTINATION ${LIBDIR}/$<CONFIG>
   FRAMEWORK DESTINATION ${FRAMEWORKDIR})
 
 if(NOT BUILD_FRAMEWORKS_AND_BUNDLE)

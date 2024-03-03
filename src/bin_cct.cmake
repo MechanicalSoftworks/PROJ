@@ -12,4 +12,4 @@ target_link_libraries(cct PRIVATE ${PROJ_LIBRARIES})
 target_compile_options(cct PRIVATE ${PROJ_CXX_WARN_FLAGS})
 
 install(TARGETS cct
-  DESTINATION ${BINDIR})
+  DESTINATION ${BINDIR}/$<CONFIG>)
