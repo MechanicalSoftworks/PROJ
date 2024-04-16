@@ -70,8 +70,8 @@ Last update: 2017-05-16
 PROJ_HEAD(unitconvert, "Unit conversion");
 
 struct TIME_UNITS {
-    cl_constant char  *id;        /* units keyword */
-    cl_constant char  *name;      /* comments */
+    const cl_constant char  *id;        /* units keyword */
+    const cl_constant char  *name;      /* comments */
 };
 
 struct pj_opaque_unitconvert {
