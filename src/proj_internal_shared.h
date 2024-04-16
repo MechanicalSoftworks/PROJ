@@ -152,7 +152,7 @@ typedef int PJ_INV_4D_ID;
 #   define PJ_FUNCTION_PTR(name)       &name
 #   define PJ_GET_COROUTINE(P, type)    P->host->type.fn
 
-#   define cl_constant const
+#   define cl_constant
 #   define cl_local
 
 #   include <math.h>
