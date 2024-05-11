@@ -37,7 +37,7 @@ PROJ_HEAD(latlong, "Lat/long (Geodetic alias)")  "\n\t";
 PROJ_HEAD(longlat, "Lat/long (Geodetic alias)")  "\n\t";
 
 
- static PJ_XY latlong_forward(PJ_LP lp, PJ *P) {
+ PJ_XY latlong_forward(PJ_LP lp, PJ *P) {
     PJ_XY xy = {0.0,0.0};
     (void) P;
     xy.x = lp.lam;
@@ -46,7 +46,7 @@ PROJ_HEAD(longlat, "Lat/long (Geodetic alias)")  "\n\t";
 }
 
 
-static PJ_LP latlong_inverse(PJ_XY xy, PJ *P) {
+PJ_LP latlong_inverse(PJ_XY xy, PJ *P) {
     PJ_LP lp = {0.0,0.0};
     (void) P;
     lp.phi = xy.y;
@@ -55,7 +55,7 @@ static PJ_LP latlong_inverse(PJ_XY xy, PJ *P) {
 }
 
 
- static PJ_XYZ latlong_forward_3d (PJ_LPZ lpz, PJ *P) {
+ PJ_XYZ latlong_forward_3d (PJ_LPZ lpz, PJ *P) {
     PJ_XYZ xyz = {0,0,0};
     (void) P;
     xyz.x = lpz.lam;
@@ -65,7 +65,7 @@ static PJ_LP latlong_inverse(PJ_XY xy, PJ *P) {
 }
 
 
-static PJ_LPZ latlong_inverse_3d (PJ_XYZ xyz, PJ *P) {
+PJ_LPZ latlong_inverse_3d (PJ_XYZ xyz, PJ *P) {
     PJ_LPZ lpz = {0,0,0};
     (void) P;
     lpz.lam = xyz.x;
@@ -74,13 +74,13 @@ static PJ_LPZ latlong_inverse_3d (PJ_XYZ xyz, PJ *P) {
     return lpz;
 }
 
-static PJ_COORD latlong_forward_4d (PJ_COORD obs, PJ *P) {
+PJ_COORD latlong_forward_4d (PJ_COORD obs, PJ *P) {
     (void) P;
     return obs;
 }
 
 
-static PJ_COORD latlong_inverse_4d (PJ_COORD obs, PJ *P) {
+PJ_COORD latlong_inverse_4d (PJ_COORD obs, PJ *P) {
     (void) P;
     return obs;
 }
@@ -91,12 +91,12 @@ static PJ *latlong_setup (PJ *P) {
     P->is_latlong = 1;
     P->x0 = 0;
     P->y0 = 0;
-    P->host->inv = PJ_MAKE_KERNEL(latlong_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(latlong_forward);
-    P->host->inv3d = PJ_MAKE_KERNEL(latlong_inverse_3d);
-    P->host->fwd3d = PJ_MAKE_KERNEL(latlong_forward_3d);
-    P->host->inv4d = PJ_MAKE_KERNEL(latlong_inverse_4d);
-    P->host->fwd4d = PJ_MAKE_KERNEL(latlong_forward_4d);
+    P->inv = PJ_MAKE_KERNEL(latlong_inverse);
+    P->fwd = PJ_MAKE_KERNEL(latlong_forward);
+    P->inv3d = PJ_MAKE_KERNEL(latlong_inverse_3d);
+    P->fwd3d = PJ_MAKE_KERNEL(latlong_forward_3d);
+    P->inv4d = PJ_MAKE_KERNEL(latlong_inverse_4d);
+    P->fwd4d = PJ_MAKE_KERNEL(latlong_forward_4d);
     P->left = PJ_IO_UNITS_RADIANS;
     P->right = PJ_IO_UNITS_RADIANS;
     return P;

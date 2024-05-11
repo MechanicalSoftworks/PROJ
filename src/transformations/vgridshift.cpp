@@ -53,7 +53,7 @@ static void deal_with_vertcon_gtx_hack(PJ *P)
     }
 }
 
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ vgridshift_forward_3d(PJ_LPZ lpz, PJ *P) {
     struct vgridshiftData *Q = (struct vgridshiftData *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
     point.lpz = lpz;
@@ -77,7 +77,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
 }
 
 
-static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
+PJ_LPZ vgridshift_reverse_3d(PJ_XYZ xyz, PJ *P) {
     struct vgridshiftData *Q = (struct vgridshiftData *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
     point.xyz = xyz;
@@ -101,37 +101,37 @@ static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
 }
 
 
-static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD vgridshift_forward_4d(PJ_COORD obs, PJ *P) {
     struct vgridshiftData *Q = (struct vgridshiftData *) P->opaque;
     PJ_COORD point = obs;
 
     /* If transformation is not time restricted, we always call it */
     if (Q->t_final==0 || Q->t_epoch==0) {
-        point.xyz = forward_3d (obs.lpz, P);
+        point.xyz = vgridshift_forward_3d (obs.lpz, P);
         return point;
     }
 
     /* Time restricted - only apply transform if within time bracket */
     if (obs.lpzt.t < Q->t_epoch && Q->t_final > Q->t_epoch)
-        point.xyz = forward_3d (obs.lpz, P);
+        point.xyz = vgridshift_forward_3d (obs.lpz, P);
 
 
     return point;
 }
 
-static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD vgridshift_reverse_4d(PJ_COORD obs, PJ *P) {
     struct vgridshiftData *Q = (struct vgridshiftData *) P->opaque;
     PJ_COORD point = obs;
 
     /* If transformation is not time restricted, we always call it */
     if (Q->t_final==0 || Q->t_epoch==0) {
-        point.lpz = reverse_3d (obs.xyz, P);
+        point.lpz = vgridshift_reverse_3d (obs.xyz, P);
         return point;
     }
 
     /* Time restricted - only apply transform if within time bracket */
     if (obs.lpzt.t < Q->t_epoch && Q->t_final > Q->t_epoch)
-        point.lpz = reverse_3d (obs.xyz, P);
+        point.lpz = vgridshift_reverse_3d (obs.xyz, P);
 
     return point;
 }
@@ -220,12 +220,12 @@ PJ *TRANSFORMATION(vgridshift,0) {
         }
     }
 
-    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
-    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
-    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
-    P->host->fwd    = nullptr;
-    P->host->inv    = nullptr;
+    P->fwd4d = PJ_MAKE_KERNEL(vgridshift_forward_4d);
+    P->inv4d = PJ_MAKE_KERNEL(vgridshift_reverse_4d);
+    P->fwd3d  = PJ_MAKE_KERNEL(vgridshift_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(vgridshift_reverse_3d);
+    P->fwd    = nullptr;
+    P->inv    = nullptr;
 
     P->left  = PJ_IO_UNITS_RADIANS;
     P->right = PJ_IO_UNITS_RADIANS;

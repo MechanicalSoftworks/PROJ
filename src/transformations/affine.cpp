@@ -58,7 +58,7 @@ struct pj_opaque_affine {
 } // anonymous namespace
 
 
-static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD affine_forward_4d(PJ_COORD obs, PJ *P) {
     PJ_COORD newObs;
     const struct pj_opaque_affine *Q = (const struct pj_opaque_affine *) P->opaque;
     const struct pj_affine_coeffs *C = &(Q->forward);
@@ -69,21 +69,21 @@ static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
     return newObs;
 }
 
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ affine_forward_3d(PJ_LPZ lpz, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.lpz = lpz;
-    return forward_4d(point, P).xyz;
+    return affine_forward_4d(point, P).xyz;
 }
 
 
-static PJ_XY forward_2d(PJ_LP lp, PJ *P) {
+PJ_XY affine_forward_2d(PJ_LP lp, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.lp = lp;
-    return forward_4d(point, P).xy;
+    return affine_forward_4d(point, P).xy;
 }
 
 
-static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD affine_reverse_4d(PJ_COORD obs, PJ *P) {
     PJ_COORD newObs;
     const struct pj_opaque_affine *Q = (const struct pj_opaque_affine *) P->opaque;
     const struct pj_affine_coeffs *C = &(Q->reverse);
@@ -97,16 +97,16 @@ static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
     return newObs;
 }
 
-static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
+PJ_LPZ affine_reverse_3d(PJ_XYZ xyz, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.xyz = xyz;
-    return reverse_4d(point, P).lpz;
+    return affine_reverse_4d(point, P).lpz;
 }
 
-static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
+PJ_LP affine_reverse_2d(PJ_XY xy, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.xy = xy;
-    return reverse_4d(point, P).lp;
+    return affine_reverse_4d(point, P).lp;
 }
 
 static struct pj_opaque_affine * initQ(PJ_CONTEXT *ctx) {
@@ -156,9 +156,9 @@ static void computeReverseParameters(PJ* P)
         if (proj_log_level(P->host->ctx, PJ_LOG_TELL) >= PJ_LOG_DEBUG) {
             proj_log_debug(P, "matrix non invertible");
         }
-        P->host->inv4d = nullptr;
-        P->host->inv3d = nullptr;
-        P->host->inv = nullptr;
+        P->inv4d = nullptr;
+        P->inv3d = nullptr;
+        P->inv = nullptr;
     } else {
         Q->reverse.s11 = A / det;
         Q->reverse.s12 = D / det;
@@ -179,12 +179,12 @@ PJ *TRANSFORMATION(affine,0 /* no need for ellipsoid */) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
 
-    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
-    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
-    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
-    P->host->fwd    = PJ_MAKE_KERNEL(forward_2d);
-    P->host->inv    = PJ_MAKE_KERNEL(reverse_2d);
+    P->fwd4d = PJ_MAKE_KERNEL(affine_forward_4d);
+    P->inv4d = PJ_MAKE_KERNEL(affine_reverse_4d);
+    P->fwd3d  = PJ_MAKE_KERNEL(affine_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(affine_reverse_3d);
+    P->fwd    = PJ_MAKE_KERNEL(affine_forward_2d);
+    P->inv    = PJ_MAKE_KERNEL(affine_reverse_2d);
 
     P->left   = PJ_IO_UNITS_WHATEVER;
     P->right  = PJ_IO_UNITS_WHATEVER;
@@ -230,12 +230,12 @@ PJ *TRANSFORMATION(geogoffset,0 /* no need for ellipsoid */) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
 
-    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
-    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
-    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
-    P->host->fwd    = PJ_MAKE_KERNEL(forward_2d);
-    P->host->inv    = PJ_MAKE_KERNEL(reverse_2d);
+    P->fwd4d = PJ_MAKE_KERNEL(affine_forward_4d);
+    P->inv4d = PJ_MAKE_KERNEL(affine_reverse_4d);
+    P->fwd3d  = PJ_MAKE_KERNEL(affine_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(affine_reverse_3d);
+    P->fwd    = PJ_MAKE_KERNEL(affine_forward_2d);
+    P->inv    = PJ_MAKE_KERNEL(affine_reverse_2d);
 
     P->left   = PJ_IO_UNITS_RADIANS;
     P->right  = PJ_IO_UNITS_RADIANS;

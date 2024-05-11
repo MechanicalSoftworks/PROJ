@@ -11,7 +11,7 @@ PROJ_HEAD(nell, "Nell") "\n\tPCyl, Sph";
 #define LOOP_TOL 1e-7
 
 
-static PJ_XY nell_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY nell_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     int i;
     (void) P;
@@ -33,7 +33,7 @@ static PJ_XY nell_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 }
 
 
-static PJ_LP nell_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP nell_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     lp.lam = 2. * xy.x / (1. + cos(xy.y));
     lp.phi = aasin(P->shared_ctx,0.5 * (xy.y + sin(xy.y)));
@@ -45,8 +45,8 @@ static PJ_LP nell_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse
 PJ *PROJECTION(nell) {
 
     P->es = 0;
-    P->host->inv = PJ_MAKE_KERNEL(nell_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(nell_s_forward);
+    P->inv = PJ_MAKE_KERNEL(nell_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(nell_s_forward);
 
     return P;
 }

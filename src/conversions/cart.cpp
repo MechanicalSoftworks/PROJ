@@ -129,7 +129,7 @@ static double geocentric_radius (double a, double b, double cosphi, double sinph
 
 
 /*********************************************************************/
-static PJ_XYZ cartesian (PJ_LPZ geod,  PJ *P) {
+PJ_XYZ cart_cartesian (PJ_LPZ geod,  PJ *P) {
 /*********************************************************************/
     PJ_XYZ xyz;
 
@@ -147,7 +147,7 @@ static PJ_XYZ cartesian (PJ_LPZ geod,  PJ *P) {
 
 
 /*********************************************************************/
-static PJ_LPZ geodetic (PJ_XYZ cart,  PJ *P) {
+PJ_LPZ cart_geodetic (PJ_XYZ cart,  PJ *P) {
 /*********************************************************************/
     PJ_LPZ lpz;
 
@@ -207,23 +207,23 @@ static PJ_LPZ geodetic (PJ_XYZ cart,  PJ *P) {
 
 
 /* In effect, 2 cartesian coordinates of a point on the ellipsoid. Rather pointless, but... */
-static PJ_XY cart_forward (PJ_LP lp, PJ *P) {
+PJ_XY cart_forward (PJ_LP lp, PJ *P) {
     PJ_COORD point;
     point.lp = lp;
     point.lpz.z = 0;
 
-    const auto xyz = cartesian (point.lpz, P);
+    const auto xyz = cart_cartesian (point.lpz, P);
     point.xyz = xyz;
     return point.xy;
 }
 
 /* And the other way round. Still rather pointless, but... */
-static PJ_LP cart_reverse (PJ_XY xy, PJ *P) {
+PJ_LP cart_reverse (PJ_XY xy, PJ *P) {
     PJ_COORD point;
     point.xy = xy;
     point.xyz.z = 0;
 
-    const auto lpz = geodetic (point.xyz, P);
+    const auto lpz = cart_geodetic (point.xyz, P);
     point.lpz = lpz;
     return point.lp;
 }
@@ -233,10 +233,10 @@ static PJ_LP cart_reverse (PJ_XY xy, PJ *P) {
 /*********************************************************************/
 PJ *CONVERSION(cart,1) {
 /*********************************************************************/
-    P->host->fwd3d  =  PJ_MAKE_KERNEL(cartesian);
-    P->host->inv3d  =  PJ_MAKE_KERNEL(geodetic);
-    P->host->fwd    =  PJ_MAKE_KERNEL(cart_forward);
-    P->host->inv    =  PJ_MAKE_KERNEL(cart_reverse);
+    P->fwd3d  =  PJ_MAKE_KERNEL(cart_cartesian);
+    P->inv3d  =  PJ_MAKE_KERNEL(cart_geodetic);
+    P->fwd    =  PJ_MAKE_KERNEL(cart_forward);
+    P->inv    =  PJ_MAKE_KERNEL(cart_reverse);
     P->left   =  PJ_IO_UNITS_RADIANS;
     P->right  =  PJ_IO_UNITS_CARTESIAN;
     return P;

@@ -54,7 +54,7 @@ static double lc(pj_ctx_shared *ctx, double b,double c,double a) {
 }
 
 
-static PJ_XY chamb_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY chamb_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double sinphi, cosphi, a;
@@ -142,7 +142,7 @@ PJ *PROJECTION(chamb) {
     Q->p.x = Q->c[2].p.x;
 
     P->es = 0.;
-    P->host->fwd = PJ_MAKE_KERNEL(chamb_s_forward);
+    P->fwd = PJ_MAKE_KERNEL(chamb_s_forward);
 
     return P;
 }

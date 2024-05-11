@@ -57,7 +57,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY igh_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY igh_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     int z;
@@ -82,7 +82,7 @@ static PJ_XY igh_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward 
     }
 
     lp.lam -= Q->pj[z-1]->lam0;
-    xy = Q->pj[z-1]->host->fwd(lp, Q->pj[z-1]);
+    xy = Q->pj[z-1]->fwd(lp, Q->pj[z-1]);
     xy.x += Q->pj[z-1]->x0;
     xy.y += Q->pj[z-1]->y0;
 
@@ -90,7 +90,7 @@ static PJ_XY igh_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward 
 }
 
 
-static PJ_LP igh_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP igh_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     const double y90 = Q->dy0 + sqrt(2.0); /* lt=90 corresponds to y=y0+sqrt(2) */
@@ -120,7 +120,7 @@ static PJ_LP igh_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse 
 
         xy.x -= Q->pj[z-1]->x0;
         xy.y -= Q->pj[z-1]->y0;
-        lp = Q->pj[z-1]->host->inv(xy, Q->pj[z-1]);
+        lp = Q->pj[z-1]->inv(xy, Q->pj[z-1]);
         lp.lam += Q->pj[z-1]->lam0;
 
         switch (z) {
@@ -232,8 +232,8 @@ PJ *PROJECTION(igh) {
     }
 
     /* y0 ? */
-    xy1 = Q->pj[0]->host->fwd(lp, Q->pj[0]); /* zone 1 */
-    xy3 = Q->pj[2]->host->fwd(lp, Q->pj[2]); /* zone 3 */
+    xy1 = Q->pj[0]->fwd(lp, Q->pj[0]); /* zone 1 */
+    xy3 = Q->pj[2]->fwd(lp, Q->pj[2]); /* zone 3 */
     /* y0 + xy1.y = xy3.y for lt = 40d44'11.8" */
     Q->dy0 = xy3.y - xy1.y;
 
@@ -249,8 +249,8 @@ PJ *PROJECTION(igh) {
        return destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     }
 
-    P->host->inv = PJ_MAKE_KERNEL(igh_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(igh_s_forward);
+    P->inv = PJ_MAKE_KERNEL(igh_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(igh_s_forward);
     P->host->destructor = destructor;
     P->es = 0.;
 

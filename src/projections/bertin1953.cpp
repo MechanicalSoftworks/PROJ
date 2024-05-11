@@ -27,7 +27,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY bertin1953_s_forward (PJ_LP lp, PJ *P) {
+PJ_XY bertin1953_s_forward (PJ_LP lp, PJ *P) {
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -89,7 +89,7 @@ PJ *PROJECTION(bertin1953) {
     Q->sin_delta_gamma = 0.;
 
     P->es = 0.;
-    P->host->fwd = PJ_MAKE_KERNEL(bertin1953_s_forward);
+    P->fwd = PJ_MAKE_KERNEL(bertin1953_s_forward);
 
     return P;
 }

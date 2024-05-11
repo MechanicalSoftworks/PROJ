@@ -285,7 +285,7 @@ struct EvaluatorIface : public EvaluatorIfacePrototype<Grid, GridSet> {
         lpz.lam = lam;
         lpz.phi = phi;
         lpz.z = height;
-        PJ_XYZ xyz = cart->host->fwd3d(lpz, cart);
+        PJ_XYZ xyz = cart->fwd3d(lpz, cart);
         X = xyz.x;
         Y = xyz.y;
         Z = xyz.z;
@@ -302,7 +302,7 @@ struct EvaluatorIface : public EvaluatorIfacePrototype<Grid, GridSet> {
         xyz.x = X;
         xyz.y = Y;
         xyz.z = Z;
-        PJ_LPZ lpz = cart->host->inv3d(xyz, cart);
+        PJ_LPZ lpz = cart->inv3d(xyz, cart);
         lam = lpz.lam;
         phi = lpz.phi;
         height = lpz.z;
@@ -343,7 +343,7 @@ static PJ *destructor(PJ *P, int errlev) {
     return pj_default_destructor(P, errlev);
 }
 
-static PJ_COORD forward_4d(PJ_COORD in, PJ *P) {
+PJ_COORD defmodel_forward_4d(PJ_COORD in, PJ *P) {
     auto *Q = (struct defmodelData *)P->opaque;
 
     PJ_COORD out;
@@ -358,7 +358,7 @@ static PJ_COORD forward_4d(PJ_COORD in, PJ *P) {
     return out;
 }
 
-static PJ_COORD reverse_4d(PJ_COORD in, PJ *P) {
+PJ_COORD defmodel_reverse_4d(PJ_COORD in, PJ *P) {
     auto *Q = (struct defmodelData *)P->opaque;
 
     PJ_COORD out;
@@ -434,8 +434,8 @@ PJ *TRANSFORMATION(defmodel, 1) {
         return destructor(P, PROJ_ERR_INVALID_OP_FILE_NOT_FOUND_OR_INVALID);
     }
 
-    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
-    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
+    P->fwd4d = PJ_MAKE_KERNEL(defmodel_forward_4d);
+    P->inv4d = PJ_MAKE_KERNEL(defmodel_reverse_4d);
 
     if (Q->evaluator->isGeographicCRS()) {
         P->left = PJ_IO_UNITS_RADIANS;

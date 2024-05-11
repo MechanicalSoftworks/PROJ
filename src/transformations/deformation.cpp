@@ -252,7 +252,7 @@ static PJ_XYZ reverse_shift(PJ *P, PJ_XYZ input, double dt) {
     return out;
 }
 
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ deformation_forward_3d(PJ_LPZ lpz, PJ *P) {
     struct deformationData *Q = (struct deformationData *) P->opaque;
     PJ_COORD out, in;
     PJ_XYZ shift;
@@ -278,7 +278,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
 }
 
 
-static PJ_COORD forward_4d(PJ_COORD in, PJ *P) {
+PJ_COORD deformation_forward_4d(PJ_COORD in, PJ *P) {
     struct deformationData *Q = (struct deformationData *) P->opaque;
     double dt;
     PJ_XYZ shift;
@@ -301,7 +301,7 @@ static PJ_COORD forward_4d(PJ_COORD in, PJ *P) {
 }
 
 
-static PJ_LPZ reverse_3d(PJ_XYZ in, PJ *P) {
+PJ_LPZ deformation_reverse_3d(PJ_XYZ in, PJ *P) {
     struct deformationData *Q = (struct deformationData *) P->opaque;
     PJ_COORD out;
     out.xyz = in;
@@ -317,7 +317,7 @@ static PJ_LPZ reverse_3d(PJ_XYZ in, PJ *P) {
     return out.lpz;
 }
 
-static PJ_COORD reverse_4d(PJ_COORD in, PJ *P) {
+PJ_COORD deformation_reverse_4d(PJ_COORD in, PJ *P) {
     struct deformationData *Q = (struct deformationData *) P->opaque;
     PJ_COORD out = in;
     double dt;
@@ -422,12 +422,12 @@ PJ *TRANSFORMATION(deformation,1) {
         return destructor(P, PROJ_ERR_INVALID_OP_MUTUALLY_EXCLUSIVE_ARGS);
     }
 
-    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
-    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
-    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
-    P->host->fwd    = nullptr;
-    P->host->inv    = nullptr;
+    P->fwd4d = PJ_MAKE_KERNEL(deformation_forward_4d);
+    P->inv4d = PJ_MAKE_KERNEL(deformation_reverse_4d);
+    P->fwd3d  = PJ_MAKE_KERNEL(deformation_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(deformation_reverse_3d);
+    P->fwd    = nullptr;
+    P->inv    = nullptr;
 
     P->left  = PJ_IO_UNITS_CARTESIAN;
     P->right = PJ_IO_UNITS_CARTESIAN;

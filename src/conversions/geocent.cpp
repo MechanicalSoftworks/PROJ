@@ -34,7 +34,7 @@
 
 PROJ_HEAD(geocent, "Geocentric")  "\n\t";
 
-static PJ_XY forward(PJ_LP lp, PJ *P) {
+PJ_XY geocent_forward(PJ_LP lp, PJ *P) {
     PJ_XY xy = {0.0,0.0};
     (void) P;
     xy.x = lp.lam;
@@ -42,7 +42,7 @@ static PJ_XY forward(PJ_LP lp, PJ *P) {
     return xy;
 }
 
-static PJ_LP inverse(PJ_XY xy, PJ *P) {
+PJ_LP geocent_inverse(PJ_XY xy, PJ *P) {
     PJ_LP lp = {0.0,0.0};
     (void) P;
     lp.phi = xy.y;
@@ -54,8 +54,8 @@ PJ *CONVERSION (geocent, 0) {
     P->is_geocent = 1;
     P->x0 = 0.0;
     P->y0 = 0.0;
-    P->host->inv = PJ_MAKE_KERNEL(inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(forward);
+    P->inv = PJ_MAKE_KERNEL(geocent_inverse);
+    P->fwd = PJ_MAKE_KERNEL(geocent_forward);
     P->left = PJ_IO_UNITS_RADIANS;
     P->right = PJ_IO_UNITS_CARTESIAN;
 

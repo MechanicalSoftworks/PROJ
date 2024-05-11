@@ -20,7 +20,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY bonne_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY bonne_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double rh, E, c;
@@ -40,7 +40,7 @@ static PJ_XY bonne_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forwar
 }
 
 
-static PJ_XY bonne_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY bonne_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double E, rh;
@@ -56,7 +56,7 @@ static PJ_XY bonne_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 }
 
 
-static PJ_LP bonne_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP bonne_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double rh;
@@ -76,7 +76,7 @@ static PJ_LP bonne_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 }
 
 
-static PJ_LP bonne_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP bonne_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double s, rh;
@@ -134,15 +134,15 @@ PJ *PROJECTION(bonne) {
         c = cos(Q->phi1);
         Q->m1 = pj_mlfn(Q->phi1, Q->am1, c, Q->en);
         Q->am1 = c / (sqrt(1. - P->es * Q->am1 * Q->am1) * Q->am1);
-        P->host->inv = PJ_MAKE_KERNEL(bonne_e_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(bonne_e_forward);
+        P->inv = PJ_MAKE_KERNEL(bonne_e_inverse);
+        P->fwd = PJ_MAKE_KERNEL(bonne_e_forward);
     } else {
         if (fabs(Q->phi1) + EPS10 >= M_HALFPI)
             Q->cphi1 = 0.;
         else
             Q->cphi1 = 1. / tan(Q->phi1);
-        P->host->inv = PJ_MAKE_KERNEL(bonne_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(bonne_s_forward);
+        P->inv = PJ_MAKE_KERNEL(bonne_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(bonne_s_forward);
     }
     return P;
 }

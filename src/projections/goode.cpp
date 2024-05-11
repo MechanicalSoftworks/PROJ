@@ -21,29 +21,29 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY goode_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY goode_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     if (fabs(lp.phi) <= PHI_LIM)
-        xy = Q->sinu->host->fwd(lp, Q->sinu);
+        xy = Q->sinu->fwd(lp, Q->sinu);
     else {
-        xy = Q->moll->host->fwd(lp, Q->moll);
+        xy = Q->moll->fwd(lp, Q->moll);
         xy.y -= lp.phi >= 0.0 ? Y_COR : -Y_COR;
     }
     return xy;
 }
 
 
-static PJ_LP goode_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP goode_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     if (fabs(xy.y) <= PHI_LIM)
-        lp = Q->sinu->host->inv(xy, Q->sinu);
+        lp = Q->sinu->inv(xy, Q->sinu);
     else {
         xy.y += xy.y >= 0.0 ? Y_COR : -Y_COR;
-        lp = Q->moll->host->inv(xy, Q->moll);
+        lp = Q->moll->inv(xy, Q->moll);
     }
     return lp;
 }
@@ -81,8 +81,8 @@ PJ *PROJECTION(goode) {
     if (Q->sinu == nullptr || Q->moll == nullptr)
         return destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
 
-    P->host->fwd = PJ_MAKE_KERNEL(goode_s_forward);
-    P->host->inv = PJ_MAKE_KERNEL(goode_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(goode_s_forward);
+    P->inv = PJ_MAKE_KERNEL(goode_s_inverse);
 
     return P;
 }

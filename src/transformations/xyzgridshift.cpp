@@ -182,7 +182,7 @@ static PJ_COORD direct_adjustment(PJ* P,
 
 // ---------------------------------------------------------------------------
 
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ xyzgridshift_forward_3d(PJ_LPZ lpz, PJ *P) {
     auto Q = static_cast<xyzgridshiftData*>(P->opaque);
     PJ_COORD point = {{0,0,0,0}};
     point.lpz = lpz;
@@ -198,7 +198,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
 }
 
 
-static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
+PJ_LPZ xyzgridshift_reverse_3d(PJ_XYZ xyz, PJ *P) {
     auto Q = static_cast<xyzgridshiftData*>(P->opaque);
     PJ_COORD point = {{0,0,0,0}};
     point.xyz = xyz;
@@ -244,12 +244,12 @@ PJ *TRANSFORMATION(xyzgridshift,0) {
     P->host->destructor = destructor;
     P->host->reassign_context = reassign_context;
 
-    P->host->fwd4d  = nullptr;
-    P->host->inv4d  = nullptr;
-    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
-    P->host->fwd    = nullptr;
-    P->host->inv    = nullptr;
+    P->fwd4d  = nullptr;
+    P->inv4d  = nullptr;
+    P->fwd3d  = PJ_MAKE_KERNEL(xyzgridshift_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(xyzgridshift_reverse_3d);
+    P->fwd    = nullptr;
+    P->inv    = nullptr;
 
     P->left  = PJ_IO_UNITS_CARTESIAN;
     P->right = PJ_IO_UNITS_CARTESIAN;

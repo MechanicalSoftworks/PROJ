@@ -48,7 +48,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 // Convert from geocentric to topocentric
-static PJ_COORD topocentric_fwd(PJ_COORD in, PJ * P)
+PJ_COORD topocentric_fwd(PJ_COORD in, PJ * P)
 {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     PJ_COORD out;
@@ -62,7 +62,7 @@ static PJ_COORD topocentric_fwd(PJ_COORD in, PJ * P)
 }
 
 // Convert from topocentric to geocentric
-static PJ_COORD topocentric_inv(PJ_COORD in, PJ * P)
+PJ_COORD topocentric_inv(PJ_COORD in, PJ * P)
 {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     PJ_COORD out;
@@ -161,8 +161,8 @@ PJ *CONVERSION(topocentric,1) {
 
     proj_destroy(cart);
 
-    P->host->fwd4d  =  PJ_MAKE_KERNEL(topocentric_fwd);
-    P->host->inv4d  =  PJ_MAKE_KERNEL(topocentric_inv);
+    P->fwd4d  =  PJ_MAKE_KERNEL(topocentric_fwd);
+    P->inv4d  =  PJ_MAKE_KERNEL(topocentric_inv);
     P->left   =  PJ_IO_UNITS_CARTESIAN;
     P->right  =  PJ_IO_UNITS_CARTESIAN;
     return P;

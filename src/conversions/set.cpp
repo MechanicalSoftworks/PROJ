@@ -19,7 +19,7 @@ struct Set {
 };
 } // anonymous namespace
 
-static PJ_COORD set_fwd_inv(PJ_COORD point, PJ *P) {
+PJ_COORD set_fwd_inv(PJ_COORD point, PJ *P) {
 
     struct Set *set = static_cast<struct Set*>(P->opaque);
 
@@ -36,8 +36,8 @@ static PJ_COORD set_fwd_inv(PJ_COORD point, PJ *P) {
 }
 
 PJ *OPERATION(set, 0) {
-    P->host->inv4d = PJ_MAKE_KERNEL(set_fwd_inv);
-    P->host->fwd4d = PJ_MAKE_KERNEL(set_fwd_inv);
+    P->inv4d = PJ_MAKE_KERNEL(set_fwd_inv);
+    P->fwd4d = PJ_MAKE_KERNEL(set_fwd_inv);
 
     auto set = static_cast<struct Set*>(P->host->ctx->allocator->svm_calloc (1, sizeof(struct Set)));
     P->opaque = set;

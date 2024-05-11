@@ -38,7 +38,7 @@
 
 PROJ_HEAD(times, "Times") "\n\tCyl, Sph";
 
-static PJ_XY times_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY times_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     double T, S, S2;
     PJ_XY xy = {0.0,0.0};
     (void) P;
@@ -54,7 +54,7 @@ static PJ_XY times_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 }
 
 
-static PJ_LP times_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP times_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     double T, S, S2;
     PJ_LP lp = {0.0,0.0};
     (void) P;
@@ -73,8 +73,8 @@ static PJ_LP times_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 PJ *PROJECTION(times) {
     P->es = 0.0;
 
-    P->host->inv = PJ_MAKE_KERNEL(times_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(times_s_forward);
+    P->inv = PJ_MAKE_KERNEL(times_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(times_s_forward);
 
     return P;
 }

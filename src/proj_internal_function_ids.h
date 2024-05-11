@@ -1,9 +1,12 @@
 /******************************************************************************
  * Project:  PROJ.4
- * Purpose:  Builds the OpenCL jump table.
+ * Purpose:  Internal plumbing for the PROJ.4 library.
+ *
  * Author:   Lucas Zadrozny
  *
  ******************************************************************************
+ * Copyright (c) 2016, 2017, Thomas Knudsen / SDFE
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -16,60 +19,47 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO COORD SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
-#include "proj_internal_shared.h"
-#include "proj_kernel.h"
+
+#ifndef PROJ_INTERNAL_SHARED_FUNCTION_IDS_H
+#define PROJ_INTERNAL_SHARED_FUNCTION_IDS_H
+
+ /*
+  * Generate all function IDs.
+  * These are consistent among all files that include this header.
+  */
+enum { PJ_FUNCTION_BASE_ID = __COUNTER__ };
+
+// Function IDs start at 1. 0 is reserved for invalid.
+#define DEFINE_FUNCTION_ID(name)	name##_id = __COUNTER__ - PJ_FUNCTION_BASE_ID + 1
+
+#define DEFINE_COROUTINE_FUNCTION_ID(name) DEFINE_FUNCTION_ID(name)
 
 /******************************************************************************
- * Externs.
+ * Coroutine IDs.
  *****************************************************************************/
-#define PROJ_COROUTINE(name) extern PJcoroutine_code_t name(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
-#define PROJ_FWD_2D(name)    extern PJ_XY name(PJ_LP lp, PJ *P);
-#define PROJ_INV_2D(name)    extern PJ_LP name(PJ_XY xy, PJ *P);
-#define PROJ_FWD_3D(name)    extern PJ_XYZ name(PJ_LPZ lp, PJ *P);
-#define PROJ_INV_3D(name)    extern PJ_LPZ name(PJ_XYZ xy, PJ *P);
-#define PROJ_OPERATOR(name)  extern PJ_COORD name(PJ_COORD lp, PJ *P);
+#define PROJ_COROUTINE(name) DEFINE_FUNCTION_ID(name),
+#define PROJ_FWD_2D(name)
+#define PROJ_INV_2D(name)
+#define PROJ_FWD_3D(name)
+#define PROJ_INV_3D(name)
+#define PROJ_OPERATOR(name)
 
-#include "pj_function_list_shared.h"
-#ifndef PROJ_OPENCL_DEVICE
+typedef enum
+{
+	PJ_INVALID_COROUTINE,
+
+#	include "pj_function_list_shared.h"
 #	include "pj_function_list_host.h"
-#endif
 
-#undef PROJ_COROUTINE
-#undef PROJ_FWD_2D
-#undef PROJ_INV_2D
-#undef PROJ_FWD_3D
-#undef PROJ_INV_3D
-#undef PROJ_OPERATOR
+	PJ_COROUTINE_COUNT
+} PJ_COROUTINE_ID;
 
- /******************************************************************************
-  * Coroutine dispatch.
-  *****************************************************************************/
-#define PROJ_COROUTINE(name) case name##_id: return name(stack, e);
-#define PROJ_FWD_2D(name)
-#define PROJ_INV_2D(name)
-#define PROJ_FWD_3D(name)
-#define PROJ_INV_3D(name)
-#define PROJ_OPERATOR(name)
-PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e)
-{
-    switch (fn)
-    {
-        default: break;
-
-#       include "pj_function_list_shared.h"
-#   ifndef PROJ_OPENCL_DEVICE
-#	    include "pj_function_list_host.h"
-#   endif
-    }
-
-    return PJ_CO_ERROR;
-}
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
 #undef PROJ_INV_2D
@@ -78,29 +68,25 @@ PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct P
 #undef PROJ_OPERATOR
 
 /******************************************************************************
- * FWD_2D dispatch.
+ * FWD_2D IDs.
  *****************************************************************************/
 #define PROJ_COROUTINE(name)
-#define PROJ_FWD_2D(name)       case name##_id: return name(in, P);
+#define PROJ_FWD_2D(name) DEFINE_FUNCTION_ID(name),
 #define PROJ_INV_2D(name)
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)
-PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP in, PJ *P)
+
+typedef enum
 {
-    switch (fn)
-    {
-        default: break;
+	PJ_INVALID_FWD_2D,
 
-#       include "pj_function_list_shared.h"
-#   ifndef PROJ_OPENCL_DEVICE
-#	    include "pj_function_list_host.h"
-#   endif
-    }
+#	include "pj_function_list_shared.h"
+#	include "pj_function_list_host.h"
 
-    PJ_XY x{ -1.0, -1.0 };
-    return x;
-}
+	PJ_FWD_2D_COUNT
+} PJ_FWD_2D_ID;
+
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
 #undef PROJ_INV_2D
@@ -109,29 +95,25 @@ PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP in, PJ *P)
 #undef PROJ_OPERATOR
 
 /******************************************************************************
- * INV_2D dispatch.
+ * INV_2D IDs.
  *****************************************************************************/
 #define PROJ_COROUTINE(name)
 #define PROJ_FWD_2D(name)
-#define PROJ_INV_2D(name)       case name##_id: return name(in, P);
+#define PROJ_INV_2D(name) DEFINE_FUNCTION_ID(name),
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)
-PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY in, PJ *P)
+
+typedef enum
 {
-    switch (fn)
-    {
-        default: break;
+	PJ_INVALID_INV_2D,
 
-#       include "pj_function_list_shared.h"
-#   ifndef PROJ_OPENCL_DEVICE
-#	    include "pj_function_list_host.h"
-#   endif
-    }
+#	include "pj_function_list_shared.h"
+#	include "pj_function_list_host.h"
 
-    PJ_LP x{ -1.0, -1.0 };
-    return x;
-}
+	PJ_INV_2D_COUNT
+} PJ_INV_2D_ID;
+
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
 #undef PROJ_INV_2D
@@ -140,29 +122,25 @@ PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY in, PJ *P)
 #undef PROJ_OPERATOR
 
 /******************************************************************************
- * FWD_3D dispatch.
+ * FWD_3D IDs.
  *****************************************************************************/
 #define PROJ_COROUTINE(name)
 #define PROJ_FWD_2D(name)
 #define PROJ_INV_2D(name)
-#define PROJ_FWD_3D(name)       case name##_id: return name(in, P);
+#define PROJ_FWD_3D(name) DEFINE_FUNCTION_ID(name),
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)
-PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ in, PJ *P)
+
+typedef enum
 {
-    switch (fn)
-    {
-        default: break;
+	PJ_INVALID_FWD_3D,
 
-#       include "pj_function_list_shared.h"
-#   ifndef PROJ_OPENCL_DEVICE
-#	    include "pj_function_list_host.h"
-#   endif
-    }
+#	include "pj_function_list_shared.h"
+#	include "pj_function_list_host.h"
 
-    PJ_XYZ x{ -1.0, -1.0, -1.0 };
-    return x;
-}
+	PJ_FWD_3D_COUNT
+} PJ_FWD_3D_ID;
+
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
 #undef PROJ_INV_2D
@@ -171,29 +149,25 @@ PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ in, PJ *P)
 #undef PROJ_OPERATOR
 
 /******************************************************************************
- * INV_3D dispatch.
+ * INV_3D IDs.
  *****************************************************************************/
 #define PROJ_COROUTINE(name)
 #define PROJ_FWD_2D(name)
 #define PROJ_INV_2D(name)
 #define PROJ_FWD_3D(name)
-#define PROJ_INV_3D(name)       case name##_id: return name(in, P);
+#define PROJ_INV_3D(name) DEFINE_FUNCTION_ID(name),
 #define PROJ_OPERATOR(name)
-PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ in, PJ *P)
+
+typedef enum
 {
-    switch (fn)
-    {
-        default: break;
+	PJ_INVALID_INV_3D,
 
-#       include "pj_function_list_shared.h"
-#   ifndef PROJ_OPENCL_DEVICE
-#	    include "pj_function_list_host.h"
-#   endif
-    }
+#	include "pj_function_list_shared.h"
+#	include "pj_function_list_host.h"
 
-    PJ_LPZ x{ -1.0, -1.0, -1.0 };
-    return x;
-}
+	PJ_INV_3D_COUNT
+} PJ_INV_3D_ID;
+
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
 #undef PROJ_INV_2D
@@ -202,32 +176,30 @@ PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ in, PJ *P)
 #undef PROJ_OPERATOR
 
 /******************************************************************************
- * 4D dispatch.
+ * 4D IDs.
  *****************************************************************************/
 #define PROJ_COROUTINE(name)
 #define PROJ_FWD_2D(name)
 #define PROJ_INV_2D(name)
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)
-#define PROJ_OPERATOR(name)       case name##_id: return name(in, P);
-PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD in, PJ *P)
+#define PROJ_OPERATOR(name) DEFINE_FUNCTION_ID(name),
+
+typedef enum
 {
-    switch (fn)
-    {
-        default: break;
+	PJ_INVALID_OPERATOR,
 
-#       include "pj_function_list_shared.h"
-#   ifndef PROJ_OPENCL_DEVICE
-#	    include "pj_function_list_host.h"
-#   endif
-    }
+#	include "pj_function_list_shared.h"
+#	include "pj_function_list_host.h"
 
-    PJ_COORD x{ -1.0, -1.0, -1.0, -1.0 };
-    return x;
-}
+	PJ_OPERATOR_COUNT
+} PJ_OPERATOR_ID;
+
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
 #undef PROJ_INV_2D
 #undef PROJ_FWD_3D
 #undef PROJ_INV_3D
 #undef PROJ_OPERATOR
+
+#endif // !PROJ_INTERNAL_SHARED_FUNCTION_IDS_H

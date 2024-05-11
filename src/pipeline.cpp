@@ -197,21 +197,6 @@ static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
         proj_assign_context(pipeline->steps[i].pj, ctx);
 }
 
-static void pipeline_scan(PJ* P, PJscan& s)
-{
-    pj_scan_local(P, s);
-
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for (size_t i = 0; i < pipeline->step_count; ++i)
-    {
-        struct PipelineStep* step = pipeline->steps + i;
-        if (!step->omit_fwd || !step->omit_inv)
-        {
-            pj_scan_recursive(step->pj, s);
-        }
-    }
-}
-
 static void pipeline_map_svm_ptrs(PJ* P, bool map)
 {
     pj_map_svm_ptrs(P, map);
@@ -231,7 +216,7 @@ static void pipeline_map_svm_ptrs(PJ* P, bool map)
 
 #endif
 
-static PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
     struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
     PJ_COORD                point = e->coo;
@@ -275,7 +260,7 @@ ABORT:
 }
 
 
-static PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
     struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
     PJ_COORD                point = e->coo;
@@ -321,7 +306,7 @@ ABORT:
 
 
 
-static PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
     struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
     PJ_COORD                point = e->coo;
@@ -366,7 +351,7 @@ ABORT:
 }
 
 
-static PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
     struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
     PJ_COORD                point = e->coo;
@@ -413,7 +398,7 @@ ABORT:
 
 
 
-static PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
     struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
     PJ_COORD                point = e->coo;
@@ -458,7 +443,7 @@ ABORT:
 }
 
 
-static PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
     struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
     PJ_COORD                point = e->coo;
@@ -639,15 +624,14 @@ PJ *OPERATION(pipeline,0) {
         return destructor (P, PROJ_ERR_INVALID_OP_WRONG_SYNTAX); /* ERROR: nested pipelines */
     }
 
-    P->host->co_fwd4d  =  PJ_MAKE_KERNEL(pipeline_forward_4d_co);
-    P->host->co_inv4d  =  PJ_MAKE_KERNEL(pipeline_reverse_4d_co);
-    P->host->co_fwd3d  =  PJ_MAKE_KERNEL(pipeline_forward_3d_co);
-    P->host->co_inv3d  =  PJ_MAKE_KERNEL(pipeline_reverse_3d_co);
-    P->host->co_fwd    =  PJ_MAKE_KERNEL(pipeline_forward_co);
-    P->host->co_inv    =  PJ_MAKE_KERNEL(pipeline_reverse_co);
+    P->co_fwd4d  =  PJ_MAKE_KERNEL(pipeline_forward_4d_co);
+    P->co_inv4d  =  PJ_MAKE_KERNEL(pipeline_reverse_4d_co);
+    P->co_fwd3d  =  PJ_MAKE_KERNEL(pipeline_forward_3d_co);
+    P->co_inv3d  =  PJ_MAKE_KERNEL(pipeline_reverse_3d_co);
+    P->co_fwd    =  PJ_MAKE_KERNEL(pipeline_forward_co);
+    P->co_inv    =  PJ_MAKE_KERNEL(pipeline_reverse_co);
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
-    P->host->scan   = pipeline_scan;
     P->host->map_pj = pipeline_map_svm_ptrs;
 
     /* Currently, the pipeline driver is a raw bit mover, enabling other operations */
@@ -766,8 +750,8 @@ PJ *OPERATION(pipeline,0) {
     /* Require a forward path through the pipeline */
     for( auto& step: steps) {
         PJ *Q = step.pj;
-        if ( ( Q->inverted && (Q->host->inv || Q->host->inv3d || Q->host->fwd4d) ) ||
-             (!Q->inverted && (Q->host->fwd || Q->host->fwd3d || Q->host->fwd4d) ) ) {
+        if ( ( Q->inverted && (Q->inv || Q->inv3d || Q->fwd4d) ) ||
+             (!Q->inverted && (Q->fwd || Q->fwd3d || Q->fwd4d) ) ) {
             continue;
         } else {
             proj_log_error (P, _("Pipeline: A forward operation couldn't be constructed"));
@@ -781,9 +765,9 @@ PJ *OPERATION(pipeline,0) {
         if ( pj_has_inverse(Q) ) {
             continue;
         } else {
-            P->host->inv   = nullptr;
-            P->host->inv3d = nullptr;
-            P->host->inv4d = nullptr;
+            P->inv   = nullptr;
+            P->inv3d = nullptr;
+            P->inv4d = nullptr;
             break;
         }
     }
@@ -859,7 +843,7 @@ PJ *OPERATION(pipeline,0) {
 
 #endif // !PROJ_OPENCL_DEVICE
 
-static PJ_COORD push(PJ_COORD point, PJ *P) {
+PJ_COORD pipeline_push(PJ_COORD point, PJ *P) {
     if (P->parent == nullptr)
         return point;
 
@@ -878,7 +862,7 @@ static PJ_COORD push(PJ_COORD point, PJ *P) {
     return point;
 }
 
-static PJ_COORD pop(PJ_COORD point, PJ *P) {
+PJ_COORD pipeline_pop(PJ_COORD point, PJ *P) {
     if (P->parent == nullptr)
         return point;
 
@@ -931,22 +915,20 @@ static PJ *setup_pushpop(PJ *P) {
     P->left  = PJ_IO_UNITS_WHATEVER;
     P->right = PJ_IO_UNITS_WHATEVER;
 
-    P->host->scan = pj_scan_nop;
-
     return P;
 }
 
 
 PJ *OPERATION(push, 0) {
-    P->host->fwd4d = PJ_MAKE_KERNEL(push);
-    P->host->inv4d = PJ_MAKE_KERNEL(pop);
+    P->fwd4d = PJ_MAKE_KERNEL(pipeline_push);
+    P->inv4d = PJ_MAKE_KERNEL(pipeline_pop);
 
     return setup_pushpop(P);
 }
 
 PJ *OPERATION(pop, 0) {
-    P->host->inv4d = PJ_MAKE_KERNEL(push);
-    P->host->fwd4d = PJ_MAKE_KERNEL(pop);
+    P->inv4d = PJ_MAKE_KERNEL(pipeline_push);
+    P->fwd4d = PJ_MAKE_KERNEL(pipeline_pop);
 
     return setup_pushpop(P);
 }

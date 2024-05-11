@@ -1798,12 +1798,12 @@ PJ  *proj_create_crs_to_crs_from_pj (PJ_CONTEXT *ctx, const PJ *source_crs, cons
     // The returned P is rather dummy
     P->host->descr = "Set of coordinate operations";
     P->host->iso_obj = nullptr;
-    P->host->fwd = nullptr;
-    P->host->inv = nullptr;
-    P->host->fwd3d = nullptr;
-    P->host->inv3d = nullptr;
-    P->host->fwd4d = nullptr;
-    P->host->inv4d = nullptr;
+    P->fwd = nullptr;
+    P->inv = nullptr;
+    P->fwd3d = nullptr;
+    P->inv3d = nullptr;
+    P->fwd4d = nullptr;
+    P->inv4d = nullptr;
 
     return P;
 }

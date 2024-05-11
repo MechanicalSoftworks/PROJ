@@ -35,7 +35,7 @@ static PJ_XY forward_error(PJ *P, PJ_LP lp, PJ_XY xy) {
     return xy;
 }
 
-static PJ_XY ortho_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY ortho_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  coslam, cosphi, sinphi;
@@ -77,7 +77,7 @@ static PJ_XY ortho_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 }
 
 
-static PJ_LP ortho_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP ortho_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double sinc;
@@ -130,7 +130,7 @@ static PJ_LP ortho_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 }
 
 
-static PJ_XY ortho_e_forward (PJ_LP lp, PJ *P) {           /* Ellipsoidal, forward */
+PJ_XY ortho_e_forward (PJ_LP lp, PJ *P) {           /* Ellipsoidal, forward */
     PJ_XY xy;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -156,7 +156,7 @@ static PJ_XY ortho_e_forward (PJ_LP lp, PJ *P) {           /* Ellipsoidal, forwa
 }
 
 
-static PJ_LP ortho_e_inverse (PJ_XY xy, PJ *P) {           /* Ellipsoidal, inverse */
+PJ_LP ortho_e_inverse (PJ_XY xy, PJ *P) {           /* Ellipsoidal, inverse */
     PJ_LP lp;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -298,16 +298,16 @@ PJ *PROJECTION(ortho) {
         Q->mode = EQUIT;
     if( P->es == 0 )
     {
-        P->host->inv = PJ_MAKE_KERNEL(ortho_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(ortho_s_forward);
+        P->inv = PJ_MAKE_KERNEL(ortho_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(ortho_s_forward);
     }
     else
     {
         Q->nu0 = 1.0 / sqrt(1.0 - P->es * Q->sinph0 * Q->sinph0);
         Q->y_shift = P->es * Q->nu0 * Q->sinph0 * Q->cosph0;
         Q->y_scale = 1.0 / sqrt(1.0 - P->es * Q->cosph0 * Q->cosph0);
-        P->host->inv = PJ_MAKE_KERNEL(ortho_e_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(ortho_e_forward);
+        P->inv = PJ_MAKE_KERNEL(ortho_e_inverse);
+        P->fwd = PJ_MAKE_KERNEL(ortho_e_forward);
     }
 
     return P;

@@ -20,7 +20,7 @@ PROJ_HEAD(putp6p, "Putnins P6'") "\n\tPCyl, Sph";
 #define CON_POLE 1.732050807568877
 
 
-static PJ_XY putp6_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY putp6_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     int i;
@@ -44,7 +44,7 @@ static PJ_XY putp6_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 }
 
 
-static PJ_LP putp6_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP putp6_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double r;
@@ -71,8 +71,8 @@ PJ *PROJECTION(putp6) {
     Q->D   = 2.;
 
     P->es = 0.;
-    P->host->inv = PJ_MAKE_KERNEL(putp6_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(putp6_s_forward);
+    P->inv = PJ_MAKE_KERNEL(putp6_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(putp6_s_forward);
 
     return P;
 }
@@ -91,8 +91,8 @@ PJ *PROJECTION(putp6p) {
     Q->D   = 3.;
 
     P->es = 0.;
-    P->host->inv = PJ_MAKE_KERNEL(putp6_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(putp6_s_forward);
+    P->inv = PJ_MAKE_KERNEL(putp6_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(putp6_s_forward);
 
     return P;
 }

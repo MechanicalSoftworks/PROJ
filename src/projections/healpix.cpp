@@ -501,21 +501,21 @@ static PJ_XY combine_caps(double x, double y, int north_square, int south_square
 }
 
 
-static PJ_XY s_healpix_forward(PJ_LP lp, PJ *P) { /* sphere  */
+PJ_XY s_healpix_forward(PJ_LP lp, PJ *P) { /* sphere  */
     (void) P;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     return rotate(healpix_sphere(lp), -Q->rot_xy);
 }
 
 
-static PJ_XY e_healpix_forward(PJ_LP lp, PJ *P) { /* ellipsoid  */
+PJ_XY e_healpix_forward(PJ_LP lp, PJ *P) { /* ellipsoid  */
     lp.phi = auth_lat(P, lp.phi, 0);
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     return rotate(healpix_sphere(lp), -Q->rot_xy);
 }
 
 
-static PJ_LP s_healpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
+PJ_LP s_healpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     xy = rotate(xy, Q->rot_xy);
 
@@ -531,7 +531,7 @@ static PJ_LP s_healpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
 }
 
 
-static PJ_LP e_healpix_inverse(PJ_XY xy, PJ *P) { /* ellipsoid */
+PJ_LP e_healpix_inverse(PJ_XY xy, PJ *P) { /* ellipsoid */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     xy = rotate(xy, Q->rot_xy);
@@ -549,7 +549,7 @@ static PJ_LP e_healpix_inverse(PJ_XY xy, PJ *P) { /* ellipsoid */
 }
 
 
-static PJ_XY s_rhealpix_forward(PJ_LP lp, PJ *P) { /* sphere */
+PJ_XY s_rhealpix_forward(PJ_LP lp, PJ *P) { /* sphere */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     PJ_XY xy = healpix_sphere(lp);
@@ -557,7 +557,7 @@ static PJ_XY s_rhealpix_forward(PJ_LP lp, PJ *P) { /* sphere */
 }
 
 
-static PJ_XY e_rhealpix_forward(PJ_LP lp, PJ *P) { /* ellipsoid */
+PJ_XY e_rhealpix_forward(PJ_LP lp, PJ *P) { /* ellipsoid */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     PJ_XY xy;
     lp.phi = auth_lat(P, lp.phi, 0);
@@ -566,7 +566,7 @@ static PJ_XY e_rhealpix_forward(PJ_LP lp, PJ *P) { /* ellipsoid */
 }
 
 
-static PJ_LP s_rhealpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
+PJ_LP s_rhealpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
     /* Check whether (x, y) lies in the rHEALPix image. */
@@ -582,7 +582,7 @@ static PJ_LP s_rhealpix_inverse(PJ_XY xy, PJ *P) { /* sphere */
 }
 
 
-static PJ_LP e_rhealpix_inverse(PJ_XY xy, PJ *P) { /* ellipsoid */
+PJ_LP e_rhealpix_inverse(PJ_XY xy, PJ *P) { /* ellipsoid */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     PJ_LP lp = {0.0,0.0};
 
@@ -629,11 +629,11 @@ PJ *PROJECTION(healpix) {
         Q->qp = pj_qsfn(1.0, P->e, P->one_es);  /* For auth_lat(). */
         P->a = P->a*sqrt(0.5*Q->qp);            /* Set P->a to authalic radius. */
         pj_calc_ellipsoid_params (P, P->a, P->es);  /* Ensure we have a consistent parameter set */
-        P->host->fwd = PJ_MAKE_KERNEL(e_healpix_forward);
-        P->host->inv = PJ_MAKE_KERNEL(e_healpix_inverse);
+        P->fwd = PJ_MAKE_KERNEL(e_healpix_forward);
+        P->inv = PJ_MAKE_KERNEL(e_healpix_inverse);
     } else {
-        P->host->fwd = PJ_MAKE_KERNEL(s_healpix_forward);
-        P->host->inv = PJ_MAKE_KERNEL(s_healpix_inverse);
+        P->fwd = PJ_MAKE_KERNEL(s_healpix_forward);
+        P->inv = PJ_MAKE_KERNEL(s_healpix_inverse);
     }
 
     return P;
@@ -668,11 +668,11 @@ PJ *PROJECTION(rhealpix) {
         Q->qp = pj_qsfn(1.0, P->e, P->one_es); /* For auth_lat(). */
         P->a = P->a*sqrt(0.5*Q->qp); /* Set P->a to authalic radius. */
         P->ra = 1.0/P->a;
-        P->host->fwd = PJ_MAKE_KERNEL(e_rhealpix_forward);
-        P->host->inv = PJ_MAKE_KERNEL(e_rhealpix_inverse);
+        P->fwd = PJ_MAKE_KERNEL(e_rhealpix_forward);
+        P->inv = PJ_MAKE_KERNEL(e_rhealpix_inverse);
     } else {
-        P->host->fwd = PJ_MAKE_KERNEL(s_rhealpix_forward);
-        P->host->inv = PJ_MAKE_KERNEL(s_rhealpix_inverse);
+        P->fwd = PJ_MAKE_KERNEL(s_rhealpix_forward);
+        P->inv = PJ_MAKE_KERNEL(s_rhealpix_inverse);
     }
 
     return P;

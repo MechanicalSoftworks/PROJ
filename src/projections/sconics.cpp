@@ -75,7 +75,7 @@ static int phi12(PJ *P, double *del) {
 }
 
 
-static PJ_XY sconics_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY sconics_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0, 0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double rho;
@@ -98,7 +98,7 @@ static PJ_XY sconics_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forw
 }
 
 
-static PJ_LP sconics_s_inverse (PJ_XY xy, PJ *P) {  /* Spheroidal, (and ellipsoidal?) inverse */
+PJ_LP sconics_s_inverse (PJ_XY xy, PJ *P) {  /* Spheroidal, (and ellipsoidal?) inverse */
     PJ_LP lp = {0.0, 0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double rho;
@@ -195,8 +195,8 @@ static PJ *setup(PJ *P, enum Type type) {
         break;
     }
 
-    P->host->inv = PJ_MAKE_KERNEL(sconics_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(sconics_s_forward);
+    P->inv = PJ_MAKE_KERNEL(sconics_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(sconics_s_forward);
     P->es = 0;
     return (P);
 }

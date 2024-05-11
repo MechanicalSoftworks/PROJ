@@ -63,7 +63,7 @@ static void seraz0(double lam, double mult, PJ *P) {
 }
 
 
-static PJ_XY misrsom_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY misrsom_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     int l, nn;
@@ -125,7 +125,7 @@ static PJ_XY misrsom_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forw
 }
 
 
-static PJ_LP misrsom_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP misrsom_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     int nn;
@@ -221,8 +221,8 @@ PJ *PROJECTION(misrsom) {
     Q->c1 /= 15.;
     Q->c3 /= 45.;
 
-    P->host->inv = PJ_MAKE_KERNEL(misrsom_e_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(misrsom_e_forward);
+    P->inv = PJ_MAKE_KERNEL(misrsom_e_inverse);
+    P->fwd = PJ_MAKE_KERNEL(misrsom_e_forward);
 
    return P;
 }

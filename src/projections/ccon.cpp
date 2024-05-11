@@ -43,7 +43,7 @@ PROJ_HEAD(ccon, "Central Conic")
 
 
 
-static PJ_XY ccon_forward (PJ_LP lp, PJ *P) {
+PJ_XY ccon_forward (PJ_LP lp, PJ *P) {
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double r;
@@ -56,7 +56,7 @@ static PJ_XY ccon_forward (PJ_LP lp, PJ *P) {
 }
 
 
-static PJ_LP ccon_inverse (PJ_XY xy, PJ *P) {
+PJ_LP ccon_inverse (PJ_XY xy, PJ *P) {
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -102,8 +102,8 @@ PJ *PROJECTION(ccon) {
     Q->ctgphi1 = Q->cosphi1/Q->sinphi1;
 
 
-    P->host->inv = PJ_MAKE_KERNEL(ccon_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(ccon_forward);
+    P->inv = PJ_MAKE_KERNEL(ccon_inverse);
+    P->fwd = PJ_MAKE_KERNEL(ccon_forward);
 
     return P;
 }

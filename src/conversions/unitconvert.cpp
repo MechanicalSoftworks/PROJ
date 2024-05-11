@@ -296,7 +296,7 @@ static double tconvert_out(int i, double d)
 
 
 /***********************************************************************/
-static PJ_XY forward_2d(PJ_LP lp, PJ *P) {
+PJ_XY unitconvert_forward_2d(PJ_LP lp, PJ *P) {
 /************************************************************************
     Forward unit conversions in the plane
 ************************************************************************/
@@ -312,7 +312,7 @@ static PJ_XY forward_2d(PJ_LP lp, PJ *P) {
 
 
 /***********************************************************************/
-static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
+PJ_LP unitconvert_reverse_2d(PJ_XY xy, PJ *P) {
 /************************************************************************
     Reverse unit conversions in the plane
 ************************************************************************/
@@ -328,7 +328,7 @@ static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
 
 
 /***********************************************************************/
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, PJ *P) {
 /************************************************************************
     Forward unit conversions the vertical component
 ************************************************************************/
@@ -337,7 +337,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
     point.lpz = lpz;
 
     /* take care of the horizontal components in the 2D function */
-    const PJ_XY xy = forward_2d(point.lp, P);
+    const PJ_XY xy = unitconvert_forward_2d(point.lp, P);
     point.xy = xy;
 
     point.xyz.z *= Q->z_factor;
@@ -346,7 +346,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
 }
 
 /***********************************************************************/
-static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
+PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, PJ *P) {
 /************************************************************************
     Reverse unit conversions the vertical component
 ************************************************************************/
@@ -355,7 +355,7 @@ static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
     point.xyz = xyz;
 
     /* take care of the horizontal components in the 2D function */
-    const PJ_LP lp = reverse_2d(point.xy, P);
+    const PJ_LP lp = unitconvert_reverse_2d(point.xy, P);
     point.lp = lp;
 
     point.xyz.z /= Q->z_factor;
@@ -365,7 +365,7 @@ static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
 
 
 /***********************************************************************/
-static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD unitconvert_forward_4d(PJ_COORD obs, PJ *P) {
 /************************************************************************
     Forward conversion of time units
 ************************************************************************/
@@ -373,7 +373,7 @@ static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
     PJ_COORD out = obs;
 
     /* delegate unit conversion of physical dimensions to the 3D function */
-    out.xyz = forward_3d(obs.lpz, P);
+    out.xyz = unitconvert_forward_3d(obs.lpz, P);
 
     if (Q->t_in_id >= 0)
         out.xyzt.t = tconvert_in( Q->t_in_id, obs.xyzt.t );
@@ -385,7 +385,7 @@ static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
 
 
 /***********************************************************************/
-static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD unitconvert_reverse_4d(PJ_COORD obs, PJ *P) {
 /************************************************************************
     Reverse conversion of time units
 ************************************************************************/
@@ -393,7 +393,7 @@ static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
     PJ_COORD out = obs;
 
     /* delegate unit conversion of physical dimensions to the 3D function */
-    out.lpz = reverse_3d(obs.xyz, P);
+    out.lpz = unitconvert_reverse_3d(obs.xyz, P);
 
     if (Q->t_out_id >= 0)
         out.xyzt.t = tconvert_in( Q->t_out_id, obs.xyzt.t );
@@ -465,12 +465,12 @@ PJ *CONVERSION(unitconvert,0) {
         return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
 
-    P->host->fwd4d  = PJ_MAKE_KERNEL(forward_4d);
-    P->host->inv4d  = PJ_MAKE_KERNEL(reverse_4d);
-    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
-    P->host->fwd    = PJ_MAKE_KERNEL(forward_2d);
-    P->host->inv    = PJ_MAKE_KERNEL(reverse_2d);
+    P->fwd4d  = PJ_MAKE_KERNEL(unitconvert_forward_4d);
+    P->inv4d  = PJ_MAKE_KERNEL(unitconvert_reverse_4d);
+    P->fwd3d  = PJ_MAKE_KERNEL(unitconvert_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(unitconvert_reverse_3d);
+    P->fwd    = PJ_MAKE_KERNEL(unitconvert_forward_2d);
+    P->inv    = PJ_MAKE_KERNEL(unitconvert_reverse_2d);
 
     P->left  = PJ_IO_UNITS_WHATEVER;
     P->right = PJ_IO_UNITS_WHATEVER;

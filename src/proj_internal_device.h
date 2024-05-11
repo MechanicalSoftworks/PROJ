@@ -51,16 +51,6 @@ static inline int pj_streq(const char* a, __constant char* b)
 	return 1;
 }
 
-void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD coo);
-
 PJ_COORD proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
-
-PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e);
-PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP lp, PJ* P);
-PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY xy, PJ* P);
-PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ lpz, PJ* P);
-PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ xyz, PJ* P);
-PJ_COORD proj_dispatch_fwd4d(PJ_FWD_4D_ID fn, PJ_COORD coo, PJ* P);
-PJ_COORD proj_dispatch_inv4d(PJ_INV_4D_ID fn, PJ_COORD coo, PJ* P);
 
 #endif // !PROJ_INTERNAL_DEVICE_H

@@ -18,7 +18,7 @@ struct pj_opaque {
 #define LOOP_TOL    1e-7
 
 
-static PJ_XY wink2_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY wink2_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0, 0.0};
     int i;
 
@@ -41,7 +41,7 @@ static PJ_XY wink2_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
     return xy;
 }
 
-static PJ_LP wink2_s_inverse(PJ_XY xy, PJ *P)
+PJ_LP wink2_s_inverse(PJ_XY xy, PJ *P)
 {
     PJ_LP lpInit;
 
@@ -60,8 +60,8 @@ PJ *PROJECTION(wink2) {
 
     static_cast<struct pj_opaque*>(P->opaque)->cosphi1 = cos(pj_param(P->host->ctx, P->host->params, "rlat_1").f);
     P->es  = 0.;
-    P->host->fwd = PJ_MAKE_KERNEL(wink2_s_forward);
-    P->host->inv = PJ_MAKE_KERNEL(wink2_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(wink2_s_forward);
+    P->inv = PJ_MAKE_KERNEL(wink2_s_inverse);
 
     return P;
 }

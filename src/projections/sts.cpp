@@ -20,7 +20,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY sts_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY sts_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -39,7 +39,7 @@ static PJ_XY sts_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward 
 }
 
 
-static PJ_LP sts_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP sts_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -58,8 +58,8 @@ static PJ_LP sts_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse 
 
 static PJ *setup(PJ *P, double p, double q, int mode) {
     P->es  = 0.;
-    P->host->inv = PJ_MAKE_KERNEL(sts_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(sts_s_forward);
+    P->inv = PJ_MAKE_KERNEL(sts_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(sts_s_forward);
     static_cast<struct pj_opaque*>(P->opaque)->C_x = q / p;
     static_cast<struct pj_opaque*>(P->opaque)->C_y = p;
     static_cast<struct pj_opaque*>(P->opaque)->C_p = 1/ q;

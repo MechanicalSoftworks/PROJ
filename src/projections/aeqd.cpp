@@ -75,7 +75,7 @@ static PJ *destructor (PJ *P, int errlev) {                        /* Destructor
 
 
 
-static PJ_XY e_guam_fwd(PJ_LP lp, PJ *P) {        /* Guam elliptical */
+PJ_XY aeqd_e_guam_fwd(PJ_LP lp, PJ *P) {        /* Guam elliptical */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  cosphi, sinphi, t;
@@ -91,7 +91,7 @@ static PJ_XY e_guam_fwd(PJ_LP lp, PJ *P) {        /* Guam elliptical */
 }
 
 
-static PJ_XY aeqd_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY aeqd_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  coslam, cosphi, sinphi, rho;
@@ -132,7 +132,7 @@ static PJ_XY aeqd_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward
 }
 
 
-static PJ_XY aeqd_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY aeqd_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  coslam, cosphi, sinphi;
@@ -180,7 +180,7 @@ oblcon:
 }
 
 
-static PJ_LP e_guam_inv(PJ_XY xy, PJ *P) { /* Guam elliptical */
+PJ_LP aeqd_e_guam_inv(PJ_XY xy, PJ *P) { /* Guam elliptical */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double x2, t = 0.0;
@@ -199,7 +199,7 @@ static PJ_LP e_guam_inv(PJ_XY xy, PJ *P) { /* Guam elliptical */
 }
 
 
-static PJ_LP aeqd_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP aeqd_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double c;
@@ -231,7 +231,7 @@ static PJ_LP aeqd_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse
 }
 
 
-static PJ_LP aeqd_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP aeqd_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double cosc, c_rh, sinc;
@@ -296,15 +296,15 @@ PJ *PROJECTION(aeqd) {
         Q->cosph0 = cos(P->phi0);
     }
     if (P->es == 0.0) {
-        P->host->inv = PJ_MAKE_KERNEL(aeqd_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(aeqd_s_forward);
+        P->inv = PJ_MAKE_KERNEL(aeqd_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(aeqd_s_forward);
     } else {
         if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
             return pj_default_destructor (P, 0);
         if (pj_param(P->host->ctx, P->host->params, "bguam").i) {
             Q->M1 = pj_mlfn(P->phi0, Q->sinph0, Q->cosph0, Q->en);
-            P->host->inv = PJ_MAKE_KERNEL(e_guam_inv);
-            P->host->fwd = PJ_MAKE_KERNEL(e_guam_fwd);
+            P->inv = PJ_MAKE_KERNEL(aeqd_e_guam_inv);
+            P->fwd = PJ_MAKE_KERNEL(aeqd_e_guam_fwd);
         } else {
             switch (Q->mode) {
             case N_POLE:
@@ -321,8 +321,8 @@ PJ *PROJECTION(aeqd) {
                 Q->He *= Q->cosph0;
                 break;
             }
-            P->host->inv = PJ_MAKE_KERNEL(aeqd_e_inverse);
-            P->host->fwd = PJ_MAKE_KERNEL(aeqd_e_forward);
+            P->inv = PJ_MAKE_KERNEL(aeqd_e_inverse);
+            P->fwd = PJ_MAKE_KERNEL(aeqd_e_forward);
         }
     }
 

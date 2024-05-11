@@ -35,7 +35,7 @@
  *
  * Uses Newton-Raphson method, extended to 2D variables, that is using
  * inversion of the Jacobian 2D matrix of partial derivatives. The derivatives
- * are estimated numerically from the P->host->fwd method evaluated at close points.
+ * are estimated numerically from the P->fwd method evaluated at close points.
  *
  * Note: thresholds used have been verified to work with adams_ws2 and wink2
  *
@@ -48,7 +48,7 @@ PJ_LP pj_generic_inverse_2d(PJ_XY xy, PJ *P, PJ_LP lpInitial) {
     double deriv_phi_X = 0;
     double deriv_phi_Y = 0;
     for (int i = 0; i < 15; i++) {
-        PJ_XY xyApprox = P->host->fwd(lp, P);
+        PJ_XY xyApprox = P->fwd(lp, P);
         const double deltaX = xyApprox.x - xy.x;
         const double deltaY = xyApprox.y - xy.y;
         if (fabs(deltaX) < 1e-10 && fabs(deltaY) < 1e-10) {
@@ -63,14 +63,14 @@ PJ_LP pj_generic_inverse_2d(PJ_XY xy, PJ *P, PJ_LP lpInitial) {
             const double dLam = lp.lam > 0 ? -1e-6 : 1e-6;
             lp2.lam = lp.lam + dLam;
             lp2.phi = lp.phi;
-            xy2 = P->host->fwd(lp2, P);
+            xy2 = P->fwd(lp2, P);
             const double deriv_X_lam = (xy2.x - xyApprox.x) / dLam;
             const double deriv_Y_lam = (xy2.y - xyApprox.y) / dLam;
 
             const double dPhi = lp.phi > 0 ? -1e-6 : 1e-6;
             lp2.lam = lp.lam;
             lp2.phi = lp.phi + dPhi;
-            xy2 = P->host->fwd(lp2, P);
+            xy2 = P->fwd(lp2, P);
             const double deriv_X_phi = (xy2.x - xyApprox.x) / dPhi;
             const double deriv_Y_phi = (xy2.y - xyApprox.y) / dPhi;
 

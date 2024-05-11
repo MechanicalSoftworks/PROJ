@@ -273,7 +273,7 @@ inline bool UVtoSphereXYZ(int face, double u, double v, PJ_XYZ* xyz) {
 //      The Forward and Inverse Functions
 //
 // ============================================
-static PJ_XY s2_forward (PJ_LP lp, PJ *P) {
+PJ_XY s2_forward (PJ_LP lp, PJ *P) {
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double lat, lon;
 
@@ -309,7 +309,7 @@ static PJ_XY s2_forward (PJ_LP lp, PJ *P) {
     return {s, t};
 }
 
-static PJ_LP s2_inverse (PJ_XY xy, PJ *P) {     
+PJ_LP s2_inverse (PJ_XY xy, PJ *P) {     
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -367,8 +367,8 @@ PJ *PROJECTION(s2) {
     P->right = PJ_IO_UNITS_PROJECTED;
     P->from_greenwich = -P->lam0;
 
-    P->host->inv = PJ_MAKE_KERNEL(s2_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(s2_forward);
+    P->inv = PJ_MAKE_KERNEL(s2_inverse);
+    P->fwd = PJ_MAKE_KERNEL(s2_forward);
 
     /* Determine the cube face from the center of projection. */
     if (P->phi0 >= M_HALFPI - M_FORTPI / 2.0) {

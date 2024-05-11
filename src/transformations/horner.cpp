@@ -298,12 +298,12 @@ summing the tiny high order elements first.
 
 
 
-static PJ_COORD horner_forward_4d (PJ_COORD point, PJ *P) {
+PJ_COORD horner_forward_4d (PJ_COORD point, PJ *P) {
     point.uv = horner_func (P, (HORNER *) P->opaque, PJ_FWD, point.uv);
     return point;
 }
 
-static PJ_COORD horner_reverse_4d (PJ_COORD point, PJ *P) {
+PJ_COORD horner_reverse_4d (PJ_COORD point, PJ *P) {
     point.uv = horner_func (P, (HORNER *) P->opaque, PJ_INV, point.uv);
     return point;
 }
@@ -387,12 +387,12 @@ polynomial evaluation engine.
 
 
 
-static PJ_COORD complex_horner_forward_4d (PJ_COORD point, PJ *P) {
+PJ_COORD complex_horner_forward_4d (PJ_COORD point, PJ *P) {
     point.uv = complex_horner (P, (HORNER *) P->opaque, PJ_FWD, point.uv);
     return point;
 }
 
-static PJ_COORD complex_horner_reverse_4d (PJ_COORD point, PJ *P) {
+PJ_COORD complex_horner_reverse_4d (PJ_COORD point, PJ *P) {
     point.uv = complex_horner (P, (HORNER *) P->opaque, PJ_INV, point.uv);
     return point;
 }
@@ -447,12 +447,12 @@ PJ *PROJECTION(horner) {
 /*********************************************************************/
     int   degree = 0, n, complex_polynomia = 0;
     HORNER *Q;
-    P->host->fwd4d  = PJ_MAKE_KERNEL(horner_forward_4d);
-    P->host->inv4d  = PJ_MAKE_KERNEL(horner_reverse_4d);
-    P->host->fwd3d  =  nullptr;
-    P->host->inv3d  =  nullptr;
-    P->host->fwd    =  nullptr;
-    P->host->inv    =  nullptr;
+    P->fwd4d  = PJ_MAKE_KERNEL(horner_forward_4d);
+    P->inv4d  = PJ_MAKE_KERNEL(horner_reverse_4d);
+    P->fwd3d  =  nullptr;
+    P->inv3d  =  nullptr;
+    P->fwd    =  nullptr;
+    P->inv    =  nullptr;
     P->left   =  P->right  =  PJ_IO_UNITS_PROJECTED;
     P->host->destructor = horner_freeup;
 
@@ -493,8 +493,8 @@ PJ *PROJECTION(horner) {
             proj_log_error (P, _("missing inv_c"));
             return horner_freeup (P, PROJ_ERR_INVALID_OP_MISSING_ARG);
         }
-        P->host->fwd4d = PJ_MAKE_KERNEL(complex_horner_forward_4d);
-        P->host->inv4d = PJ_MAKE_KERNEL(complex_horner_reverse_4d);
+        P->fwd4d = PJ_MAKE_KERNEL(complex_horner_forward_4d);
+        P->inv4d = PJ_MAKE_KERNEL(complex_horner_reverse_4d);
     }
 
     else {

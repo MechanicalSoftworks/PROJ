@@ -114,7 +114,7 @@ static double ell_int_5(double phi) {
 
 }
 
-static PJ_XY adams_forward(PJ_LP lp, PJ *P) {
+PJ_XY adams_forward(PJ_LP lp, PJ *P) {
     double a=0., b=0.;
     bool sm=false, sn=false;
     PJ_XY xy;
@@ -279,7 +279,7 @@ static PJ_XY adams_forward(PJ_LP lp, PJ *P) {
     return xy;
 }
 
-static PJ_LP adams_inverse(PJ_XY xy, PJ *P)
+PJ_LP adams_inverse(PJ_XY xy, PJ *P)
 {
     PJ_LP lp;
 
@@ -309,11 +309,11 @@ static PJ *setup(PJ *P, projection_type mode) {
     P->opaque = Q;
 
     P->es = 0;
-    P->host->fwd = PJ_MAKE_KERNEL(adams_forward);
+    P->fwd = PJ_MAKE_KERNEL(adams_forward);
 
     Q->mode = mode;
     if( mode == ADAMS_WS2 )
-        P->host->inv = PJ_MAKE_KERNEL(adams_inverse);
+        P->inv = PJ_MAKE_KERNEL(adams_inverse);
 
     if( mode == PEIRCE_Q) {
       // Quincuncial projections type options: square, diamond, hemisphere, horizontal (rectangle) or vertical (rectangle)

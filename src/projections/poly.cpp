@@ -23,7 +23,7 @@ struct pj_opaque {
 #define ITOL 1.e-12
 
 
-static PJ_XY poly_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY poly_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  ms, sp, cp;
@@ -44,7 +44,7 @@ static PJ_XY poly_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward
 }
 
 
-static PJ_XY poly_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY poly_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -62,7 +62,7 @@ static PJ_XY poly_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 }
 
 
-static PJ_LP poly_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP poly_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -108,7 +108,7 @@ static PJ_LP poly_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse
 }
 
 
-static PJ_LP poly_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP poly_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
 
     if (fabs(xy.y = P->phi0 + xy.y) <= TOL) {
@@ -165,12 +165,12 @@ PJ *PROJECTION(poly) {
         if (!(Q->en = pj_enfn(P->host->ctx, P->es)))
             return pj_default_destructor (P, PROJ_ERR_OTHER /*ENOMEM*/);
         Q->ml0 = pj_mlfn(P->phi0, sin(P->phi0), cos(P->phi0), Q->en);
-        P->host->inv = PJ_MAKE_KERNEL(poly_e_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(poly_e_forward);
+        P->inv = PJ_MAKE_KERNEL(poly_e_inverse);
+        P->fwd = PJ_MAKE_KERNEL(poly_e_forward);
     } else {
         Q->ml0 = -P->phi0;
-        P->host->inv = PJ_MAKE_KERNEL(poly_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(poly_s_forward);
+        P->inv = PJ_MAKE_KERNEL(poly_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(poly_s_forward);
     }
 
     return P;

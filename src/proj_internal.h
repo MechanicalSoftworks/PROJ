@@ -287,90 +287,10 @@ enum class TMercAlgo
     PODER_ENGSAGER,
 };
 
-/* Pointer to a kernel function.
- * Executed directly in CPU mode, function is written using name in OpenCL mode.
- *
- * This struct acts as a drop in replacement for a function pointer variable, with the option of retrieving the function name. */
-template<typename T>
-struct PJkernel
-{
-    const char *name = nullptr;
-    T           fn = nullptr;
-
-    auto operator==(std::nullptr_t) const { return nullptr == fn; }
-    operator bool() const { return fn != nullptr; }
-
-    /* Dereference is a no-op, since this is already a value type.
-     * Just return a self-reference so the caller can use 'operator()'. */
-          auto& operator*()       { return *this; }
-    const auto& operator*() const { return *this; }
-
-    template<typename... TArgs>
-    auto operator()(TArgs... args) const { return fn(std::forward<TArgs>(args)...); }
-
-    auto& operator=(std::nullptr_t) { fn = nullptr; name = nullptr; return *this; }
-};
-
-template<typename T>
-inline auto operator==(std::nullptr_t, const PJkernel<T>& k) { return k == nullptr; }
-
-typedef PJ_XY  (*PJ_FWD_2D)(PJ_LP, PJ*);
-typedef PJ_LP  (*PJ_INV_2D)(PJ_XY, PJ*);
-typedef PJ_XYZ (*PJ_FWD_3D)(PJ_LPZ, PJ*);
-typedef PJ_LPZ (*PJ_INV_3D)(PJ_XYZ, PJ*);
-
 #define PROJ_STR_HELPER(x) #x
 #define PROJ_STR(x) PROJ_STR_HELPER(x)
 
-#define PJ_MAKE_KERNEL(name) PJkernel<decltype(name)*>{ PROJ_STR(name), &name }
-
-typedef std::map<std::string, int> PJfunction_to_id;
-
-struct PJscan
-{
-    int next_co_id = 1;         // Start at 1 - that leaves 0 as being "null".
-    int next_fwd_id = 1000;
-    int next_inv_id = 2000;
-    int next_fwd3d_id = 3000;
-    int next_inv3d_id = 4000;
-    int next_fwd4d_id = 5000;
-    int next_inv4d_id = 6000;
-
-    PJfunction_to_id co;
-    PJfunction_to_id fwd, inv;
-    PJfunction_to_id fwd3d, inv3d;
-    PJfunction_to_id fwd4d, inv4d;
-
-    std::set<std::string> files;
-    
-    PJ_COROUTINE_ID add_co(const PJkernel<PJ_COROUTINE>& k, const char* file) { return add_internal(k, file, co, next_co_id, files); }
-    PJ_FWD_2D_ID add_fwd(const PJkernel<PJ_FWD_2D>& k, const char* file) { return add_internal(k, file, fwd, next_fwd_id, files); }
-    PJ_INV_2D_ID add_inv(const PJkernel<PJ_INV_2D>& k, const char* file) { return add_internal(k, file, inv, next_inv_id, files); }
-    PJ_FWD_3D_ID add_fwd(const PJkernel<PJ_FWD_3D>& k, const char* file) { return add_internal(k, file, fwd3d, next_fwd3d_id, files); }
-    PJ_INV_3D_ID add_inv(const PJkernel<PJ_INV_3D>& k, const char* file) { return add_internal(k, file, inv3d, next_inv3d_id, files); }
-    PJ_FWD_4D_ID add_fwd4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { return add_internal(k, file, fwd4d, next_fwd4d_id, files); }
-    PJ_INV_4D_ID add_inv4d(const PJkernel<PJ_OPERATOR>& k, const char* file) { return add_internal(k, file, inv4d, next_inv4d_id, files); }
-
-    static std::string definitions_for(const PJfunction_to_id& m);
-
-    template<typename T>
-    static auto add_internal(const PJkernel<T>& k, const char* file, PJfunction_to_id& m, int& next_id, std::set<std::string>& files) -> int
-    {
-        if (!k)
-        {
-            return 0;
-        }
-
-        auto r = m.try_emplace(k.name, next_id);
-        if (r.second)
-        {
-            ++next_id;
-            files.insert(file);
-        }
-
-        return r.first->second;
-    }
-};
+#define PJ_MAKE_KERNEL(name) PJ_FUNCTION_PTR(name)
 
 struct PJhost
 {
@@ -399,35 +319,11 @@ struct PJhost
 
                           F U N C T I O N    P O I N T E R S
 
-    **************************************************************************************
-
-        For projection xxx, these are pointers to functions in the corresponding
-        PJ_xxx.c file.
-
-        pj_init() delegates the setup of these to pj_projection_specific_setup_xxx(),
-        a name which is currently hidden behind the magic curtain of the PROJECTION
-        macro.
-
     **************************************************************************************/
-
-    PJkernel<PJ_COROUTINE>   co_fwd;
-    PJkernel<PJ_COROUTINE>   co_inv;
-    PJkernel<PJ_COROUTINE>   co_fwd3d;
-    PJkernel<PJ_COROUTINE>   co_inv3d;
-    PJkernel<PJ_COROUTINE>   co_fwd4d;
-    PJkernel<PJ_COROUTINE>   co_inv4d;
-
-    PJkernel<PJ_FWD_2D>   fwd;
-    PJkernel<PJ_INV_2D>   inv;
-    PJkernel<PJ_FWD_3D>   fwd3d;
-    PJkernel<PJ_INV_3D>   inv3d;
-    PJkernel<PJ_OPERATOR> fwd4d;
-    PJkernel<PJ_OPERATOR> inv4d;
 
     PJ_DESTRUCTOR destructor = nullptr;
     void   (*reassign_context)(PJ*, PJ_CONTEXT*) = nullptr;
 
-    void   (*scan)(PJ*, PJscan& s) = nullptr;
     void   (*map_pj)(PJ* P, bool map) = nullptr;
     void   map_svm(void* ptr, bool map);
 
@@ -754,11 +650,6 @@ std::string pj_double_quote_string_param_if_needed(const std::string& str);
 PJ *pj_create_internal (PJ_CONTEXT *ctx, const char *definition);
 PJ *pj_create_argv_internal (PJ_CONTEXT *ctx, int argc, char **argv);
 
-void pj_scan_recursive(PJ* P, PJscan& s);
-void pj_scan_local(PJ* P, PJscan& s);
-void pj_scan_nop(PJ* P, PJscan& s);
-std::string pj_create_opencl_source_from_scan(PJscan& s);
-std::string pj_create_opencl_definitions_from_scan(PJscan& s);
 void pj_map_svm_ptrs(PJ* P, bool map);
 
 // For use by projinfo
@@ -845,15 +736,5 @@ void pj_stderr_logger( void *, int, const char * );
 
 int pj_find_file(PJ_CONTEXT * ctx, const char *short_filename,
                  char* out_full_filename, size_t out_full_filename_size);
-
-void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE fn, PJ* P, PJ_COORD coo);
-
-PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE fn, struct PJstack_s* stack, struct PJstack_entry_s* e);
-PJ_XY proj_dispatch_fwd(PJ_FWD_2D fn, PJ_LP lp, PJ* P);
-PJ_LP proj_dispatch_inv(PJ_INV_2D fn, PJ_XY xy, PJ* P);
-PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D fn, PJ_LPZ lpz, PJ* P);
-PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D fn, PJ_XYZ xyz, PJ* P);
-PJ_COORD proj_dispatch_fwd4d(PJ_OPERATOR fn, PJ_COORD coo, PJ* P);
-PJ_COORD proj_dispatch_inv4d(PJ_OPERATOR fn, PJ_COORD coo, PJ* P);
 
 #endif /* ndef PROJ_INTERNAL_H */
