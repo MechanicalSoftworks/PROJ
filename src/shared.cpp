@@ -296,10 +296,6 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
     {
         cl_local PJstack_entry_t* top = stack->s + stack->n - 1;
 
-#ifndef PROJ_OPENCL_DEVICE
-        printf("%d, %f %f, %d, %d\n", top->fn, top->coo.xy.x, top->coo.xy.y, top->step, top->i);
-#endif
-
         switch (proj_dispatch_coroutine(top->fn, stack, top))
         {
             case PJ_CO_YIELD:
@@ -332,10 +328,6 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
             }
         }
     }
-
-#ifndef PROJ_OPENCL_DEVICE
-    printf("\n");
-#endif
 
     return coo;
 }
