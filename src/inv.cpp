@@ -35,7 +35,7 @@
 #define INPUT_UNITS  P->right
 #define OUTPUT_UNITS P->left
 
-static PJcoroutine_code_t inv_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t inv_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*         P = e->P;
     PJ_COORD    coo = e->coo;
 
@@ -115,7 +115,7 @@ ABORT:
 
 
 
-static PJcoroutine_code_t inv_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t inv_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*         P = e->P;
     PJ_COORD    coo = e->coo;
 
