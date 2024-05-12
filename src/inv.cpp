@@ -30,8 +30,6 @@
 
 #include "proj_kernel.h"
 
-#undef INPUT_UNITS
-#undef OUTPUT_UNITS
 #define INPUT_UNITS  P->right
 #define OUTPUT_UNITS P->left
 

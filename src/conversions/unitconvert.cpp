@@ -69,17 +69,21 @@ Last update: 2017-05-16
 
 PROJ_HEAD(unitconvert, "Unit conversion");
 
+namespace { // anonymous namespace
 struct TIME_UNITS {
     const cl_constant char  *id;        /* units keyword */
     const cl_constant char  *name;      /* comments */
 };
+} // anonymous namespace
 
+namespace { // anonymous namespace
 struct pj_opaque_unitconvert {
     int     t_in_id;        /* time unit id for the time input unit   */
     int     t_out_id;       /* time unit id for the time output unit  */
     double  xy_factor;      /* unit conversion factor for horizontal components */
     double  z_factor;       /* unit conversion factor for vertical components */
 };
+} // anonymous namespace
 
 /***********************************************************************/
 static int is_leap_year(long year) {
@@ -337,7 +341,7 @@ PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, PJ *P) {
     point.lpz = lpz;
 
     /* take care of the horizontal components in the 2D function */
-    const PJ_XY xy = unitconvert_forward_2d(point.lp, P);
+    const auto xy = unitconvert_forward_2d(point.lp, P);
     point.xy = xy;
 
     point.xyz.z *= Q->z_factor;
@@ -355,7 +359,7 @@ PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, PJ *P) {
     point.xyz = xyz;
 
     /* take care of the horizontal components in the 2D function */
-    const PJ_LP lp = unitconvert_reverse_2d(point.xy, P);
+    const auto lp = unitconvert_reverse_2d(point.xy, P);
     point.lp = lp;
 
     point.xyz.z /= Q->z_factor;

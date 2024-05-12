@@ -98,8 +98,7 @@ PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP in, PJ *P)
 #   endif
     }
 
-    PJ_XY x{ -1.0, -1.0 };
-    return x;
+    return proj_coord_error().xy;
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -129,8 +128,7 @@ PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY in, PJ *P)
 #   endif
     }
 
-    PJ_LP x{ -1.0, -1.0 };
-    return x;
+    return proj_coord_error().lp;
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -160,8 +158,7 @@ PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ in, PJ *P)
 #   endif
     }
 
-    PJ_XYZ x{ -1.0, -1.0, -1.0 };
-    return x;
+    return proj_coord_error().xyz;
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -191,8 +188,7 @@ PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ in, PJ *P)
 #   endif
     }
 
-    PJ_LPZ x{ -1.0, -1.0, -1.0 };
-    return x;
+    return proj_coord_error().lpz;
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -222,8 +218,7 @@ PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD in, PJ *P)
 #   endif
     }
 
-    PJ_COORD x{ -1.0, -1.0, -1.0, -1.0 };
-    return x;
+    return proj_coord_error();
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D

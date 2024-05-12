@@ -106,6 +106,8 @@ PROJ_HEAD(pipeline,         "Transformation pipeline manager");
 PROJ_HEAD(pop, "Retrieve coordinate value from pipeline stack");
 PROJ_HEAD(push, "Save coordinate value on pipeline stack");
 
+/* Projection specific elements for the PJ object */
+namespace { // anonymous namespace
 struct PipelineStep {
     PJ_FIELD(PJ*,  pj,       nullptr);
     PJ_FIELD(bool, omit_fwd, false);
@@ -139,6 +141,7 @@ struct PushPop {
     bool v3;
     bool v4;
 };
+} // anonymous namespace
 
 #ifndef PROJ_OPENCL_DEVICE
 
@@ -192,9 +195,11 @@ static void PipelineStackPop(struct PipelineStack* stack)
 
 static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
 {
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    for (size_t i = 0; i < pipeline->step_count; ++i)
-        proj_assign_context(pipeline->steps[i].pj, ctx);
+    auto pipeline = static_cast<struct Pipeline*>(P->opaque);
+    for (size_t i = 0; i < pipeline->step_count; ++i) {
+        auto& step = pipeline->steps[i];
+        proj_assign_context(step.pj, ctx);
+    }
 }
 
 static void pipeline_map_svm_ptrs(PJ* P, bool map)
@@ -218,7 +223,7 @@ static void pipeline_map_svm_ptrs(PJ* P, bool map)
 
 PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
-    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
     struct PipelineStep*    step = nullptr;
@@ -262,7 +267,7 @@ ABORT:
 
 PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
-    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
     struct PipelineStep*    step = nullptr;
@@ -308,7 +313,7 @@ ABORT:
 
 PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
-    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
     struct PipelineStep*    step = nullptr;
@@ -353,7 +358,7 @@ ABORT:
 
 PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
-    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
     struct PipelineStep*    step = nullptr;
@@ -400,7 +405,7 @@ ABORT:
 
 PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
-    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
     struct PipelineStep*    step = nullptr;
@@ -445,7 +450,7 @@ ABORT:
 
 PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*                     P = e->P;
-    struct Pipeline*        pipeline = (struct Pipeline*)(P->opaque);
+    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
     struct PipelineStep*    step = nullptr;
@@ -847,8 +852,8 @@ PJ_COORD pipeline_push(PJ_COORD point, PJ *P) {
     if (P->parent == nullptr)
         return point;
 
-    struct Pipeline *pipeline = (struct Pipeline*)(P->parent->opaque);
-    struct PushPop *pushpop = (struct PushPop*)(P->opaque);
+    auto pipeline = static_cast<struct Pipeline*>(P->parent->opaque);
+    auto pushpop = static_cast<struct PushPop*>(P->opaque);
 
     if (pushpop->v1)
         PipelineStackPush(pipeline->stack + 0, point.v[0]);
@@ -866,8 +871,8 @@ PJ_COORD pipeline_pop(PJ_COORD point, PJ *P) {
     if (P->parent == nullptr)
         return point;
 
-    struct Pipeline *pipeline = (struct Pipeline*)(P->parent->opaque);
-    struct PushPop *pushpop = (struct PushPop*)(P->opaque);
+    auto pipeline = static_cast<struct Pipeline*>(P->parent->opaque);
+    auto pushpop = static_cast<struct PushPop*>(P->opaque);
 
     if (pushpop->v1 && !PipelineStackEmpty(pipeline->stack + 0)) {
             point.v[0] = PipelineStackTop(pipeline->stack + 0);
