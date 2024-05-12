@@ -10,7 +10,7 @@ PROJ_HEAD(gins8, "Ginsburg VIII (TsNIIGAiK)") "\n\tPCyl, Sph, no inv";
 #define C12 0.08333333333333333
 
 
-static PJ_XY gins8_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY gins8_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     double t = lp.phi * lp.phi;
     (void) P;
@@ -26,8 +26,8 @@ static PJ_XY gins8_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 
 PJ *PROJECTION(gins8) {
     P->es = 0.0;
-    P->host->inv = nullptr;
-    P->host->fwd = PJ_MAKE_KERNEL(gins8_s_forward);
+    P->inv = nullptr;
+    P->fwd = PJ_MAKE_KERNEL(gins8_s_forward);
 
     return P;
 }

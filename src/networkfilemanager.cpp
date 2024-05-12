@@ -71,6 +71,9 @@
 
 //! @cond Doxygen_Suppress
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 using namespace NS_PROJ::internal;
 
 NS_PROJ_START
@@ -1633,8 +1636,8 @@ CurlFileHandle::CurlFileHandle(PJ_CONTEXT *ctx, const char *url, CURL *handle,
               curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, m_szCurlErrBuf));
 
     if (getenv("PROJ_NO_USERAGENT") == nullptr) {
-        m_useragent = "PROJ " PROJ_STR(PROJ_VERSION_MAJOR) "." STR(
-            PROJ_VERSION_MINOR) "." PROJ_STR(PROJ_VERSION_PATCH);
+        m_useragent = "PROJ " STR(PROJ_VERSION_MAJOR) "." STR(
+            PROJ_VERSION_MINOR) "." STR(PROJ_VERSION_PATCH);
         const auto exeName = GetExecutableName();
         if (!exeName.empty()) {
             m_useragent = exeName + " using " + m_useragent;

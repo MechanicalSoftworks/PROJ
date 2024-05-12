@@ -73,7 +73,7 @@ static int sign(int x) {
     return (x > 0) - (x < 0);
 }
 
-static PJ_XY forward_2d(PJ_LP lp, PJ *P) {
+PJ_XY axisswap_forward_2d(PJ_LP lp, PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out, in;
@@ -89,7 +89,7 @@ static PJ_XY forward_2d(PJ_LP lp, PJ *P) {
 }
 
 
-static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
+PJ_LP axisswap_reverse_2d(PJ_XY xy, PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out, in;
@@ -105,7 +105,7 @@ static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
 }
 
 
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ axisswap_forward_3d(PJ_LPZ lpz, PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out, in;
@@ -121,7 +121,7 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
     return out.xyz;
 }
 
-static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
+PJ_LPZ axisswap_reverse_3d(PJ_XYZ xyz, PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD in, out;
@@ -138,7 +138,7 @@ static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
 }
 
 
-static PJ_COORD forward_4d(PJ_COORD coo, PJ *P) {
+PJ_COORD axisswap_forward_4d(PJ_COORD coo, PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out;
@@ -152,7 +152,7 @@ static PJ_COORD forward_4d(PJ_COORD coo, PJ *P) {
 }
 
 
-static PJ_COORD reverse_4d(PJ_COORD coo, PJ *P) {
+PJ_COORD axisswap_reverse_4d(PJ_COORD coo, PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out;
@@ -271,20 +271,20 @@ PJ *CONVERSION(axisswap,0) {
 
     /* only map fwd/inv functions that are possible with the given axis setup */
     if (n == 4) {
-        P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
-        P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
+        P->fwd4d = PJ_MAKE_KERNEL(axisswap_forward_4d);
+        P->inv4d = PJ_MAKE_KERNEL(axisswap_reverse_4d);
     }
     if (n == 3 && Q->axis[0] < 3 && Q->axis[1] < 3 && Q->axis[2] < 3) {
-        P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-        P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
+        P->fwd3d  = PJ_MAKE_KERNEL(axisswap_forward_3d);
+        P->inv3d  = PJ_MAKE_KERNEL(axisswap_reverse_3d);
     }
     if (n == 2 && Q->axis[0] < 2 && Q->axis[1] < 2) {
-        P->host->fwd    = PJ_MAKE_KERNEL(forward_2d);
-        P->host->inv    = PJ_MAKE_KERNEL(reverse_2d);
+        P->fwd    = PJ_MAKE_KERNEL(axisswap_forward_2d);
+        P->inv    = PJ_MAKE_KERNEL(axisswap_reverse_2d);
     }
 
 
-    if (P->host->fwd4d == nullptr && P->host->fwd3d == nullptr && P->host->fwd == nullptr) {
+    if (P->fwd4d == nullptr && P->fwd3d == nullptr && P->fwd == nullptr) {
         proj_log_error(P, _("swapaxis: bad axis order"));
         return pj_default_destructor(P, PROJ_ERR_INVALID_OP_ILLEGAL_ARG_VALUE);
     }

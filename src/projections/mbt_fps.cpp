@@ -16,7 +16,7 @@ PROJ_HEAD(mbt_fps, "McBryde-Thomas Flat-Pole Sine (No. 2)") "\n\tCyl, Sph";
 #define C_y 1.44492
 #define C1_2 0.33333333333333333333333333
 
-static PJ_XY mbt_fps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY mbt_fps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     (void) P;
 
@@ -36,7 +36,7 @@ static PJ_XY mbt_fps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forw
 }
 
 
-static PJ_LP mbt_fps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP mbt_fps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
 
     const double t = aasin(P->shared_ctx,xy.y / C_y);
@@ -50,8 +50,8 @@ static PJ_LP mbt_fps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inve
 PJ *PROJECTION(mbt_fps) {
 
     P->es = 0;
-    P->host->inv = PJ_MAKE_KERNEL(mbt_fps_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(mbt_fps_s_forward);
+    P->inv = PJ_MAKE_KERNEL(mbt_fps_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(mbt_fps_s_forward);
 
     return P;
 }

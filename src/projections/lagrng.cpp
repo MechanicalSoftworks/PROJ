@@ -21,7 +21,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY lagrng_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY lagrng_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double v, c;
@@ -45,7 +45,7 @@ static PJ_XY lagrng_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwa
 }
 
 
-static PJ_LP lagrng_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP lagrng_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double c, x2, y2p, y2m;
@@ -99,8 +99,8 @@ PJ *PROJECTION(lagrng) {
     Q->a2 = Q->a1 * Q->a1;
 
     P->es = 0.;
-    P->host->inv = PJ_MAKE_KERNEL(lagrng_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(lagrng_s_forward);
+    P->inv = PJ_MAKE_KERNEL(lagrng_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(lagrng_s_forward);
 
     return P;
 }

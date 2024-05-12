@@ -24,7 +24,7 @@ struct pj_opaque {
 };
 } // anonymous namespace
 
-static PJ_XY col_urban_forward (PJ_LP lp, PJ *P) {
+PJ_XY col_urban_forward (PJ_LP lp, PJ *P) {
     PJ_XY xy;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -41,7 +41,7 @@ static PJ_XY col_urban_forward (PJ_LP lp, PJ *P) {
     return xy;
 }
 
-static PJ_LP col_urban_inverse (PJ_XY xy, PJ *P) {
+PJ_LP col_urban_inverse (PJ_XY xy, PJ *P) {
     PJ_LP lp;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -69,8 +69,8 @@ PJ *PROJECTION(col_urban) {
     Q->C = 1 + Q->h0;
     Q->D = Q->rho0 * (1 + Q->h0 / (1 - P->es));
 
-    P->host->fwd = PJ_MAKE_KERNEL(col_urban_forward);
-    P->host->inv = PJ_MAKE_KERNEL(col_urban_inverse);
+    P->fwd = PJ_MAKE_KERNEL(col_urban_forward);
+    P->inv = PJ_MAKE_KERNEL(col_urban_inverse);
 
     return P;
 }

@@ -21,7 +21,7 @@
 
 #define MAX_LINE 1000
 #define MAX_PARGS 100
-#define PJ_INVERSE(P) (P->host->inv ? 1 : 0)
+#define PJ_INVERSE(P) (P->inv ? 1 : 0)
 
 static PJ *Proj;
 static union {
@@ -502,7 +502,7 @@ int main(int argc, char **argv) {
     }
 
     if (inverse) {
-        if (!Proj->host->inv)
+        if (!Proj->inv)
             emess(3,"inverse projection not available");
         proj.inv = pj_inv;
     } else

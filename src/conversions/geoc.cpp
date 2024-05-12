@@ -36,19 +36,19 @@
 PROJ_HEAD(geoc, "Geocentric Latitude");
 
 /* Geographical to geocentric */
-static PJ_COORD forward(PJ_COORD coo, PJ *P) {
+PJ_COORD geoc_forward(PJ_COORD coo, PJ *P) {
     return pj_geocentric_latitude (P, PJ_FWD, coo);
 }
 
 /* Geocentric to geographical */
-static PJ_COORD inverse(PJ_COORD coo, PJ *P) {
+PJ_COORD geoc_inverse(PJ_COORD coo, PJ *P) {
     return pj_geocentric_latitude (P, PJ_INV, coo);
 }
 
 
-static PJ *CONVERSION(geoc, 1) {
-    P->host->inv4d = PJ_MAKE_KERNEL(inverse);
-    P->host->fwd4d = PJ_MAKE_KERNEL(forward);
+PJ *CONVERSION(geoc, 1) {
+    P->inv4d = PJ_MAKE_KERNEL(geoc_inverse);
+    P->fwd4d = PJ_MAKE_KERNEL(geoc_forward);
 
     P->left   =  PJ_IO_UNITS_RADIANS;
     P->right  =  PJ_IO_UNITS_RADIANS;

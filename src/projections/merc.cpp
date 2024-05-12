@@ -10,7 +10,7 @@
 PROJ_HEAD(merc, "Mercator") "\n\tCyl, Sph&Ell\n\tlat_ts=";
 PROJ_HEAD(webmerc, "Web Mercator / Pseudo Mercator") "\n\tCyl, Ell\n\t";
 
-static PJ_XY merc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY merc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     xy.x = P->k0 * lp.lam;
     // Instead of calling tan and sin, call sin and cos which the compiler
@@ -22,7 +22,7 @@ static PJ_XY merc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward
 }
 
 
-static PJ_XY merc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY merc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     xy.x = P->k0 * lp.lam;
     xy.y = P->k0 * asinh(tan(lp.phi));
@@ -30,7 +30,7 @@ static PJ_XY merc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 }
 
 
-static PJ_LP merc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP merc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     lp.phi = atan(pj_sinhpsi2tanphi(P->shared_ctx, sinh(xy.y / P->k0), P->e));
     lp.lam = xy.x / P->k0;
@@ -38,7 +38,7 @@ static PJ_LP merc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse
 }
 
 
-static PJ_LP merc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP merc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     lp.phi = atan(sinh(xy.y / P->k0));
     lp.lam = xy.x / P->k0;
@@ -62,15 +62,15 @@ PJ *PROJECTION(merc) {
     if (P->es != 0.0) { /* ellipsoid */
         if (is_phits)
             P->k0 = pj_msfn(sin(phits), cos(phits), P->es);
-        P->host->inv = PJ_MAKE_KERNEL(merc_e_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(merc_e_forward);
+        P->inv = PJ_MAKE_KERNEL(merc_e_inverse);
+        P->fwd = PJ_MAKE_KERNEL(merc_e_forward);
     }
 
     else { /* sphere */
         if (is_phits)
             P->k0 = cos(phits);
-        P->host->inv = PJ_MAKE_KERNEL(merc_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(merc_s_forward);
+        P->inv = PJ_MAKE_KERNEL(merc_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(merc_s_forward);
     }
 
     return P;
@@ -81,7 +81,7 @@ PJ *PROJECTION(webmerc) {
     /* Overriding k_0 with fixed parameter */
     P->k0 = 1.0;
 
-    P->host->inv = PJ_MAKE_KERNEL(merc_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(merc_s_forward);
+    P->inv = PJ_MAKE_KERNEL(merc_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(merc_s_forward);
     return P;
 }

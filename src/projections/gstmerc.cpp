@@ -22,7 +22,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY gstmerc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY gstmerc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double L, Ls, sinLs1, Ls1;
@@ -38,7 +38,7 @@ static PJ_XY gstmerc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forw
 }
 
 
-static PJ_LP gstmerc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP gstmerc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double L, LC, sinC;
@@ -68,8 +68,8 @@ PJ *PROJECTION(gstmerc) {
     Q->XS = 0;
     Q->YS = -Q->n2 * Q->phic;
 
-    P->host->inv = PJ_MAKE_KERNEL(gstmerc_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(gstmerc_s_forward);
+    P->inv = PJ_MAKE_KERNEL(gstmerc_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(gstmerc_s_forward);
 
     return P;
 }

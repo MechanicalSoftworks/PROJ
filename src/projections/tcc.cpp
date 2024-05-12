@@ -10,7 +10,7 @@ PROJ_HEAD(tcc, "Transverse Central Cylindrical") "\n\tCyl, Sph, no inv";
 #define EPS10 1.e-10
 
 
-static PJ_XY tcc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY tcc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0, 0.0};
 
     const double b = cos (lp.phi) * sin (lp.lam);
@@ -27,8 +27,8 @@ static PJ_XY tcc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward 
 
 PJ *PROJECTION(tcc) {
     P->es  = 0.;
-    P->host->fwd = PJ_MAKE_KERNEL(tcc_s_forward);
-    P->host->inv = nullptr;
+    P->fwd = PJ_MAKE_KERNEL(tcc_s_forward);
+    P->inv = nullptr;
 
     return P;
 }

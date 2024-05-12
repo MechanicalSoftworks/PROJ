@@ -13,7 +13,7 @@ PROJ_HEAD(crast, "Craster Parabolic (Putnins P4)") "\n\tPCyl, Sph";
 #define THIRD   0.333333333333333333
 
 
-static PJ_XY crast_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY crast_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     (void) P;
     lp.phi *= THIRD;
@@ -23,7 +23,7 @@ static PJ_XY crast_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwar
 }
 
 
-static PJ_LP crast_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP crast_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     (void) P;
     lp.phi = 3. * asin(xy.y * RYM);
@@ -34,8 +34,8 @@ static PJ_LP crast_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, invers
 
 PJ *PROJECTION(crast) {
     P->es = 0.0;
-    P->host->inv = PJ_MAKE_KERNEL(crast_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(crast_s_forward);
+    P->inv = PJ_MAKE_KERNEL(crast_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(crast_s_forward);
 
     return P;
 }

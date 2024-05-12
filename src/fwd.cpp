@@ -30,13 +30,11 @@
 
 #include "proj_kernel.h"
 
-#undef INPUT_UNITS
-#undef OUTPUT_UNITS
 #define INPUT_UNITS  P->left
 #define OUTPUT_UNITS P->right
 
 
-static PJcoroutine_code_t fwd_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t fwd_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*         P = e->P;
     PJ_COORD    coo = e->coo;
 
@@ -147,7 +145,7 @@ ABORT:
 }
 
 
-static PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
     PJ*         P = e->P;
     PJ_COORD    coo = e->coo;
 
@@ -244,7 +242,7 @@ static PJ_COORD push_fwd4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     // Try to avoid dispatching a new coroutine if possible, because:
     //  a) the coroutine stack is limited in size, and
     //  b) refactoring 100 projections, that don't need to be coroutines, into coroutines, isn't very fun.
-    return proj_dispatch_fwd4d(PJ_GET_COROUTINE(P, fwd4d), coo, P);
+    return proj_dispatch_operator(PJ_GET_COROUTINE(P, fwd4d), coo, P);
 }
 
 static PJ_COORD push_fwd3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
@@ -536,14 +534,6 @@ PJ_XY PROJ_DLL pj_fwd(PJ_LP lp, PJ* P) {
     stack_push(&stack, PJ_FUNCTION_PTR(pj_fwd_co), P, coo);
 
     return stack_exec(&stack).xy;
-}
-
-void pj_scan_fwd(PJscan& s) {
-    s.add_co(PJ_MAKE_KERNEL(fwd_prepare_co), __FILE__);
-    s.add_co(PJ_MAKE_KERNEL(fwd_finalize_co), __FILE__);
-    s.add_co(PJ_MAKE_KERNEL(pj_fwd_co), __FILE__);
-    s.add_co(PJ_MAKE_KERNEL(pj_fwd3d_co), __FILE__);
-    s.add_co(PJ_MAKE_KERNEL(pj_fwd4d_co), __FILE__);
 }
 
 #endif

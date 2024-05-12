@@ -41,7 +41,7 @@ static double ssfn_ (double phit, double sinphi, double eccen) {
 }
 
 
-static PJ_XY stere_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY stere_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double coslam, sinlam, sinX = 0.0, cosX = 0.0, A = 0.0, sinphi;
@@ -99,7 +99,7 @@ static PJ_XY stere_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forwar
 }
 
 
-static PJ_XY stere_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY stere_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  sinphi, cosphi, coslam, sinlam;
@@ -143,7 +143,7 @@ oblcon:
 }
 
 
-static PJ_LP stere_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP stere_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double cosphi, sinphi, tp=0.0, phi_l=0.0, rho, halfe=0.0, halfpi=0.0;
@@ -195,7 +195,7 @@ static PJ_LP stere_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, invers
 }
 
 
-static PJ_LP stere_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP stere_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  c, sinc, cosc;
@@ -275,8 +275,8 @@ static PJ *setup(PJ *P) {                   /* general initialization */
             Q->cosX1 = cos (X);
             break;
         }
-        P->host->inv = PJ_MAKE_KERNEL(stere_e_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(stere_e_forward);
+        P->inv = PJ_MAKE_KERNEL(stere_e_inverse);
+        P->fwd = PJ_MAKE_KERNEL(stere_e_forward);
     } else {
         switch (Q->mode) {
         case OBLIQ:
@@ -294,8 +294,8 @@ static PJ *setup(PJ *P) {                   /* general initialization */
             break;
         }
 
-        P->host->inv = PJ_MAKE_KERNEL(stere_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(stere_s_forward);
+        P->inv = PJ_MAKE_KERNEL(stere_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(stere_s_forward);
     }
     return P;
 }

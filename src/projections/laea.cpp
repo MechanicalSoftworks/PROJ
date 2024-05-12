@@ -32,7 +32,7 @@ struct pj_opaque {
 
 #define EPS10   1.e-10
 
-static PJ_XY laea_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY laea_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double coslam, sinlam, sinphi, q, sinb=0.0, cosb=0.0, b=0.0;
@@ -95,7 +95,7 @@ eqcon:
 }
 
 
-static PJ_XY laea_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY laea_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  coslam, cosphi, sinphi;
@@ -137,7 +137,7 @@ oblcon:
 }
 
 
-static PJ_LP laea_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP laea_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double cCe, sCe, q, rho, ab=0.0;
@@ -194,7 +194,7 @@ static PJ_LP laea_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse
 }
 
 
-static PJ_LP laea_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP laea_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  cosz=0.0, rh, sinz=0.0;
@@ -297,15 +297,15 @@ PJ *PROJECTION(laea) {
             Q->xmf *= Q->dd;
             break;
         }
-        P->host->inv = PJ_MAKE_KERNEL(laea_e_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(laea_e_forward);
+        P->inv = PJ_MAKE_KERNEL(laea_e_inverse);
+        P->fwd = PJ_MAKE_KERNEL(laea_e_forward);
     } else {
         if (Q->mode == OBLIQ) {
             Q->sinb1 = sin(P->phi0);
             Q->cosb1 = cos(P->phi0);
         }
-        P->host->inv = PJ_MAKE_KERNEL(laea_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(laea_s_forward);
+        P->inv = PJ_MAKE_KERNEL(laea_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(laea_s_forward);
     }
 
     return P;

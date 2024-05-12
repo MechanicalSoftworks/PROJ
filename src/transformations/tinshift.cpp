@@ -60,7 +60,7 @@ static PJ *destructor(PJ *P, int errlev) {
     return pj_default_destructor(P, errlev);
 }
 
-static PJ_COORD tinshift_forward_4d(PJ_COORD in, PJ *P) {
+PJ_COORD tinshift_forward_4d(PJ_COORD in, PJ *P) {
     auto *Q = (struct tinshiftData *)P->opaque;
 
     PJ_COORD out = in;
@@ -71,7 +71,7 @@ static PJ_COORD tinshift_forward_4d(PJ_COORD in, PJ *P) {
     return out;
 }
 
-static PJ_COORD tinshift_reverse_4d(PJ_COORD in, PJ *P) {
+PJ_COORD tinshift_reverse_4d(PJ_COORD in, PJ *P) {
     auto *Q = (struct tinshiftData *)P->opaque;
 
     PJ_COORD out = in;
@@ -124,8 +124,8 @@ PJ *TRANSFORMATION(tinshift, 1) {
     }
 
     P->host->destructor = destructor;
-    P->host->fwd4d = PJ_MAKE_KERNEL(tinshift_forward_4d);
-    P->host->inv4d = PJ_MAKE_KERNEL(tinshift_reverse_4d);
+    P->fwd4d = PJ_MAKE_KERNEL(tinshift_forward_4d);
+    P->inv4d = PJ_MAKE_KERNEL(tinshift_reverse_4d);
     P->left = PJ_IO_UNITS_WHATEVER;
     P->right = PJ_IO_UNITS_WHATEVER;
 

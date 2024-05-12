@@ -224,6 +224,7 @@ set(SRC_LIBPROJ_CORE
   internal.cpp
   inv.cpp
   list.cpp
+  kernel_dispatch.cpp
   log.cpp
   malloc.cpp
   mlfn.cpp
@@ -233,10 +234,13 @@ set(SRC_LIBPROJ_CORE
   param.cpp
   phi2.cpp
   pipeline.cpp
+  pj_function_list_host.h
+  pj_function_list_shared.h
   pj_list.h
   pr_list.cpp
   proj_internal.h
   proj_internal_shared.h
+  proj_internal_function_ids.h
   proj_internal_device.h
   proj_mdist.cpp
   qsfn.cpp

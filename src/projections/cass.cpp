@@ -26,7 +26,7 @@ struct cass_data {
 
 
 
-static PJ_XY cass_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY cass_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0, 0.0};
     struct cass_data *Q = static_cast<struct cass_data*>(P->opaque);
 
@@ -56,7 +56,7 @@ static PJ_XY cass_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward
 }
 
 
-static PJ_XY cass_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY cass_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0, 0.0};
     xy.x  =  asin (cos (lp.phi) * sin (lp.lam));
     xy.y  =  atan2 (tan (lp.phi), cos (lp.lam)) - P->phi0;
@@ -64,7 +64,7 @@ static PJ_XY cass_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 }
 
 
-static PJ_LP cass_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP cass_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0, 0.0};
     struct cass_data *Q = static_cast<struct cass_data*>(P->opaque);
 
@@ -94,7 +94,7 @@ static PJ_LP cass_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse
 }
 
 
-static PJ_LP cass_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP cass_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     double dd;
     lp.phi = asin(sin(dd = xy.y + P->phi0) * cos(xy.x));
@@ -119,8 +119,8 @@ PJ *PROJECTION(cass) {
 
     /* Spheroidal? */
     if (0==P->es) {
-        P->host->inv = PJ_MAKE_KERNEL(cass_s_inverse);
-        P->host->fwd = PJ_MAKE_KERNEL(cass_s_forward);
+        P->inv = PJ_MAKE_KERNEL(cass_s_inverse);
+        P->fwd = PJ_MAKE_KERNEL(cass_s_forward);
         return P;
     }
 
@@ -138,8 +138,8 @@ PJ *PROJECTION(cass) {
     Q->m0 = pj_mlfn (P->phi0,  sin (P->phi0),  cos (P->phi0), Q->en);
     if (pj_param_exists(P->host->params, "hyperbolic"))
         Q->hyperbolic = true;
-    P->host->inv = PJ_MAKE_KERNEL(cass_e_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(cass_e_forward);
+    P->inv = PJ_MAKE_KERNEL(cass_e_inverse);
+    P->fwd = PJ_MAKE_KERNEL(cass_e_forward);
 
     return P;
 }

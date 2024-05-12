@@ -17,7 +17,7 @@ struct pj_opaque {
 } // anonymous namespace
 
 
-static PJ_XY wag3_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY wag3_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
 	xy.x = static_cast<struct pj_opaque*>(P->opaque)->C_x * lp.lam * cos(TWOTHIRD * lp.phi);
 	xy.y = lp.phi;
@@ -25,7 +25,7 @@ static PJ_XY wag3_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward
 }
 
 
-static PJ_LP wag3_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP wag3_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
 	lp.phi = xy.y;
 	lp.lam = xy.x / (static_cast<struct pj_opaque*>(P->opaque)->C_x * cos(TWOTHIRD * lp.phi));
@@ -44,8 +44,8 @@ PJ *PROJECTION(wag3) {
 	ts = pj_param (P->host->ctx, P->host->params, "rlat_ts").f;
 	static_cast<struct pj_opaque*>(P->opaque)->C_x = cos (ts) / cos (2.*ts/3.);
 	P->es = 0.;
-    P->host->inv = PJ_MAKE_KERNEL(wag3_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(wag3_s_forward);
+    P->inv = PJ_MAKE_KERNEL(wag3_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(wag3_s_forward);
 
     return P;
 }

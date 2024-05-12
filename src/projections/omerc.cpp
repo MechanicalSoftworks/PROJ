@@ -45,7 +45,7 @@ struct pj_opaque {
 #define EPS 1.e-10
 
 
-static PJ_XY omerc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY omerc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double u, v;
@@ -84,7 +84,7 @@ static PJ_XY omerc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forwar
 }
 
 
-static PJ_LP omerc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP omerc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double  u, v, Qp, Sp, Tp, Vp, Up;
@@ -266,8 +266,8 @@ PJ *PROJECTION(omerc) {
     F = 0.5 * gamma0;
     Q->v_pole_n = Q->ArB * log(tan(M_FORTPI - F));
     Q->v_pole_s = Q->ArB * log(tan(M_FORTPI + F));
-    P->host->inv = PJ_MAKE_KERNEL(omerc_e_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(omerc_e_forward);
+    P->inv = PJ_MAKE_KERNEL(omerc_e_inverse);
+    P->fwd = PJ_MAKE_KERNEL(omerc_e_forward);
 
     return P;
 }

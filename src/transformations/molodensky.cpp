@@ -52,8 +52,8 @@
 
 PROJ_HEAD(molodensky, "Molodensky transform");
 
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P);
-static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P);
+PJ_XYZ molodensky_forward_3d(PJ_LPZ lpz, PJ *P);
+PJ_LPZ molodensky_reverse_3d(PJ_XYZ xyz, PJ *P);
 
 namespace { // anonymous namespace
 struct pj_opaque_molodensky {
@@ -211,30 +211,30 @@ static PJ_LPZ calc_abridged_params(PJ_LPZ lpz, PJ *P) {
 }
 
 
-static PJ_XY forward_2d(PJ_LP lp, PJ *P) {
+PJ_XY molodensky_forward_2d(PJ_LP lp, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
 
     point.lp = lp;
-    const auto xyz = forward_3d(point.lpz, P);
+    const auto xyz = molodensky_forward_3d(point.lpz, P);
     point.xyz = xyz;
 
     return point.xy;
 }
 
 
-static PJ_LP reverse_2d(PJ_XY xy, PJ *P) {
+PJ_LP molodensky_reverse_2d(PJ_XY xy, PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
 
     point.xy = xy;
     point.xyz.z = 0;
-    const auto lpz = reverse_3d(point.xyz, P);
+    const auto lpz = molodensky_reverse_3d(point.xyz, P);
     point.lpz = lpz;
 
     return point.lp;
 }
 
 
-static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ molodensky_forward_3d(PJ_LPZ lpz, PJ *P) {
     struct pj_opaque_molodensky *Q = (struct pj_opaque_molodensky *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
 
@@ -260,14 +260,14 @@ static PJ_XYZ forward_3d(PJ_LPZ lpz, PJ *P) {
 }
 
 
-static PJ_COORD forward_4d(PJ_COORD obs, PJ *P) {
-    const auto xyz = forward_3d(obs.lpz, P);
+PJ_COORD molodensky_forward_4d(PJ_COORD obs, PJ *P) {
+    const auto xyz = molodensky_forward_3d(obs.lpz, P);
     obs.xyz = xyz;
     return obs;
 }
 
 
-static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
+PJ_LPZ molodensky_reverse_3d(PJ_XYZ xyz, PJ *P) {
     struct pj_opaque_molodensky *Q = (struct pj_opaque_molodensky *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
     PJ_LPZ lpz;
@@ -293,8 +293,8 @@ static PJ_LPZ reverse_3d(PJ_XYZ xyz, PJ *P) {
 }
 
 
-static PJ_COORD reverse_4d(PJ_COORD obs, PJ *P) {
-    const auto lpz = reverse_3d(obs.xyz, P);
+PJ_COORD molodensky_reverse_4d(PJ_COORD obs, PJ *P) {
+    const auto lpz = molodensky_reverse_3d(obs.xyz, P);
     obs.lpz = lpz;
     return obs;
 }
@@ -306,12 +306,12 @@ PJ *TRANSFORMATION(molodensky,1) {
         return pj_default_destructor(P, PROJ_ERR_OTHER /*ENOMEM*/);
     P->opaque = (void *) Q;
 
-    P->host->fwd4d = PJ_MAKE_KERNEL(forward_4d);
-    P->host->inv4d = PJ_MAKE_KERNEL(reverse_4d);
-    P->host->fwd3d  = PJ_MAKE_KERNEL(forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(reverse_3d);
-    P->host->fwd    = PJ_MAKE_KERNEL(forward_2d);
-    P->host->inv    = PJ_MAKE_KERNEL(reverse_2d);
+    P->fwd4d = PJ_MAKE_KERNEL(molodensky_forward_4d);
+    P->inv4d = PJ_MAKE_KERNEL(molodensky_reverse_4d);
+    P->fwd3d  = PJ_MAKE_KERNEL(molodensky_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(molodensky_reverse_3d);
+    P->fwd    = PJ_MAKE_KERNEL(molodensky_forward_2d);
+    P->inv    = PJ_MAKE_KERNEL(molodensky_reverse_2d);
 
     P->left   = PJ_IO_UNITS_RADIANS;
     P->right  = PJ_IO_UNITS_RADIANS;

@@ -67,6 +67,9 @@
 
 //! @cond Doxygen_Suppress
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
 using namespace NS_PROJ::internal;
 
 NS_PROJ_START

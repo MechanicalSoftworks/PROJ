@@ -30,6 +30,7 @@
 #define PROJ_INTERNAL_SHARED_H
 
 #include "proj_shared.h"
+#include "proj_internal_function_ids.h"
 
 // The constructors need access to the real header.
 #ifndef PROJ_OPENCL_DEVICE
@@ -118,23 +119,12 @@ p##s:
 
 struct PJstack_entry_s;
 
-// These are generated using the results of PJscan. Transmitted to the kernel at compile time.
-typedef int PJ_COROUTINE_ID;
-typedef int PJ_FWD_2D_ID;
-typedef int PJ_INV_2D_ID;
-typedef int PJ_FWD_3D_ID;
-typedef int PJ_INV_3D_ID;
-typedef int PJ_FWD_4D_ID;
-typedef int PJ_INV_4D_ID;
-
 #ifdef PROJ_OPENCL_DEVICE
 
 // Initialised on the host.
 #   define PJ_FIELD(type, name, value) type name
 #   define PJ_HOST_MUTABLE
 
-#   define PJ_FUNCTION_PTR(name)        name##_id
-#   define PJ_GET_COROUTINE(P, type)    P->type
 
 #   define lround round
 #   define nullptr 0
@@ -149,17 +139,127 @@ typedef int PJ_INV_4D_ID;
 #   define PJ_FIELD(type, name, value) type name = value
 #   define PJ_HOST_MUTABLE mutable
 
-#   define PJ_FUNCTION_PTR(name)       &name
-#   define PJ_GET_COROUTINE(P, type)    P->host->type.fn
-
 #   define cl_constant
 #   define cl_local
 
 #   include <math.h>
 
-    typedef PJcoroutine_code_t(*PJ_COROUTINE)(cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e);
-
 #endif
+
+#define PJ_GET_COROUTINE(P, type)    P->type
+#define PJ_FUNCTION_PTR(name)        name##_id
+
+PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e);
+PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP lp, PJ* P);
+PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY xy, PJ* P);
+PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ lpz, PJ* P);
+PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ xyz, PJ* P);
+PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD coo, PJ* P);
+
+/* Pointer to a kernel function.
+ * Executed directly in CPU mode, function is written using name in OpenCL mode.
+ *
+ * This struct acts as a drop in replacement for a function pointer variable, with the option of retrieving the function name. */
+template<typename T, T InvalidValue>
+struct PJkernel
+{
+    PJkernel(T x) : fn(x) {}
+
+    T fn = InvalidValue;
+    
+    operator bool() const                  { return InvalidValue != fn; }
+    operator T() const                     { return fn; }
+
+#ifndef PROJ_OPENCL_DEVICE
+    auto  operator==(std::nullptr_t) const { return InvalidValue == fn; }
+    auto& operator= (std::nullptr_t)       { fn = InvalidValue; return *this; }
+#endif
+
+    auto& operator= (T x)                  { fn = x;            return *this; }
+};
+
+#ifndef PROJ_OPENCL_DEVICE
+template<typename T, T InvalidValue>
+inline auto operator==(std::nullptr_t, const PJkernel<T, InvalidValue>& k) { return k == nullptr; }
+#endif
+
+struct PJ_COROUTINE : public PJkernel<PJ_COROUTINE_ID, PJ_INVALID_COROUTINE>
+{
+    auto operator()(cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e) const { return proj_dispatch_coroutine(fn, stack, e); }
+
+    using PJkernel::PJkernel;
+    using PJkernel::operator=;
+   
+    /* Dereference is a no-op, since this is already a value type.
+     * Just return a self-reference so the caller can use 'operator()'. */
+          auto& operator*()       { return *this; }
+    const auto& operator*() const { return *this; }
+};
+
+struct PJ_FWD_2D : public PJkernel<PJ_FWD_2D_ID, PJ_INVALID_FWD_2D>
+{
+    auto operator()(PJ_LP lp, PJ* P) const { return proj_dispatch_fwd(fn, lp, P); }
+
+    using PJkernel::PJkernel;
+    using PJkernel::operator=;
+   
+    /* Dereference is a no-op, since this is already a value type.
+     * Just return a self-reference so the caller can use 'operator()'. */
+          auto& operator*()       { return *this; }
+    const auto& operator*() const { return *this; }
+};
+
+struct PJ_INV_2D : public PJkernel<PJ_INV_2D_ID, PJ_INVALID_INV_2D>
+{
+    auto operator()(PJ_XY xy, PJ* P) const { return proj_dispatch_inv(fn, xy, P); }
+
+    using PJkernel::PJkernel;
+    using PJkernel::operator=;
+   
+    /* Dereference is a no-op, since this is already a value type.
+     * Just return a self-reference so the caller can use 'operator()'. */
+          auto& operator*()       { return *this; }
+    const auto& operator*() const { return *this; }
+};
+
+struct PJ_FWD_3D : public PJkernel<PJ_FWD_3D_ID, PJ_INVALID_FWD_3D>
+{
+    auto operator()(PJ_LPZ lpz, PJ* P) const { return proj_dispatch_fwd3d(fn, lpz, P); }
+
+    using PJkernel::PJkernel;
+    using PJkernel::operator=;
+   
+    /* Dereference is a no-op, since this is already a value type.
+     * Just return a self-reference so the caller can use 'operator()'. */
+          auto& operator*()       { return *this; }
+    const auto& operator*() const { return *this; }
+};
+
+struct PJ_INV_3D : public PJkernel<PJ_INV_3D_ID, PJ_INVALID_INV_3D>
+{
+    auto operator()(PJ_XYZ xyz, PJ* P) const { return proj_dispatch_inv3d(fn, xyz, P); }
+
+    using PJkernel::PJkernel;
+    using PJkernel::operator=;
+   
+    /* Dereference is a no-op, since this is already a value type.
+     * Just return a self-reference so the caller can use 'operator()'. */
+          auto& operator*()       { return *this; }
+    const auto& operator*() const { return *this; }
+};
+
+struct PJ_OPERATOR_4D : public PJkernel<PJ_OPERATOR_ID, PJ_INVALID_OPERATOR>
+{
+    auto operator()(PJ_COORD coo, PJ* P) const { return proj_dispatch_operator(fn, coo, P); }
+
+    using PJkernel::PJkernel;
+    using PJkernel::operator=;
+   
+    /* Dereference is a no-op, since this is already a value type.
+     * Just return a self-reference so the caller can use 'operator()'. */
+          auto& operator*()       { return *this; }
+    const auto& operator*() const { return *this; }
+};
 
 enum pj_io_units {
     PJ_IO_UNITS_WHATEVER = 0,  /* Doesn't matter (or depends on pipeline neighbours) */
@@ -179,31 +279,6 @@ enum pj_io_units pj_right(struct PJconsts* P);
 #define PJD_7PARAM    2
 #define PJD_GRIDSHIFT 3
 #define PJD_WGS84     4   /* WGS84 (or anything considered equivalent) */
-
-typedef struct PJstack_entry_s
-{
-#ifdef PROJ_OPENCL_DEVICE
-    PJ_COROUTINE_ID fn;
-#else
-    PJ_COROUTINE    fn;
-#endif
-
-    // State.
-    PJ_COORD        coo;
-    PJ*             P;
-    int             step;
-    union {
-        int         i;          // Pipeline.
-        int         last_errno; // pj_fwd+pj_inv.
-    };
-} PJstack_entry_t;
-
-#define PR_CO_STACK_SIZE 16
-typedef struct PJstack_s
-{
-    PJstack_entry_t s[PR_CO_STACK_SIZE];
-    int             n;
-} PJstack_t;
 
 /* Context data that's shared between the OpenCL host and evice */
 struct pj_ctx_shared {
@@ -250,19 +325,27 @@ struct PJconsts {
 
     **************************************************************************************/
 
-    PJ_FIELD(PJ_COROUTINE_ID, co_fwd, 0);
-    PJ_FIELD(PJ_COROUTINE_ID, co_inv, 0);
-    PJ_FIELD(PJ_COROUTINE_ID, co_fwd3d, 0);
-    PJ_FIELD(PJ_COROUTINE_ID, co_inv3d, 0);
-    PJ_FIELD(PJ_COROUTINE_ID, co_fwd4d, 0);
-    PJ_FIELD(PJ_COROUTINE_ID, co_inv4d, 0);
+    PJ_FIELD(PJ_COROUTINE, co_fwd, PJ_INVALID_COROUTINE);
+    PJ_FIELD(PJ_COROUTINE, co_inv, PJ_INVALID_COROUTINE);
+    PJ_FIELD(PJ_COROUTINE, co_fwd3d, PJ_INVALID_COROUTINE);
+    PJ_FIELD(PJ_COROUTINE, co_inv3d, PJ_INVALID_COROUTINE);
+    PJ_FIELD(PJ_COROUTINE, co_fwd4d, PJ_INVALID_COROUTINE);
+    PJ_FIELD(PJ_COROUTINE, co_inv4d, PJ_INVALID_COROUTINE);
 
-    PJ_FIELD(PJ_FWD_2D_ID, fwd, 0);
-    PJ_FIELD(PJ_INV_2D_ID, inv, 0);
-    PJ_FIELD(PJ_FWD_3D_ID, fwd3d, 0);
-    PJ_FIELD(PJ_INV_3D_ID, inv3d, 0);
-    PJ_FIELD(PJ_FWD_4D_ID, fwd4d, 0);
-    PJ_FIELD(PJ_INV_4D_ID, inv4d, 0);
+    PJ_FIELD(PJ_FWD_2D, fwd, PJ_INVALID_FWD_2D);
+    PJ_FIELD(PJ_INV_2D, inv, PJ_INVALID_INV_2D);
+    PJ_FIELD(PJ_FWD_3D, fwd3d, PJ_INVALID_FWD_3D);
+    PJ_FIELD(PJ_INV_3D, inv3d, PJ_INVALID_INV_3D);
+    PJ_FIELD(PJ_OPERATOR_4D, fwd4d, PJ_INVALID_OPERATOR);
+    PJ_FIELD(PJ_OPERATOR_4D, inv4d, PJ_INVALID_OPERATOR);
+
+    // Sizes must be the same between host and device.
+    static_assert(sizeof(PJ_COROUTINE_ID) == sizeof(int));
+    static_assert(sizeof(PJ_FWD_2D_ID) == sizeof(int));
+    static_assert(sizeof(PJ_INV_2D_ID) == sizeof(int));
+    static_assert(sizeof(PJ_FWD_3D_ID) == sizeof(int));
+    static_assert(sizeof(PJ_INV_3D_ID) == sizeof(int));
+    static_assert(sizeof(PJ_OPERATOR_ID) == sizeof(int));
 
 
     /*************************************************************************************
@@ -434,6 +517,8 @@ struct pj_ctx_shared* pj_get_ctx_shared(const PJ*);
 // Coroutines.
 void stack_new(cl_local PJstack_t* stack);
 PJ_COORD stack_exec(cl_local PJstack_t* stack);
+
+void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD coo);
 
 void push_proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 void push_approx_3D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);

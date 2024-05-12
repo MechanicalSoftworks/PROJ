@@ -9,7 +9,7 @@ PROJ_HEAD(august, "August Epicycloidal") "\n\tMisc Sph, no inv";
 #define M 1.333333333333333
 
 
-static PJ_XY august_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY august_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     double t, c1, c, x1, x12, y1, y12;
     (void) P;
@@ -31,8 +31,8 @@ static PJ_XY august_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwa
 
 
 PJ *PROJECTION(august) {
-    P->host->inv = nullptr;
-    P->host->fwd = PJ_MAKE_KERNEL(august_s_forward);
+    P->inv = nullptr;
+    P->fwd = PJ_MAKE_KERNEL(august_s_forward);
     P->es = 0.;
     return P;
 }

@@ -73,7 +73,7 @@ struct tmerc_data {
 /*****************************************************************************/
 
 
-static PJ_XY approx_e_fwd (PJ_LP lp, PJ *P)
+PJ_XY tmerc_approx_e_fwd (PJ_LP lp, PJ *P)
 {
     PJ_XY xy = {0.0, 0.0};
     const auto *Q = &(static_cast<struct tmerc_data*>(P->opaque)->approx);
@@ -115,7 +115,7 @@ static PJ_XY approx_e_fwd (PJ_LP lp, PJ *P)
     return (xy);
 }
 
-static PJ_XY tmerc_spherical_fwd (PJ_LP lp, PJ *P) {
+PJ_XY tmerc_spherical_fwd (PJ_LP lp, PJ *P) {
     PJ_XY xy = {0.0,0.0};
     double b, cosphi;
     const auto *Q = &(static_cast<struct tmerc_data*>(P->opaque)->approx);
@@ -151,7 +151,7 @@ static PJ_XY tmerc_spherical_fwd (PJ_LP lp, PJ *P) {
     return xy;
 }
 
-static PJ_LP approx_e_inv (PJ_XY xy, PJ *P) {
+PJ_LP tmerc_approx_e_inv (PJ_XY xy, PJ *P) {
     PJ_LP lp = {0.0,0.0};
     const auto *Q = &(static_cast<struct tmerc_data*>(P->opaque)->approx);
 
@@ -183,7 +183,7 @@ static PJ_LP approx_e_inv (PJ_XY xy, PJ *P) {
     return lp;
 }
 
-static PJ_LP tmerc_spherical_inv (PJ_XY xy, PJ *P) {
+PJ_LP tmerc_spherical_inv (PJ_XY xy, PJ *P) {
     PJ_LP lp = {0.0, 0.0};
     double h, g;
     const auto *Q = &(static_cast<struct tmerc_data*>(P->opaque)->approx);
@@ -324,7 +324,7 @@ static double clens(const double *a, int size, double arg_r) {
 }
 
 /* Ellipsoidal, forward */
-static PJ_XY exact_e_fwd (PJ_LP lp, PJ *P) {
+PJ_XY tmerc_exact_e_fwd (PJ_LP lp, PJ *P) {
     PJ_XY xy = {0.0,0.0};
     const auto *Q = &(static_cast<struct tmerc_data*>(P->opaque)->exact);
 
@@ -411,7 +411,7 @@ static PJ_XY exact_e_fwd (PJ_LP lp, PJ *P) {
 
 
 /* Ellipsoidal, inverse */
-static PJ_LP exact_e_inv (PJ_XY xy, PJ *P) {
+PJ_LP tmerc_exact_e_inv (PJ_XY xy, PJ *P) {
     PJ_LP lp = {0.0,0.0};
     const auto *Q = &(static_cast<struct tmerc_data*>(P->opaque)->exact);
 
@@ -568,23 +568,23 @@ static PJ *setup_exact(PJ *P) {
 
 
 
-static PJ_XY auto_e_fwd (PJ_LP lp, PJ *P) {
+PJ_XY tmerc_auto_e_fwd (PJ_LP lp, PJ *P) {
     if( fabs(lp.lam) > 3 * DEG_TO_RAD )
-        return exact_e_fwd(lp, P);
+        return tmerc_exact_e_fwd(lp, P);
     else
-        return approx_e_fwd(lp, P);
+        return tmerc_approx_e_fwd(lp, P);
 }
 
-static PJ_LP auto_e_inv (PJ_XY xy, PJ *P) {
+PJ_LP tmerc_auto_e_inv (PJ_XY xy, PJ *P) {
     // For k = 1 and lon = 3 (from central meridian),
     // At lat = 0, we get x ~= 0.052, y = 0
     // At lat = 90, we get x = 0, y ~= 1.57
     // And the shape of this x=f(y) frontier curve is very very roughly a
     // parabola. Hence:
     if( fabs(xy.x) > 0.053 - 0.022 * xy.y * xy.y )
-        return exact_e_inv(xy, P);
+        return tmerc_exact_e_inv(xy, P);
     else
-        return approx_e_inv(xy, P);
+        return tmerc_approx_e_inv(xy, P);
 }
 
 static PJ *setup(PJ *P, TMercAlgo eAlg) {
@@ -606,13 +606,13 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
                 return nullptr;
             if( P->es == 0 )
             {
-                P->host->inv = PJ_MAKE_KERNEL(tmerc_spherical_inv);
-                P->host->fwd = PJ_MAKE_KERNEL(tmerc_spherical_fwd);
+                P->inv = PJ_MAKE_KERNEL(tmerc_spherical_inv);
+                P->fwd = PJ_MAKE_KERNEL(tmerc_spherical_fwd);
             }
             else
             {
-                P->host->inv = PJ_MAKE_KERNEL(approx_e_inv);
-                P->host->fwd = PJ_MAKE_KERNEL(approx_e_fwd);
+                P->inv = PJ_MAKE_KERNEL(tmerc_approx_e_inv);
+                P->fwd = PJ_MAKE_KERNEL(tmerc_approx_e_fwd);
             }
             break;
         }
@@ -620,8 +620,8 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
         case TMercAlgo::PODER_ENGSAGER:
         {
             setup_exact(P);
-            P->host->inv = PJ_MAKE_KERNEL(exact_e_inv);
-            P->host->fwd = PJ_MAKE_KERNEL(exact_e_fwd);
+            P->inv = PJ_MAKE_KERNEL(tmerc_exact_e_inv);
+            P->fwd = PJ_MAKE_KERNEL(tmerc_exact_e_fwd);
             break;
         }
 
@@ -632,8 +632,8 @@ static PJ *setup(PJ *P, TMercAlgo eAlg) {
                 return nullptr;
             setup_exact(P);
 
-            P->host->inv = PJ_MAKE_KERNEL(auto_e_inv);
-            P->host->fwd = PJ_MAKE_KERNEL(auto_e_fwd);
+            P->inv = PJ_MAKE_KERNEL(tmerc_auto_e_inv);
+            P->fwd = PJ_MAKE_KERNEL(tmerc_auto_e_fwd);
             break;
         }
     }

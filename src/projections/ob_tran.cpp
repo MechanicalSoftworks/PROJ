@@ -24,7 +24,7 @@ PROJ_HEAD(ob_tran, "General Oblique Transformation") "\n\tMisc Sph"
 #define TOL 1e-10
 
 
-static PJ_XY o_forward(PJ_LP lp, PJ *P) {             /* spheroid */
+PJ_XY ob_tran_o_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double coslam, sinphi, cosphi;
 
@@ -37,11 +37,11 @@ static PJ_XY o_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     /* Formula (5-7) */
     lp.phi = aasin(P->shared_ctx,Q->sphip * sinphi - Q->cphip * cosphi * coslam);
 
-    return Q->link->host->fwd(lp, Q->link);
+    return Q->link->fwd(lp, Q->link);
 }
 
 
-static PJ_XY t_forward(PJ_LP lp, PJ *P) {             /* spheroid */
+PJ_XY ob_tran_t_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double cosphi, coslam;
 
@@ -50,16 +50,16 @@ static PJ_XY t_forward(PJ_LP lp, PJ *P) {             /* spheroid */
     lp.lam = adjlon(aatan2(cosphi * sin(lp.lam), sin(lp.phi)) + Q->lamp);
     lp.phi = aasin(P->shared_ctx, - cosphi * coslam);
 
-    return Q->link->host->fwd(lp, Q->link);
+    return Q->link->fwd(lp, Q->link);
 }
 
 
-static PJ_LP o_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
+PJ_LP ob_tran_o_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
 
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double coslam, sinphi, cosphi;
 
-    PJ_LP lp = Q->link->host->inv(xy, Q->link);
+    PJ_LP lp = Q->link->inv(xy, Q->link);
     if (lp.lam != HUGE_VAL) {
         lp.lam -= Q->lamp;
         coslam = cos(lp.lam);
@@ -75,12 +75,12 @@ static PJ_LP o_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
 }
 
 
-static PJ_LP t_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
+PJ_LP ob_tran_t_inverse(PJ_XY xy, PJ *P) {             /* spheroid */
 
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double cosphi, t;
 
-    PJ_LP lp = Q->link->host->inv(xy, Q->link);
+    PJ_LP lp = Q->link->inv(xy, Q->link);
     if (lp.lam != HUGE_VAL) {
         cosphi = cos(lp.phi);
         t = lp.lam - Q->lamp;
@@ -267,18 +267,18 @@ PJ *PROJECTION(ob_tran) {
     if (fabs(phip) > TOL) { /* oblique */
         Q->cphip = cos(phip);
         Q->sphip = sin(phip);
-        if (Q->link->host->fwd) {
-            P->host->fwd = PJ_MAKE_KERNEL(o_forward);
+        if (Q->link->fwd) {
+            P->fwd = PJ_MAKE_KERNEL(ob_tran_o_forward);
         }
-        if (Q->link->host->inv) {
-            P->host->inv = PJ_MAKE_KERNEL(o_inverse);
+        if (Q->link->inv) {
+            P->inv = PJ_MAKE_KERNEL(ob_tran_o_inverse);
         }
     } else { /* transverse */
-        if (Q->link->host->fwd) {
-            P->host->fwd = PJ_MAKE_KERNEL(t_forward);
+        if (Q->link->fwd) {
+            P->fwd = PJ_MAKE_KERNEL(ob_tran_t_forward);
         }
-        if (Q->link->host->inv) {
-            P->host->inv = PJ_MAKE_KERNEL(t_inverse);
+        if (Q->link->inv) {
+            P->inv = PJ_MAKE_KERNEL(ob_tran_t_inverse);
         }
     }
 

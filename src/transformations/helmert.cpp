@@ -57,8 +57,8 @@ Last update: 2018-10-26
 PROJ_HEAD(helmert, "3(6)-, 4(8)- and 7(14)-parameter Helmert shift");
 PROJ_HEAD(molobadekas, "Molodensky-Badekas transformation");
 
-static PJ_XYZ helmert_forward_3d (PJ_LPZ lpz, PJ *P);
-static PJ_LPZ helmert_reverse_3d (PJ_XYZ xyz, PJ *P);
+PJ_XYZ helmert_forward_3d (PJ_LPZ lpz, PJ *P);
+PJ_LPZ helmert_reverse_3d (PJ_XYZ xyz, PJ *P);
 
 
 
@@ -320,7 +320,7 @@ static void build_rot_matrix(PJ *P) {
 
 
 /***********************************************************************/
-static PJ_XY helmert_forward (PJ_LP lp, PJ *P) {
+PJ_XY helmert_forward (PJ_LP lp, PJ *P) {
 /***********************************************************************/
     struct pj_opaque_helmert *Q = (struct pj_opaque_helmert *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
@@ -340,7 +340,7 @@ static PJ_XY helmert_forward (PJ_LP lp, PJ *P) {
 
 
 /***********************************************************************/
-static PJ_LP helmert_reverse (PJ_XY xy, PJ *P) {
+PJ_LP helmert_reverse (PJ_XY xy, PJ *P) {
 /***********************************************************************/
     struct pj_opaque_helmert *Q = (struct pj_opaque_helmert *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
@@ -360,7 +360,7 @@ static PJ_LP helmert_reverse (PJ_XY xy, PJ *P) {
 
 
 /***********************************************************************/
-static PJ_XYZ helmert_forward_3d (PJ_LPZ lpz, PJ *P) {
+PJ_XYZ helmert_forward_3d (PJ_LPZ lpz, PJ *P) {
 /***********************************************************************/
     struct pj_opaque_helmert *Q = (struct pj_opaque_helmert *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
@@ -401,7 +401,7 @@ static PJ_XYZ helmert_forward_3d (PJ_LPZ lpz, PJ *P) {
 
 
 /***********************************************************************/
-static PJ_LPZ helmert_reverse_3d (PJ_XYZ xyz, PJ *P) {
+PJ_LPZ helmert_reverse_3d (PJ_XYZ xyz, PJ *P) {
 /***********************************************************************/
     struct pj_opaque_helmert *Q = (struct pj_opaque_helmert *) P->opaque;
     PJ_COORD point = {{0,0,0,0}};
@@ -438,7 +438,7 @@ static PJ_LPZ helmert_reverse_3d (PJ_XYZ xyz, PJ *P) {
 }
 
 
-static PJ_COORD helmert_forward_4d (PJ_COORD point, PJ *P) {
+PJ_COORD helmert_forward_4d (PJ_COORD point, PJ *P) {
     struct pj_opaque_helmert *Q = (struct pj_opaque_helmert *) P->opaque;
 
     /* We only need to rebuild the rotation matrix if the
@@ -457,7 +457,7 @@ static PJ_COORD helmert_forward_4d (PJ_COORD point, PJ *P) {
 }
 
 
-static PJ_COORD helmert_reverse_4d (PJ_COORD point, PJ *P) {
+PJ_COORD helmert_reverse_4d (PJ_COORD point, PJ *P) {
     struct pj_opaque_helmert *Q = (struct pj_opaque_helmert *) P->opaque;
 
     /* We only need to rebuild the rotation matrix if the
@@ -569,14 +569,14 @@ PJ *TRANSFORMATION(helmert, 0) {
     if (pj_param_exists (P->host->params, "theta")) {
         P->left  = PJ_IO_UNITS_PROJECTED;
         P->right = PJ_IO_UNITS_PROJECTED;
-        P->host->fwd    = PJ_MAKE_KERNEL(helmert_forward);
-        P->host->inv    = PJ_MAKE_KERNEL(helmert_reverse);
+        P->fwd    = PJ_MAKE_KERNEL(helmert_forward);
+        P->inv    = PJ_MAKE_KERNEL(helmert_reverse);
     }
 
-    P->host->fwd4d  = PJ_MAKE_KERNEL(helmert_forward_4d);
-    P->host->inv4d  = PJ_MAKE_KERNEL(helmert_reverse_4d);
-    P->host->fwd3d  = PJ_MAKE_KERNEL(helmert_forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(helmert_reverse_3d);
+    P->fwd4d  = PJ_MAKE_KERNEL(helmert_forward_4d);
+    P->inv4d  = PJ_MAKE_KERNEL(helmert_reverse_4d);
+    P->fwd3d  = PJ_MAKE_KERNEL(helmert_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(helmert_reverse_3d);
 
     Q = (struct pj_opaque_helmert *)P->opaque;
 
@@ -705,8 +705,8 @@ PJ *TRANSFORMATION(molobadekas, 0) {
         return nullptr;
     }
 
-    P->host->fwd3d  = PJ_MAKE_KERNEL(helmert_forward_3d);
-    P->host->inv3d  = PJ_MAKE_KERNEL(helmert_reverse_3d);
+    P->fwd3d  = PJ_MAKE_KERNEL(helmert_forward_3d);
+    P->inv3d  = PJ_MAKE_KERNEL(helmert_reverse_3d);
 
     Q = (struct pj_opaque_helmert *)P->opaque;
 

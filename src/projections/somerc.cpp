@@ -18,7 +18,7 @@ struct pj_opaque {
 #define NITER 6
 
 
-static PJ_XY somerc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY somerc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0, 0.0};
     double phip, lamp, phipp, lampp, sp, cp;
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
@@ -37,7 +37,7 @@ static PJ_XY somerc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forwa
 }
 
 
-static PJ_LP somerc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP somerc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double phip, lamp, phipp, lampp, cp, esp, con, delp;
@@ -90,7 +90,7 @@ PJ *PROJECTION(somerc) {
         log (tan (M_FORTPI + 0.5 * P->phi0)) - Q->hlf_e *
         log ((1. + sp) / (1. - sp)));
     Q->kR = P->k0 * sqrt(P->one_es) / (1. - sp * sp);
-    P->host->inv = PJ_MAKE_KERNEL(somerc_e_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(somerc_e_forward);
+    P->inv = PJ_MAKE_KERNEL(somerc_e_inverse);
+    P->fwd = PJ_MAKE_KERNEL(somerc_e_forward);
     return P;
 }

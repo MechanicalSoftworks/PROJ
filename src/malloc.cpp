@@ -125,7 +125,6 @@ void PJhost::map_svm(void* ptr, bool map)
 // cppcheck-suppress uninitMemberVar
 PJhost::PJhost() :
     destructor(pj_default_destructor),
-    scan(pj_scan_recursive),
     map_pj(pj_map_svm_ptrs)
 {}
 /*****************************************************************************/

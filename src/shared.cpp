@@ -296,7 +296,7 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
     {
         cl_local PJstack_entry_t* top = stack->s + stack->n - 1;
 
-        switch (proj_dispatch_coroutine(top->fn, stack, top))
+        switch (proj_dispatch_coroutine(static_cast<PJ_COROUTINE_ID>(top->coroutine_id), stack, top))
         {
             case PJ_CO_YIELD:
             {
@@ -332,21 +332,17 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
     return coo;
 }
 
-#ifdef PROJ_OPENCL_DEVICE
 void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD coo)
-#else
-void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE    fn, PJ* P, PJ_COORD coo)
-#endif
 {
     cl_local PJstack_entry_t* e = stack->s + stack->n;
     
-    if (stack->n == PR_CO_STACK_SIZE)
+    if (stack->n == PJ_CO_STACK_SIZE)
     {
         stack->n = 0;
         return;
     }
 
-    e->fn = fn;
+    e->coroutine_id = fn;
     e->coo = coo;
     e->P = P;
 
@@ -386,16 +382,3 @@ void push_approx_3D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION directi
 
     stack_push(stack, direction == PJ_FWD ? PJ_FUNCTION_PTR(pj_fwd3d_co) : PJ_FUNCTION_PTR(pj_inv3d_co), P, coord);
 }
-
-#ifndef PROJ_OPENCL_DEVICE
-
-// The OpenCL versions of these are generated in 'pj_create_opencl_source_from_scan'.
-PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE fn, struct PJstack_s* stack, struct PJstack_entry_s* e) { return fn(stack, e); }
-PJ_XY proj_dispatch_fwd(PJ_FWD_2D fn, PJ_LP lp, PJ* P) { return fn(lp, P); }
-PJ_LP proj_dispatch_inv(PJ_INV_2D fn, PJ_XY xy, PJ* P) { return fn(xy, P); }
-PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D fn, PJ_LPZ lpz, PJ* P) { return fn(lpz, P); }
-PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D fn, PJ_XYZ xyz, PJ* P) { return fn(xyz, P); }
-PJ_COORD proj_dispatch_fwd4d(PJ_OPERATOR fn, PJ_COORD coo, PJ* P) { return fn(coo, P); }
-PJ_COORD proj_dispatch_inv4d(PJ_OPERATOR fn, PJ_COORD coo, PJ* P) { return fn(coo, P); }
-
-#endif

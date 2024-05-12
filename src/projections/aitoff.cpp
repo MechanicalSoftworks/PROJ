@@ -62,7 +62,7 @@ FORWARD(aitoff_s_forward); /* spheroid */
 #endif
 
 
-static PJ_XY aitoff_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY aitoff_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     double c, d;
@@ -102,7 +102,7 @@ static PJ_XY aitoff_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwa
 *
 ************************************************************************************/
 
-static PJ_LP aitoff_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP aitoff_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
     int iter, MAXITER = 10, round = 0, MAXROUND = 20;
@@ -179,8 +179,8 @@ static PJ_LP aitoff_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 
 
 static PJ *setup(PJ *P) {
-    P->host->inv = PJ_MAKE_KERNEL(aitoff_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(aitoff_s_forward);
+    P->inv = PJ_MAKE_KERNEL(aitoff_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(aitoff_s_forward);
     P->es = 0.;
     return P;
 }

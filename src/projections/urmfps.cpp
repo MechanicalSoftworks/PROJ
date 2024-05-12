@@ -19,7 +19,7 @@ struct pj_opaque {
 #define Cy 1.139753528477
 
 
-static PJ_XY urmfps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY urmfps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0, 0.0};
     lp.phi = aasin (P->shared_ctx,static_cast<struct pj_opaque*>(P->opaque)->n * sin (lp.phi));
     xy.x = C_x * lp.lam * cos (lp.phi);
@@ -28,7 +28,7 @@ static PJ_XY urmfps_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forwa
 }
 
 
-static PJ_LP urmfps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP urmfps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0, 0.0};
     xy.y /= static_cast<struct pj_opaque*>(P->opaque)->C_y;
     lp.phi = aasin(P->shared_ctx, sin (xy.y) / static_cast<struct pj_opaque*>(P->opaque)->n);
@@ -40,8 +40,8 @@ static PJ_LP urmfps_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inver
 static PJ *setup(PJ *P) {
     static_cast<struct pj_opaque*>(P->opaque)->C_y = Cy / static_cast<struct pj_opaque*>(P->opaque)->n;
     P->es = 0.;
-    P->host->inv = PJ_MAKE_KERNEL(urmfps_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(urmfps_s_forward);
+    P->inv = PJ_MAKE_KERNEL(urmfps_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(urmfps_s_forward);
     return P;
 }
 

@@ -9,7 +9,7 @@
 
 PROJ_HEAD(tobmerc, "Tobler-Mercator") "\n\tCyl, Sph";
 
-static PJ_XY tobmerc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY tobmerc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0, 0.0};
     double cosphi;
 
@@ -30,7 +30,7 @@ static PJ_XY tobmerc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forw
     return xy;
 }
 
-static PJ_LP tobmerc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP tobmerc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0, 0.0};
     double cosphi;
 
@@ -41,7 +41,7 @@ static PJ_LP tobmerc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inve
 }
 
 PJ *PROJECTION(tobmerc) {
-    P->host->inv = PJ_MAKE_KERNEL(tobmerc_s_inverse);
-    P->host->fwd = PJ_MAKE_KERNEL(tobmerc_s_forward);
+    P->inv = PJ_MAKE_KERNEL(tobmerc_s_inverse);
+    P->fwd = PJ_MAKE_KERNEL(tobmerc_s_forward);
     return P;
 }
