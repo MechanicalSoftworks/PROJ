@@ -280,27 +280,6 @@ enum pj_io_units pj_right(struct PJconsts* P);
 #define PJD_GRIDSHIFT 3
 #define PJD_WGS84     4   /* WGS84 (or anything considered equivalent) */
 
-typedef struct PJstack_entry_s
-{
-    PJ_COROUTINE_ID fn;
-
-    // State.
-    PJ_COORD        coo;
-    PJ*             P;
-    int             step;
-    union {
-        int         i;          // Pipeline.
-        int         last_errno; // pj_fwd+pj_inv.
-    };
-} PJstack_entry_t;
-
-#define PJ_CO_STACK_SIZE 16
-typedef struct PJstack_s
-{
-    PJstack_entry_t s[PJ_CO_STACK_SIZE];
-    int             n;
-} PJstack_t;
-
 /* Context data that's shared between the OpenCL host and evice */
 struct pj_ctx_shared {
     PJ_FIELD(int, last_errno, 0);

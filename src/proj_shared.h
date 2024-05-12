@@ -196,6 +196,27 @@ enum PJ_DIRECTION {
 };
 typedef enum PJ_DIRECTION PJ_DIRECTION;
 
+typedef struct PJstack_entry_s
+{
+    int             coroutine_id;         // PJ_COROUTINE_ID
+
+    // State.
+    PJ_COORD        coo;
+    PJ*             P;
+    int             step;
+    union {
+        int         i;          // Pipeline.
+        int         last_errno; // pj_fwd+pj_inv.
+    };
+} PJstack_entry_t;
+
+#define PJ_CO_STACK_SIZE 16
+typedef struct PJstack_s
+{
+    PJstack_entry_t s[PJ_CO_STACK_SIZE];
+    int             n;
+} PJstack_t;
+
 #ifdef PJ_LIB__
 
 #   define PROJ_HEAD(name, desc) static const char des_##name [] = desc

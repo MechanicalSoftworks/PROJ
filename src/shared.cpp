@@ -296,7 +296,7 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
     {
         cl_local PJstack_entry_t* top = stack->s + stack->n - 1;
 
-        switch (proj_dispatch_coroutine(top->fn, stack, top))
+        switch (proj_dispatch_coroutine(static_cast<PJ_COROUTINE_ID>(top->coroutine_id), stack, top))
         {
             case PJ_CO_YIELD:
             {
@@ -342,7 +342,7 @@ void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD c
         return;
     }
 
-    e->fn = fn;
+    e->coroutine_id = fn;
     e->coo = coo;
     e->P = P;
 
