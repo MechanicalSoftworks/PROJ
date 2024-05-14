@@ -289,9 +289,6 @@ void stack_new(cl_local PJstack_t* stack)
 
 PJ_COORD stack_exec(cl_local PJstack_t* stack)
 {
-    // Default to an error value.
-    PJ_COORD coo = { -1, -1, -1, -1 };
-
     while (stack->n > 0)
     {
         cl_local PJstack_entry_t* top = stack->s + stack->n - 1;
@@ -309,13 +306,13 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
                 --stack->n;
                 
                 // Transfer state back to the caller.
-                if (!stack->n)
+                if (stack->n)
                 {
-                    coo = top->coo;
+                    (top - 1)->coo = top->coo;
                 }
                 else
                 {
-                    (top - 1)->coo = top->coo;
+                    return top->coo;
                 }
 
                 break;
@@ -329,7 +326,7 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
         }
     }
 
-    return coo;
+    return proj_coord_error();
 }
 
 void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD coo)
