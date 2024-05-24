@@ -71,8 +71,8 @@ PROJ_HEAD(unitconvert, "Unit conversion");
 
 namespace { // anonymous namespace
 struct TIME_UNITS {
-    const cl_constant char  *id;        /* units keyword */
-    const cl_constant char  *name;      /* comments */
+    const __constant char  *id;        /* units keyword */
+    const __constant char  *name;      /* comments */
 };
 } // anonymous namespace
 
@@ -300,7 +300,7 @@ static double tconvert_out(int i, double d)
 
 
 /***********************************************************************/
-PJ_XY unitconvert_forward_2d(PJ_LP lp, PJ *P) {
+PJ_XY unitconvert_forward_2d(PJ_LP lp, __global PJ *P) {
 /************************************************************************
     Forward unit conversions in the plane
 ************************************************************************/
@@ -316,7 +316,7 @@ PJ_XY unitconvert_forward_2d(PJ_LP lp, PJ *P) {
 
 
 /***********************************************************************/
-PJ_LP unitconvert_reverse_2d(PJ_XY xy, PJ *P) {
+PJ_LP unitconvert_reverse_2d(PJ_XY xy, __global PJ *P) {
 /************************************************************************
     Reverse unit conversions in the plane
 ************************************************************************/
@@ -332,7 +332,7 @@ PJ_LP unitconvert_reverse_2d(PJ_XY xy, PJ *P) {
 
 
 /***********************************************************************/
-PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, PJ *P) {
+PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, __global PJ *P) {
 /************************************************************************
     Forward unit conversions the vertical component
 ************************************************************************/
@@ -350,7 +350,7 @@ PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, PJ *P) {
 }
 
 /***********************************************************************/
-PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, PJ *P) {
+PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, __global PJ *P) {
 /************************************************************************
     Reverse unit conversions the vertical component
 ************************************************************************/
@@ -369,7 +369,7 @@ PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, PJ *P) {
 
 
 /***********************************************************************/
-PJ_COORD unitconvert_forward_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD unitconvert_forward_4d(PJ_COORD obs, __global PJ *P) {
 /************************************************************************
     Forward conversion of time units
 ************************************************************************/
@@ -389,7 +389,7 @@ PJ_COORD unitconvert_forward_4d(PJ_COORD obs, PJ *P) {
 
 
 /***********************************************************************/
-PJ_COORD unitconvert_reverse_4d(PJ_COORD obs, PJ *P) {
+PJ_COORD unitconvert_reverse_4d(PJ_COORD obs, __global PJ *P) {
 /************************************************************************
     Reverse conversion of time units
 ************************************************************************/

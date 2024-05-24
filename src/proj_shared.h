@@ -28,6 +28,12 @@
 #ifndef PROJ_SHARED_H
 #define PROJ_SHARED_H
 
+#ifndef PROJ_OPENCL_DEVICE
+#   define __global
+#   define __constant
+#   define __local
+#endif
+
 /* first forward declare everything needed */
 
 /* Data type for generic geodetic 3D data plus epoch information */
@@ -202,7 +208,7 @@ typedef struct PJstack_entry_s
 
     // State.
     PJ_COORD        coo;
-    PJ*             P;
+    __global PJ*    P;
     int             step;
     union {
         int         i;          // Pipeline.

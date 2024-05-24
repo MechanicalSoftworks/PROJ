@@ -129,18 +129,12 @@ struct PJstack_entry_s;
 #   define lround round
 #   define nullptr 0
 
-#   define cl_constant  __constant
-#   define cl_local     __local
-
 #   define PROJ_DLL
 
 #else
 
 #   define PJ_FIELD(type, name, value) type name = value
 #   define PJ_HOST_MUTABLE mutable
-
-#   define cl_constant
-#   define cl_local
 
 #   include <math.h>
 
@@ -149,12 +143,12 @@ struct PJstack_entry_s;
 #define PJ_GET_COROUTINE(P, type)    P->type
 #define PJ_FUNCTION_PTR(name)        name##_id
 
-PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e);
-PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP lp, PJ* P);
-PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY xy, PJ* P);
-PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ lpz, PJ* P);
-PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ xyz, PJ* P);
-PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD coo, PJ* P);
+PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, __local PJstack_t* stack, __local PJstack_entry_t* e);
+PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP lp, __global PJ* P);
+PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY xy, __global PJ* P);
+PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ lpz, __global PJ* P);
+PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ xyz, __global PJ* P);
+PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD coo, __global PJ* P);
 
 /* Pointer to a kernel function.
  * Executed directly in CPU mode, function is written using name in OpenCL mode.
@@ -185,7 +179,7 @@ inline auto operator==(std::nullptr_t, const PJkernel<T, InvalidValue>& k) { ret
 
 struct PJ_COROUTINE : public PJkernel<PJ_COROUTINE_ID, PJ_INVALID_COROUTINE>
 {
-    auto operator()(cl_local struct PJstack_s* stack, cl_local struct PJstack_entry_s* e) const { return proj_dispatch_coroutine(fn, stack, e); }
+    auto operator()(__local struct PJstack_s* stack, __local struct PJstack_entry_s* e) const { return proj_dispatch_coroutine(fn, stack, e); }
 
     using PJkernel::PJkernel;
     using PJkernel::operator=;
@@ -198,7 +192,7 @@ struct PJ_COROUTINE : public PJkernel<PJ_COROUTINE_ID, PJ_INVALID_COROUTINE>
 
 struct PJ_FWD_2D : public PJkernel<PJ_FWD_2D_ID, PJ_INVALID_FWD_2D>
 {
-    auto operator()(PJ_LP lp, PJ* P) const { return proj_dispatch_fwd(fn, lp, P); }
+    auto operator()(PJ_LP lp, __global PJ* P) const { return proj_dispatch_fwd(fn, lp, P); }
 
     using PJkernel::PJkernel;
     using PJkernel::operator=;
@@ -211,7 +205,7 @@ struct PJ_FWD_2D : public PJkernel<PJ_FWD_2D_ID, PJ_INVALID_FWD_2D>
 
 struct PJ_INV_2D : public PJkernel<PJ_INV_2D_ID, PJ_INVALID_INV_2D>
 {
-    auto operator()(PJ_XY xy, PJ* P) const { return proj_dispatch_inv(fn, xy, P); }
+    auto operator()(PJ_XY xy, __global PJ* P) const { return proj_dispatch_inv(fn, xy, P); }
 
     using PJkernel::PJkernel;
     using PJkernel::operator=;
@@ -224,7 +218,7 @@ struct PJ_INV_2D : public PJkernel<PJ_INV_2D_ID, PJ_INVALID_INV_2D>
 
 struct PJ_FWD_3D : public PJkernel<PJ_FWD_3D_ID, PJ_INVALID_FWD_3D>
 {
-    auto operator()(PJ_LPZ lpz, PJ* P) const { return proj_dispatch_fwd3d(fn, lpz, P); }
+    auto operator()(PJ_LPZ lpz, __global PJ* P) const { return proj_dispatch_fwd3d(fn, lpz, P); }
 
     using PJkernel::PJkernel;
     using PJkernel::operator=;
@@ -237,7 +231,7 @@ struct PJ_FWD_3D : public PJkernel<PJ_FWD_3D_ID, PJ_INVALID_FWD_3D>
 
 struct PJ_INV_3D : public PJkernel<PJ_INV_3D_ID, PJ_INVALID_INV_3D>
 {
-    auto operator()(PJ_XYZ xyz, PJ* P) const { return proj_dispatch_inv3d(fn, xyz, P); }
+    auto operator()(PJ_XYZ xyz, __global PJ* P) const { return proj_dispatch_inv3d(fn, xyz, P); }
 
     using PJkernel::PJkernel;
     using PJkernel::operator=;
@@ -250,7 +244,7 @@ struct PJ_INV_3D : public PJkernel<PJ_INV_3D_ID, PJ_INVALID_INV_3D>
 
 struct PJ_OPERATOR_4D : public PJkernel<PJ_OPERATOR_ID, PJ_INVALID_OPERATOR>
 {
-    auto operator()(PJ_COORD coo, PJ* P) const { return proj_dispatch_operator(fn, coo, P); }
+    auto operator()(PJ_COORD coo, __global PJ* P) const { return proj_dispatch_operator(fn, coo, P); }
 
     using PJkernel::PJkernel;
     using PJkernel::operator=;
@@ -301,13 +295,13 @@ struct PJconsts {
 
     PJ_FIELD(struct PJhost*, host, nullptr);
 
-    PJ_FIELD(struct pj_ctx_shared*, shared_ctx, nullptr);
+    PJ_FIELD(__global struct pj_ctx_shared*, shared_ctx, nullptr);
 
-    PJ_FIELD(struct PJconsts*, parent, nullptr);                   /* Parent PJ of pipeline steps - nullptr if not a pipeline step */
+    PJ_FIELD(__global struct PJconsts*, parent, nullptr);       /* Parent PJ of pipeline steps - nullptr if not a pipeline step */
 
-    PJ_FIELD(struct geod_geodesic*, geod, nullptr);         /* For geodesic computations */
-    PJ_FIELD(void*, opaque, nullptr);                       /* Projection specific parameters, Defined in PJ_*.c */
-    PJ_FIELD(int, inverted, 0);                             /* Tell high level API functions to swap inv/fwd */
+    PJ_FIELD(__global struct geod_geodesic*, geod, nullptr);    /* For geodesic computations */
+    PJ_FIELD(__global void*, opaque, nullptr);                  /* Projection specific parameters, Defined in PJ_*.c */
+    PJ_FIELD(int, inverted, 0);                                 /* Tell high level API functions to swap inv/fwd */
     int pad0;
 
     /*************************************************************************************
@@ -424,12 +418,12 @@ struct PJconsts {
     PJ_FIELD(int, right, PJ_IO_UNITS_WHATEVER);
     
     /* These PJs are used for implementing cs2cs style coordinate handling in the 4D API */
-    PJ_FIELD(struct PJconsts*, axisswap, nullptr);
-    PJ_FIELD(struct PJconsts*, cart, nullptr);
-    PJ_FIELD(struct PJconsts*, cart_wgs84, nullptr);
-    PJ_FIELD(struct PJconsts*, helmert, nullptr);
-    PJ_FIELD(struct PJconsts*, hgridshift, nullptr);
-    PJ_FIELD(struct PJconsts*, vgridshift, nullptr);
+    PJ_FIELD(__global struct PJconsts*, axisswap, nullptr);
+    PJ_FIELD(__global struct PJconsts*, cart, nullptr);
+    PJ_FIELD(__global struct PJconsts*, cart_wgs84, nullptr);
+    PJ_FIELD(__global struct PJconsts*, helmert, nullptr);
+    PJ_FIELD(__global struct PJconsts*, hgridshift, nullptr);
+    PJ_FIELD(__global struct PJconsts*, vgridshift, nullptr);
 
 
     /*************************************************************************************
@@ -474,8 +468,8 @@ struct PJconsts {
     PJ_FIELD(int,    datum_type, PJD_UNKNOWN);  /* PJD_UNKNOWN/3PARAM/7PARAM/GRIDSHIFT/WGS84 */
 
     PJ_FIELD(int  ,  has_geoid_vgrids, 0);      /* used by legacy transform.cpp */
-    PJ_FIELD(void*,  hgrids_legacy, nullptr);   /* used by legacy transform.cpp. Is a pointer to a ListOfHGrids* */ 
-    PJ_FIELD(void*,  vgrids_legacy, nullptr);   /* used by legacy transform.cpp. Is a pointer to a ListOfVGrids* */ 
+    PJ_FIELD(__global void*, hgrids_legacy, nullptr);   /* used by legacy transform.cpp. Is a pointer to a ListOfHGrids* */
+    PJ_FIELD(__global void*,  vgrids_legacy, nullptr);   /* used by legacy transform.cpp. Is a pointer to a ListOfVGrids* */
 
     PJ_FIELD(double, from_greenwich, 0.0);      /* prime meridian offset (in radians) */
     PJ_FIELD(double, long_wrap_center, 0.0);    /* 0.0 for -180 to 180, actually in radians*/
@@ -515,22 +509,22 @@ void proj_context_errno_set(struct pj_ctx_shared* ctx, int err);
 struct pj_ctx_shared* pj_get_ctx_shared(const PJ*);
 
 // Coroutines.
-void stack_new(cl_local PJstack_t* stack);
-PJ_COORD stack_exec(cl_local PJstack_t* stack);
+void stack_new(__local PJstack_t* stack);
+PJ_COORD stack_exec(__local PJstack_t* stack);
 
-void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD coo);
+void stack_push(__local PJstack_t* stack, PJ_COROUTINE_ID fn, __global PJ* P, PJ_COORD coo);
 
-void push_proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
-void push_approx_3D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
-void push_approx_2D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+void push_proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+void push_approx_3D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+void push_approx_2D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
-PJcoroutine_code_t pj_fwd4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
-PJcoroutine_code_t pj_inv4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+PJcoroutine_code_t pj_fwd4d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
+PJcoroutine_code_t pj_inv4d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
 
-PJcoroutine_code_t pj_fwd3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
-PJcoroutine_code_t pj_inv3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+PJcoroutine_code_t pj_fwd3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
+PJcoroutine_code_t pj_inv3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
 
-PJcoroutine_code_t pj_fwd_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
-PJcoroutine_code_t pj_inv_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
+PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
+PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
 
 #endif // !PROJ_INTERNAL_SHARED_H

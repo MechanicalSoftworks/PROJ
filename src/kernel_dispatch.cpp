@@ -26,19 +26,31 @@
 #include "proj_kernel.h"
 
 /******************************************************************************
+* Sanity checks.
+*****************************************************************************/
+static_assert(sizeof(PJconsts) == 568);
+
+static_assert(sizeof(PJstack_t) == 904);
+static_assert(alignof(PJstack_t) == 8);
+
+static_assert(sizeof(PJstack_entry_t) == 56);
+static_assert(alignof(PJstack_entry_t) == 8);
+
+/******************************************************************************
  * Externs.
  *****************************************************************************/
-#define PROJ_COROUTINE(name) extern PJcoroutine_code_t name(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e);
-#define PROJ_FWD_2D(name)    extern PJ_XY name(PJ_LP lp, PJ *P);
-#define PROJ_INV_2D(name)    extern PJ_LP name(PJ_XY xy, PJ *P);
-#define PROJ_FWD_3D(name)    extern PJ_XYZ name(PJ_LPZ lp, PJ *P);
-#define PROJ_INV_3D(name)    extern PJ_LPZ name(PJ_XYZ xy, PJ *P);
-#define PROJ_OPERATOR(name)  extern PJ_COORD name(PJ_COORD lp, PJ *P);
+#define PROJ_COROUTINE(name) extern PJcoroutine_code_t name(__local PJstack_t* stack, __local PJstack_entry_t* e);
+#define PROJ_FWD_2D(name)    extern PJ_XY name(PJ_LP lp, __global PJ *P);
+#define PROJ_INV_2D(name)    extern PJ_LP name(PJ_XY xy, __global PJ *P);
+#define PROJ_FWD_3D(name)    extern PJ_XYZ name(PJ_LPZ lp, __global PJ *P);
+#define PROJ_INV_3D(name)    extern PJ_LPZ name(PJ_XYZ xy, __global PJ *P);
+#define PROJ_OPERATOR(name)  extern PJ_COORD name(PJ_COORD lp, __global PJ *P);
 
 #include "pj_function_list_shared.h"
 #ifndef PROJ_OPENCL_DEVICE
 #	include "pj_function_list_host.h"
 #endif
+
 #define USE_FUNCTION_POINTERS
 
 #if defined(PROJ_OPENCL_DEVICE) && defined(USE_FUNCTION_POINTERS)
@@ -46,7 +58,7 @@
 #endif
 
 #ifdef USE_FUNCTION_POINTERS
-#   define CASE(name)   case name##_id: x = name; break
+#   define CASE(name)   case name##_id: x = &name; break
 #else
 #   define CASE(name)   case name##_id: return name(a, b)
 #endif
@@ -58,19 +70,19 @@
 #undef PROJ_INV_3D
 #undef PROJ_OPERATOR
 
- /******************************************************************************
-  * Coroutine dispatch.
-  *****************************************************************************/
+/******************************************************************************
+ * Coroutine dispatch.
+ *****************************************************************************/
 #define PROJ_COROUTINE(name) CASE(name);
 #define PROJ_FWD_2D(name)
 #define PROJ_INV_2D(name)
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)
-PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct PJstack_s* a, cl_local struct PJstack_entry_s* b)
+PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, __local PJstack_t* a, __local PJstack_entry_t* b)
 {
 #ifdef USE_FUNCTION_POINTERS
-    PJcoroutine_code_t (*x)(cl_local PJstack_t*, cl_local PJstack_entry_t*);
+    PJcoroutine_code_t (*x)(__local PJstack_t*, __local PJstack_entry_t*);
 #endif
 
     switch (fn)
@@ -103,10 +115,10 @@ PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, cl_local struct P
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)
-PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP a, PJ *b)
+PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP a, __global PJ *b)
 {
 #ifdef USE_FUNCTION_POINTERS
-    PJ_XY (*x)(PJ_LP lp, PJ *P);
+    PJ_XY (*x)(PJ_LP lp, __global PJ *P);
 #endif
 
     switch (fn)
@@ -139,10 +151,10 @@ PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP a, PJ *b)
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)
-PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY a, PJ *b)
+PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY a, __global PJ *b)
 {
 #ifdef USE_FUNCTION_POINTERS
-    PJ_LP (*x)(PJ_XY xy, PJ *P);
+    PJ_LP (*x)(PJ_XY xy, __global PJ *P);
 #endif
 
     switch (fn)
@@ -175,10 +187,10 @@ PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY a, PJ *b)
 #define PROJ_FWD_3D(name)       CASE(name);
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)
-PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ a, PJ *b)
+PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ a, __global PJ *b)
 {
 #ifdef USE_FUNCTION_POINTERS
-    PJ_XYZ (*x)(PJ_LPZ lpz, PJ *P);
+    PJ_XYZ (*x)(PJ_LPZ lpz, __global PJ *P);
 #endif
 
     switch (fn)
@@ -211,10 +223,10 @@ PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ a, PJ *b)
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)       CASE(name);
 #define PROJ_OPERATOR(name)
-PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ a, PJ *b)
+PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ a, __global PJ *b)
 {
 #ifdef USE_FUNCTION_POINTERS
-    PJ_LPZ (*x)(PJ_XYZ xyz, PJ *P);
+    PJ_LPZ (*x)(PJ_XYZ xyz, __global PJ *P);
 #endif
 
     switch (fn)
@@ -247,10 +259,10 @@ PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ a, PJ *b)
 #define PROJ_FWD_3D(name)
 #define PROJ_INV_3D(name)
 #define PROJ_OPERATOR(name)       CASE(name);
-PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD a, PJ *b)
+PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD a, __global PJ *b)
 {
 #ifdef USE_FUNCTION_POINTERS
-    PJ_COORD (*x)(PJ_COORD lp, PJ *P);
+    PJ_COORD (*x)(PJ_COORD lp, __global PJ *P);
 #endif
 
     switch (fn)

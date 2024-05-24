@@ -12,7 +12,7 @@ PROJ_HEAD(eqc, "Equidistant Cylindrical (Plate Carree)")
     "\n\tCyl, Sph\n\tlat_ts=[, lat_0=0]";
 
 
-PJ_XY eqc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PJ_XY eqc_s_forward (PJ_LP lp, __global PJ *P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 
@@ -23,7 +23,7 @@ PJ_XY eqc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
 }
 
 
-PJ_LP eqc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PJ_LP eqc_s_inverse (PJ_XY xy, __global PJ *P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = static_cast<struct pj_opaque*>(P->opaque);
 

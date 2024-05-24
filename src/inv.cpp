@@ -33,7 +33,7 @@
 #define INPUT_UNITS  P->right
 #define OUTPUT_UNITS P->left
 
-PJcoroutine_code_t inv_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t inv_prepare_co (__local PJstack_t* stack, __local PJstack_entry_t* e) {
     PJ*         P = e->P;
     PJ_COORD    coo = e->coo;
 
@@ -113,7 +113,7 @@ ABORT:
 
 
 
-PJcoroutine_code_t inv_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
+PJcoroutine_code_t inv_finalize_co (__local PJstack_t* stack, __local PJstack_entry_t* e) {
     PJ*         P = e->P;
     PJ_COORD    coo = e->coo;
 
@@ -184,17 +184,17 @@ ABORT:
 
 extern PJ_COORD error_or_coord(PJ* P, PJ_COORD coord, int last_errno);
 
-static void push_inv_prepare(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static void push_inv_prepare(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     return stack_push(stack, PJ_FUNCTION_PTR(inv_prepare_co), P, coo);
 }
 
-static void push_inv_finalize(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static void push_inv_finalize(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     return stack_push(stack, PJ_FUNCTION_PTR(inv_finalize_co), P, coo);
 }
 
-static PJ_COORD push_inv4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static PJ_COORD push_inv4d(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     if (PJ_GET_COROUTINE(P, co_inv4d)) {
         // This code path is really only taken by the pipeline.
@@ -208,7 +208,7 @@ static PJ_COORD push_inv4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     return proj_dispatch_operator(PJ_GET_COROUTINE(P, inv4d), coo, P);
 }
 
-static PJ_COORD push_inv3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static PJ_COORD push_inv3d(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     if (PJ_GET_COROUTINE(P, co_inv3d)) {
         // This code path is really only taken by the pipeline.
@@ -225,7 +225,7 @@ static PJ_COORD push_inv3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     return r;
 }
 
-static PJ_COORD push_inv(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static PJ_COORD push_inv(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     if (PJ_GET_COROUTINE(P, co_inv)) {
         // This code path is really only taken by the pipeline.
@@ -243,10 +243,10 @@ static PJ_COORD push_inv(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     return r;
 }
 
-PJcoroutine_code_t pj_inv_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    int         last_errno = e->last_errno;
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
+    int             last_errno = e->last_errno;
+    __global PJ*    P = e->P;
+    PJ_COORD        coo = e->coo;
 
     switch (e->step) {
         case 0: break;
@@ -316,10 +316,10 @@ ABORT:
 
 
 
-PJcoroutine_code_t pj_inv3d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    int         last_errno = e->last_errno;
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t pj_inv3d_co (__local PJstack_t* stack, __local PJstack_entry_t* e) {
+    int             last_errno = e->last_errno;
+    __global PJ*    P = e->P;
+    PJ_COORD        coo = e->coo;
 
     switch (e->step) {
         case 0: break;
@@ -389,10 +389,10 @@ ABORT:
 
 
 
-PJcoroutine_code_t pj_inv4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    int         last_errno = e->last_errno;
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t pj_inv4d_co (__local PJstack_t* stack, __local PJstack_entry_t* e) {
+    int             last_errno = e->last_errno;
+    __global PJ*    P = e->P;
+    PJ_COORD        coo = e->coo;
 
     switch (e->step) {
         case 0: break;
