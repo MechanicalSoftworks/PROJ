@@ -86,15 +86,6 @@ void proj_assign_context( PJ* pj, PJ_CONTEXT *ctx )
 /************************************************************************/
 
 /**********************************************************************/
-static void default_map(void* user, void* ptr, int map)
-/**********************************************************************/
-{
-    (void)user;
-    (void)ptr;
-    (void)map;
-}
-
-/**********************************************************************/
 static void* default_malloc(void* user, size_t sz)
 /**********************************************************************/
 {
@@ -123,7 +114,7 @@ static void default_free(void* user, void* ptr)
 
 pj_ctx pj_ctx::createDefault(pj_allocator *allocator)
 {
-    static pj_allocator defaultAllocator{ nullptr, default_malloc, default_calloc, default_free, default_map };
+    static pj_allocator defaultAllocator{ nullptr, default_malloc, default_calloc, default_free };
 
     if (nullptr==allocator)
         allocator = &defaultAllocator;

@@ -205,28 +205,11 @@ static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
     }
 }
 
-static void pipeline_map_svm_ptrs(PJ* P, bool map)
-{
-    pj_map_svm_ptrs(P, map);
-
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    P->host->map_svm(pipeline->steps, map);
-    P->host->map_svm(&pipeline->stack1, map);
-    for (size_t i = 0; i < pipeline->step_count; ++i)
-    {
-        struct PipelineStep* step = pipeline->steps + i;
-        if (!step->omit_fwd || !step->omit_inv)
-        {
-            step->pj->host->map_pj(step->pj, map);
-        }
-    }
-}
-
 #endif
 
 PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    __global Pipeline*      pipeline = static_cast<__global struct Pipeline*>(P->opaque);
+    __global PJ*            P = e->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
     __global PipelineStep*  step = nullptr;
@@ -269,11 +252,11 @@ ABORT:
 
 
 PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
+    __global PJ*            P = e->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+    __global PipelineStep*  step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -315,11 +298,11 @@ ABORT:
 
 
 PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
+    __global PJ*            P = e->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+    __global PipelineStep*  step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -360,11 +343,11 @@ ABORT:
 
 
 PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
+    __global PJ*            P = e->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+    __global PipelineStep*  step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -407,11 +390,11 @@ ABORT:
 
 
 PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
+    __global PJ*            P = e->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+    __global PipelineStep*  step = nullptr;
 
     switch (e->step) {
     case 0: break;
@@ -452,11 +435,11 @@ ABORT:
 
 
 PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
+    __global PJ*            P = e->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = e->coo;
     size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+    __global PipelineStep*  step = nullptr;
 
     switch (e->step) {
         case 0: break;
@@ -641,7 +624,6 @@ PJ *OPERATION(pipeline,0) {
     P->co_inv    =  PJ_MAKE_KERNEL(pipeline_reverse_co);
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
-    P->host->map_pj = pipeline_map_svm_ptrs;
 
     /* Currently, the pipeline driver is a raw bit mover, enabling other operations */
     /* to collaborate efficiently. All prep/fin stuff is done at the step levels. */

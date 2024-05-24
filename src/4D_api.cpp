@@ -1881,9 +1881,9 @@ int proj_errno_reset (const PJ *P) {
 }
 
 
-PJ_ALLOCATOR PROJ_DLL* proj_allocator_create(void *user, PROJ_SVM_MALLOC_FUNCTION svm_malloc, PROJ_SVM_CALLOC_FUNCTION svm_calloc, PROJ_SVM_FREE_FUNCTION svm_free, PROJ_SVM_UPDATE_FUNCTION svm_map)
+PJ_ALLOCATOR PROJ_DLL* proj_allocator_create(void *user, PROJ_SVM_MALLOC_FUNCTION svm_malloc, PROJ_SVM_CALLOC_FUNCTION svm_calloc, PROJ_SVM_FREE_FUNCTION svm_free)
 {
-    return new (std::nothrow) pj_allocator{ user, svm_malloc, svm_calloc, svm_free, svm_map };
+    return new (std::nothrow) pj_allocator{ user, svm_malloc, svm_calloc, svm_free };
 }
 
 void PROJ_DLL proj_allocator_set_user(PJ_ALLOCATOR* a, void* user)

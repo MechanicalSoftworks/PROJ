@@ -324,9 +324,6 @@ struct PJhost
     PJ_DESTRUCTOR destructor = nullptr;
     void   (*reassign_context)(PJ*, PJ_CONTEXT*) = nullptr;
 
-    void   (*map_pj)(PJ* P, bool map) = nullptr;
-    void   map_svm(void* ptr, bool map);
-
     /*************************************************************************************
      ISO-19111 interface
     **************************************************************************************/
@@ -439,8 +436,8 @@ struct projFileApiCallbackAndData
 
 struct pj_allocator
 {
-    pj_allocator(void* u, PROJ_SVM_MALLOC_FUNCTION m, PROJ_SVM_CALLOC_FUNCTION c, PROJ_SVM_FREE_FUNCTION f, PROJ_SVM_UPDATE_FUNCTION map)
-        : user_data(u), m_malloc(m), m_calloc(c), m_free(f), m_map(map)
+    pj_allocator(void* u, PROJ_SVM_MALLOC_FUNCTION m, PROJ_SVM_CALLOC_FUNCTION c, PROJ_SVM_FREE_FUNCTION f)
+        : user_data(u), m_malloc(m), m_calloc(c), m_free(f)
     {}
 
     void*   user_data = nullptr;
@@ -448,7 +445,6 @@ struct pj_allocator
     void* svm_malloc(size_t sz)           { return m_malloc(user_data, sz); }
     void* svm_calloc(size_t n, size_t sz) { return m_calloc(user_data, n, sz); }
     void svm_free(void* ptr)              { m_free(user_data, ptr); }
-    void svm_map(void* ptr, bool map)     { m_map(user_data, ptr, map); }
 
     template<typename T>
     T* svm_new()
@@ -476,7 +472,6 @@ private:
     const PROJ_SVM_MALLOC_FUNCTION m_malloc;
     const PROJ_SVM_CALLOC_FUNCTION m_calloc;
     const PROJ_SVM_FREE_FUNCTION   m_free;
-    const PROJ_SVM_UPDATE_FUNCTION m_map;
 };
 
 /* proj thread context */
@@ -649,8 +644,6 @@ std::string pj_double_quote_string_param_if_needed(const std::string& str);
 
 PJ *pj_create_internal (PJ_CONTEXT *ctx, const char *definition);
 PJ *pj_create_argv_internal (PJ_CONTEXT *ctx, int argc, char **argv);
-
-void pj_map_svm_ptrs(PJ* P, bool map);
 
 // For use by projinfo
 void pj_load_ini(PJ_CONTEXT* ctx);

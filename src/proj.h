@@ -284,9 +284,8 @@ typedef void (*PJ_LOG_FUNCTION)(void *, int, const char *);
 typedef void* (*PROJ_SVM_MALLOC_FUNCTION)(void *user, size_t sz);
 typedef void* (*PROJ_SVM_CALLOC_FUNCTION)(void *user, size_t n, size_t sz);
 typedef void (*PROJ_SVM_FREE_FUNCTION)(void* user, void* ptr);
-typedef void (*PROJ_SVM_UPDATE_FUNCTION)(void* user, void* ptr, int map);
 
-PJ_ALLOCATOR PROJ_DLL* proj_allocator_create(void *user, PROJ_SVM_MALLOC_FUNCTION svm_malloc, PROJ_SVM_CALLOC_FUNCTION svm_calloc, PROJ_SVM_FREE_FUNCTION svm_free, PROJ_SVM_UPDATE_FUNCTION svm_map);
+PJ_ALLOCATOR PROJ_DLL* proj_allocator_create(void *user, PROJ_SVM_MALLOC_FUNCTION svm_malloc, PROJ_SVM_CALLOC_FUNCTION svm_calloc, PROJ_SVM_FREE_FUNCTION svm_free);
 void PROJ_DLL proj_allocator_set_user(PJ_ALLOCATOR* a, void* user);
 PJ_ALLOCATOR PROJ_DLL* proj_allocator_destroy(PJ_ALLOCATOR* a);
 
@@ -1354,11 +1353,6 @@ int PROJ_DLL proj_concatoperation_get_step_count(PJ_CONTEXT *ctx,
 PJ PROJ_DLL *proj_concatoperation_get_step(PJ_CONTEXT *ctx,
                                            const PJ *concatoperation,
                                            int i_step);
-
-/* ------------------------------------------------------------------------- */
-
-void PROJ_DLL   proj_host_acquire_svm(PJ* P);
-void PROJ_DLL   proj_host_release_svm(PJ* P);
 
 /**@}*/
 
