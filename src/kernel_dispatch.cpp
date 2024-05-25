@@ -30,10 +30,10 @@
 *****************************************************************************/
 static_assert(sizeof(PJconsts) == 568);
 
-static_assert(sizeof(PJstack_t) == 904);
+static_assert(sizeof(PJstack_t) == 776);
 static_assert(alignof(PJstack_t) == 8);
 
-static_assert(sizeof(PJstack_entry_t) == 56);
+static_assert(sizeof(PJstack_entry_t) == 48);
 static_assert(alignof(PJstack_entry_t) == 8);
 
 /******************************************************************************

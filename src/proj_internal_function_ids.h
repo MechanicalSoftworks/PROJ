@@ -33,7 +33,7 @@
   * Generate all function IDs.
   * These are consistent among all files that include this header.
   */
-enum { PJ_FUNCTION_BASE_ID = __COUNTER__ };
+enum { PJ_FUNCTION_BASE_ID = __COUNTER__ + 1 };
 
 // Function IDs start at 1. 0 is reserved for invalid.
 #define DEFINE_FUNCTION_ID(name)	name##_id = __COUNTER__ - PJ_FUNCTION_BASE_ID + 1
