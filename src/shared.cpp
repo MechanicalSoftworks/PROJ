@@ -110,7 +110,7 @@ struct pj_ctx_shared* pj_get_ctx_shared(const PJ* P)
 
 #ifdef PROJ_OPENCL_DEVICE
 
-PJ_COORD proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+PJ_COORD proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
 {
     push_proj_trans(stack, P, direction, coord);
     return stack_exec(stack);
@@ -282,21 +282,18 @@ chained calls starting out with a call to its 3D interface.
 
 #endif
 
-void stack_new(cl_local PJstack_t* stack)
+void stack_new(__local PJstack_t* stack)
 {
     stack->n = 0;
 }
 
-PJ_COORD stack_exec(cl_local PJstack_t* stack)
+PJ_COORD stack_exec(__local PJstack_t* stack)
 {
-    // Default to an error value.
-    PJ_COORD coo = { -1, -1, -1, -1 };
-
     while (stack->n > 0)
     {
-        cl_local PJstack_entry_t* top = stack->s + stack->n - 1;
+        __local PJstack_entry_t* top = stack->s + stack->n - 1;
 
-        switch (proj_dispatch_coroutine(static_cast<PJ_COROUTINE_ID>(top->coroutine_id), stack, top))
+        switch (proj_dispatch_coroutine(static_cast<PJ_COROUTINE_ID>(top->coroutine_id), stack))
         {
             case PJ_CO_YIELD:
             {
@@ -309,13 +306,13 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
                 --stack->n;
                 
                 // Transfer state back to the caller.
-                if (!stack->n)
+                if (stack->n)
                 {
-                    coo = top->coo;
+                    (top - 1)->coo = top->coo;
                 }
                 else
                 {
-                    (top - 1)->coo = top->coo;
+                    return top->coo;
                 }
 
                 break;
@@ -329,12 +326,12 @@ PJ_COORD stack_exec(cl_local PJstack_t* stack)
         }
     }
 
-    return coo;
+    return proj_coord_error();
 }
 
-void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD coo)
+void stack_push(__local PJstack_t* stack, PJ_COROUTINE_ID fn, __global PJ* P, PJ_COORD coo)
 {
-    cl_local PJstack_entry_t* e = stack->s + stack->n;
+    __local PJstack_entry_t* next = stack->s + stack->n;
     
     if (stack->n == PJ_CO_STACK_SIZE)
     {
@@ -342,18 +339,19 @@ void stack_push(cl_local PJstack_t* stack, PJ_COROUTINE_ID fn, PJ* P, PJ_COORD c
         return;
     }
 
-    e->coroutine_id = fn;
-    e->coo = coo;
-    e->P = P;
+    static_assert(PJ_COROUTINE_COUNT  < USHRT_MAX);
+    next->coroutine_id = (unsigned short)fn;
+    next->coo = coo;
+    next->P = P;
 
-    e->step = 0;
-    e->i = 0;
-    e->last_errno = 0;
+    next->step = 0;
+    next->i = 0;
+    next->last_errno = 0;
 
     ++stack->n;
 }
 
-void push_proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+void push_proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
 {
     if (nullptr == P || direction == PJ_IDENT)
         return;
@@ -363,7 +361,7 @@ void push_proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, P
     stack_push(stack, direction == PJ_FWD ? PJ_FUNCTION_PTR(pj_fwd4d_co) : PJ_FUNCTION_PTR(pj_inv4d_co), P, coord);
 }
 
-void push_approx_2D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+void push_approx_2D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
 {
     if (nullptr == P || direction == PJ_IDENT)
         return;
@@ -373,7 +371,7 @@ void push_approx_2D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION directi
     stack_push(stack, direction == PJ_FWD ? PJ_FUNCTION_PTR(pj_fwd_co) : PJ_FUNCTION_PTR(pj_inv_co), P, coord);
 }
 
-void push_approx_3D_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+void push_approx_3D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
 {
     if (nullptr == P || direction == PJ_IDENT)
         return;

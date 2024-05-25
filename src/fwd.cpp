@@ -34,11 +34,12 @@
 #define OUTPUT_UNITS P->right
 
 
-PJcoroutine_code_t fwd_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t fwd_prepare_co (__local PJstack_t* stack, __local void*) {
+    auto        top = stack_top(stack);
+    PJ*         P = top->P;
+    PJ_COORD    coo = top->coo;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         case 2: goto p2;
@@ -94,24 +95,24 @@ PJcoroutine_code_t fwd_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_e
 
         if (P->hgridshift) {
             push_proj_trans(stack, P->hgridshift, PJ_INV, coo);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
         }
         else if (P->helmert || (P->cart_wgs84 != nullptr && P->cart != nullptr)) {
             push_proj_trans (stack, P->cart_wgs84, PJ_FWD, coo); /* Go cartesian in WGS84 frame */
-            PJ_YIELD(e, 2);
+            PJ_YIELD(top, 2);
 
             if (P->helmert) {
                 push_proj_trans(stack, P->helmert, PJ_INV, coo); /* Step into local frame */
-                PJ_YIELD(e, 3);
+                PJ_YIELD(top, 3);
             }
             push_proj_trans (stack, P->cart,       PJ_INV, coo); /* Go back to angular using local ellps */
-            PJ_YIELD(e, 4);
+            PJ_YIELD(top, 4);
         }
         if (coo.lp.lam==HUGE_VAL)
             goto DONE;
         if (P->vgridshift) {
             push_proj_trans(stack, P->vgridshift, PJ_FWD, coo); /* Go orthometric from geometric */
-            PJ_YIELD(e, 5);
+            PJ_YIELD(top, 5);
         }
 
         /* Distance from central meridian, taking system zero meridian into account */
@@ -128,28 +129,29 @@ PJcoroutine_code_t fwd_prepare_co (cl_local PJstack_t* stack, cl_local PJstack_e
     /* We do not support gridshifts on cartesian input */
     if (INPUT_UNITS == PJ_IO_UNITS_CARTESIAN && P->helmert) {
         push_proj_trans(stack, P->helmert, PJ_INV, coo);
-        PJ_YIELD(e, 6);
+        PJ_YIELD(top, 6);
     }
 
 DONE:
-    e->coo = coo;
+    top->coo = coo;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = coo;
+    top->coo = coo;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
-PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t fwd_finalize_co (__local PJstack_t* stack, __local void*) {
+    auto        top = stack_top(stack);
+    PJ*         P = top->P;
+    PJ_COORD    coo = top->coo;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         case 2: goto p2;
@@ -163,7 +165,7 @@ PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_
 
         if (P->is_geocent) {
             push_proj_trans (stack, P->cart, PJ_FWD, coo);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
         }
         coo.xyz.x *= P->fr_meter;
         coo.xyz.y *= P->fr_meter;
@@ -205,33 +207,33 @@ PJcoroutine_code_t fwd_finalize_co (cl_local PJstack_t* stack, cl_local PJstack_
 
     if (P->axisswap) {
         push_proj_trans(stack, P->axisswap, PJ_FWD, coo);
-        PJ_YIELD(e, 2);
+        PJ_YIELD(top, 2);
     }
 
 //DONE:
-    e->coo = coo;
+    top->coo = coo;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = coo;
+    top->coo = coo;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
-static void push_fwd_prepare(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static void push_fwd_prepare(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     return stack_push(stack, PJ_FUNCTION_PTR(fwd_prepare_co), P, coo);
 }
 
-static void push_fwd_finalize(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static void push_fwd_finalize(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     return stack_push(stack, PJ_FUNCTION_PTR(fwd_finalize_co), P, coo);
 }
 
-static PJ_COORD push_fwd4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static PJ_COORD push_fwd4d(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     if (PJ_GET_COROUTINE(P, co_fwd4d)) {
         // This code path is really only taken by the pipeline.
@@ -245,7 +247,7 @@ static PJ_COORD push_fwd4d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     return proj_dispatch_operator(PJ_GET_COROUTINE(P, fwd4d), coo, P);
 }
 
-static PJ_COORD push_fwd3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static PJ_COORD push_fwd3d(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     if (PJ_GET_COROUTINE(P, co_fwd3d)) {
         // This code path is really only taken by the pipeline.
@@ -262,7 +264,7 @@ static PJ_COORD push_fwd3d(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
     return r;
 }
 
-static PJ_COORD push_fwd(cl_local PJstack_t* stack, PJ* P, PJ_COORD coo)
+static PJ_COORD push_fwd(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
 {
     if (PJ_GET_COROUTINE(P, co_fwd)) {
         // This code path is really only taken by the pipeline.
@@ -288,12 +290,13 @@ PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
     return coord;
 }
 
-PJcoroutine_code_t pj_fwd_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    int         last_errno = e->last_errno;
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*) {
+    auto            top = stack_top(stack);
+    int             last_errno = top->last_errno;
+    __global PJ*    P = top->P;
+    PJ_COORD        coo = top->coo;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         case 2: goto p2;
@@ -303,13 +306,13 @@ PJcoroutine_code_t pj_fwd_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t
         default: goto ABORT;
     }
 
-    coo.lp = e->coo.lp;
+    coo.lp = top->coo.lp;
     last_errno = P->shared_ctx->last_errno;
     P->shared_ctx->last_errno = 0;
 
     if (!P->skip_fwd_prepare) {
         push_fwd_prepare(stack, P, coo);
-        PJ_YIELD(e, 1);
+        PJ_YIELD(top, 1);
     }
     if (HUGE_VAL==coo.v[0] || HUGE_VAL==coo.v[1])
         goto ABORT;
@@ -318,17 +321,17 @@ PJcoroutine_code_t pj_fwd_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t
     if (PJ_GET_COROUTINE(P, fwd) || PJ_GET_COROUTINE(P, co_fwd))
     {
         coo.xy = push_fwd(stack, P, coo).xy;
-        PJ_YIELD(e, 2);
+        PJ_YIELD(top, 2);
     }
     else if (PJ_GET_COROUTINE(P, fwd3d) || PJ_GET_COROUTINE(P, co_fwd3d))
     {
         coo.xyz = push_fwd3d(stack, P, coo).xyz;
-        PJ_YIELD(e, 3);
+        PJ_YIELD(top, 3);
     }
     else if (PJ_GET_COROUTINE(P, fwd4d) || PJ_GET_COROUTINE(P, co_fwd4d))
     {
         coo = push_fwd4d(stack, P, coo);
-        PJ_YIELD(e, 4);
+        PJ_YIELD(top, 4);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
@@ -339,34 +342,35 @@ PJcoroutine_code_t pj_fwd_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t
 
     if (!P->skip_fwd_finalize) {
         push_fwd_finalize(stack, P, coo);
-        PJ_YIELD(e, 5);
+        PJ_YIELD(top, 5);
     }
 
     coo.xy = error_or_coord(P, coo, last_errno).xy;
 
 //DONE:
-    e->coo = coo;
-    e->last_errno = last_errno;
+    top->coo = coo;
+    top->last_errno = last_errno;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = coo;
-    e->last_errno = last_errno;
+    top->coo = coo;
+    top->last_errno = last_errno;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo.xy = proj_coord_error().xy;
+    top->coo.xy = proj_coord_error().xy;
     return PJ_CO_ERROR;
 }
 
 
 
-PJcoroutine_code_t pj_fwd3d_co (cl_local PJstack_t *stack, cl_local PJstack_entry_t* e) {
-    int         last_errno = e->last_errno;
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t pj_fwd3d_co (__local PJstack_t *stack, __local void*) {
+    auto            top = stack_top(stack);
+    int             last_errno = top->last_errno;
+    __global PJ*    P = top->P;
+    PJ_COORD        coo = top->coo;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         case 2: goto p2;
@@ -376,13 +380,13 @@ PJcoroutine_code_t pj_fwd3d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
         default: goto ABORT;
     }
 
-    coo.lpz = e->coo.lpz;
+    coo.lpz = top->coo.lpz;
     last_errno = P->shared_ctx->last_errno;
     P->shared_ctx->last_errno = 0;
 
     if (!P->skip_fwd_prepare) {
         push_fwd_prepare(stack, P, coo);
-        PJ_YIELD(e, 1);
+        PJ_YIELD(top, 1);
     }
     if (HUGE_VAL==coo.v[0])
         goto ABORT;
@@ -391,17 +395,17 @@ PJcoroutine_code_t pj_fwd3d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
     if (PJ_GET_COROUTINE(P, fwd3d) || PJ_GET_COROUTINE(P, co_fwd3d))
     {
         coo.xyz = push_fwd3d(stack, P, coo).xyz;
-        PJ_YIELD(e, 2);
+        PJ_YIELD(top, 2);
     }
     else if (PJ_GET_COROUTINE(P, fwd4d) || PJ_GET_COROUTINE(P, co_fwd4d))
     {
         coo = push_fwd4d(stack, P, coo);
-        PJ_YIELD(e, 3);
+        PJ_YIELD(top, 3);
     }
     else if (PJ_GET_COROUTINE(P, fwd) || PJ_GET_COROUTINE(P, co_fwd))
     {
         coo.xy = push_fwd(stack, P, coo).xy;
-        PJ_YIELD(e, 4);
+        PJ_YIELD(top, 4);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
@@ -412,32 +416,33 @@ PJcoroutine_code_t pj_fwd3d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
 
     if (!P->skip_fwd_finalize) {
         push_fwd_finalize(stack, P, coo);
-        PJ_YIELD(e, 5);
+        PJ_YIELD(top, 5);
     }
 
     coo.xyz = error_or_coord(P, coo, last_errno).xyz;
 
 //DONE:
-    e->coo = coo;
-    e->last_errno = last_errno;
+    top->coo = coo;
+    top->last_errno = last_errno;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = coo;
-    e->last_errno = last_errno;
+    top->coo = coo;
+    top->last_errno = last_errno;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo.xyz = proj_coord_error().xyz;
+    top->coo.xyz = proj_coord_error().xyz;
     return PJ_CO_ERROR;
 }
 
-PJcoroutine_code_t pj_fwd4d_co (cl_local PJstack_t *stack, cl_local PJstack_entry_t* e) {
-    int         last_errno = e->last_errno;
-    PJ*         P = e->P;
-    PJ_COORD    coo = e->coo;
+PJcoroutine_code_t pj_fwd4d_co (__local PJstack_t *stack, __local void*) {
+    auto            top = stack_top(stack);
+    int             last_errno = top->last_errno;
+    __global PJ*    P = top->P;
+    PJ_COORD        coo = top->coo;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         case 2: goto p2;
@@ -452,7 +457,7 @@ PJcoroutine_code_t pj_fwd4d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
 
     if (!P->skip_fwd_prepare) {
         push_fwd_prepare(stack, P, coo);
-        PJ_YIELD(e, 1);
+        PJ_YIELD(top, 1);
     }
     if (HUGE_VAL == coo.v[0])
         goto ABORT;
@@ -461,17 +466,17 @@ PJcoroutine_code_t pj_fwd4d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
     if (PJ_GET_COROUTINE(P, fwd4d) || PJ_GET_COROUTINE(P, co_fwd4d))
     {
         coo = push_fwd4d(stack, P, coo);
-        PJ_YIELD(e, 2);
+        PJ_YIELD(top, 2);
     }
     else if (PJ_GET_COROUTINE(P, fwd3d) || PJ_GET_COROUTINE(P, co_fwd3d))
     {
         coo = push_fwd3d(stack, P, coo);
-        PJ_YIELD(e, 3);
+        PJ_YIELD(top, 3);
     }
     else if (PJ_GET_COROUTINE(P, fwd) || PJ_GET_COROUTINE(P, co_fwd))
     {
         coo = push_fwd(stack, P, coo);
-        PJ_YIELD(e, 4);
+        PJ_YIELD(top, 4);
     }
     else {
         proj_errno_set (P, PROJ_ERR_OTHER_NO_INVERSE_OP);
@@ -482,23 +487,23 @@ PJcoroutine_code_t pj_fwd4d_co (cl_local PJstack_t *stack, cl_local PJstack_entr
 
     if (!P->skip_fwd_finalize) {
         push_fwd_finalize(stack, P, coo);
-        PJ_YIELD(e, 5);
+        PJ_YIELD(top, 5);
     }
 
     coo = error_or_coord(P, coo, last_errno);
 
 //DONE:
-    e->coo = coo;
-    e->last_errno = last_errno;
+    top->coo = coo;
+    top->last_errno = last_errno;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = coo;
-    e->last_errno = last_errno;
+    top->coo = coo;
+    top->last_errno = last_errno;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 

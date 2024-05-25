@@ -109,30 +109,33 @@ PROJ_HEAD(push, "Save coordinate value on pipeline stack");
 /* Projection specific elements for the PJ object */
 namespace { // anonymous namespace
 struct PipelineStep {
-    PJ_FIELD(PJ*,  pj,       nullptr);
-    PJ_FIELD(bool, omit_fwd, false);
-    PJ_FIELD(bool, omit_inv, false);
+    PJ_FIELD(__global PJ*, pj,       nullptr);
+    PJ_FIELD(        bool, omit_fwd, false);
+    PJ_FIELD(        bool, omit_inv, false);
 
 #ifdef __cplusplus
-    PipelineStep(PJ* pjIn, bool omitFwdIn, bool omitInvIn) :
+    PipelineStep(__global PJ* pjIn, bool omitFwdIn, bool omitInvIn) :
         pj(pjIn), omit_fwd(omitFwdIn), omit_inv(omitInvIn) {}
 #endif
 };
 
 struct PipelineStack {
-    PJ_FIELD(double*, ptr,      nullptr);
-    PJ_FIELD(size_t,  size,     0);
-    PJ_FIELD(size_t,  max_size, 0);
+    PJ_FIELD(__global double*, ptr,      nullptr);
+    PJ_FIELD(          size_t, size,     0);
+    PJ_FIELD(          size_t, max_size, 0);
 };
 
 struct Pipeline {
     PJ_FIELD(char**, argv,         nullptr);
     PJ_FIELD(char**, current_argv, nullptr);
 
-    PJ_FIELD(struct PipelineStep*, steps,      nullptr);
-    PJ_FIELD(size_t,               step_count, 0);
+    PJ_FIELD(__global struct PipelineStep*, steps,      nullptr);
+    PJ_FIELD(                       size_t, step_count, 0);
 
-    struct PipelineStack stack[4];
+    PipelineStack stack1;
+    PipelineStack stack2;
+    PipelineStack stack3;
+    PipelineStack stack4;
 };
 
 struct PushPop {
@@ -162,19 +165,19 @@ static void PipelineStackDelete(struct pj_allocator* allocator, struct PipelineS
 
 #endif
 
-static double PipelineStackTop(struct PipelineStack* stack)
+static double PipelineStackTop(__global struct PipelineStack* stack)
 {
     return stack->size
         ? stack->ptr[stack->size - 1]
         : 0.0;
 }
 
-static int PipelineStackEmpty(struct PipelineStack* stack)
+static int PipelineStackEmpty(__global struct PipelineStack* stack)
 {
     return !stack->size;
 }
 
-static void PipelineStackPush(struct PipelineStack* stack, double d)
+static void PipelineStackPush(__global struct PipelineStack* stack, double d)
 {
     if (stack->size < stack->max_size)
     {
@@ -182,7 +185,7 @@ static void PipelineStackPush(struct PipelineStack* stack, double d)
     }
 }
 
-static void PipelineStackPop(struct PipelineStack* stack)
+static void PipelineStackPop(__global struct PipelineStack* stack)
 {
     if (stack->size)
     {
@@ -202,33 +205,17 @@ static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
     }
 }
 
-static void pipeline_map_svm_ptrs(PJ* P, bool map)
-{
-    pj_map_svm_ptrs(P, map);
-
-    struct Pipeline* pipeline = (struct Pipeline*)(P->opaque);
-    P->host->map_svm(pipeline->steps, map);
-    P->host->map_svm(pipeline->stack, map);
-    for (size_t i = 0; i < pipeline->step_count; ++i)
-    {
-        struct PipelineStep* step = pipeline->steps + i;
-        if (!step->omit_fwd || !step->omit_inv)
-        {
-            step->pj->host->map_pj(step->pj, map);
-        }
-    }
-}
-
 #endif
 
-PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
+    __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -242,7 +229,7 @@ PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local P
         if( !step->omit_fwd )
         {
             push_proj_trans (stack, step->pj, PJ_FWD, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -250,29 +237,30 @@ PJcoroutine_code_t pipeline_forward_4d_co (cl_local PJstack_t* stack, cl_local P
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
-PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
+    __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -286,7 +274,7 @@ PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJ
         if( !step->omit_inv )
         {
             push_proj_trans (stack, step->pj, PJ_INV, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -294,31 +282,32 @@ PJcoroutine_code_t pipeline_reverse_4d_co(cl_local PJstack_t* stack, cl_local PJ
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
 
 
-PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
+    __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -333,7 +322,7 @@ PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJ
         if( !step->omit_fwd )
         {
             push_approx_3D_trans (stack, step->pj, PJ_FWD, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -341,29 +330,30 @@ PJcoroutine_code_t pipeline_forward_3d_co(cl_local PJstack_t* stack, cl_local PJ
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
-PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
+    __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -378,7 +368,7 @@ PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJ
         if( !step->omit_inv )
         {
             push_proj_trans (stack, step->pj, PJ_INV, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -386,31 +376,32 @@ PJcoroutine_code_t pipeline_reverse_3d_co(cl_local PJstack_t* stack, cl_local PJ
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
 
 
-PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
+    __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
     case 0: break;
     case 1: goto p1;
     default: goto ABORT;
@@ -425,7 +416,7 @@ PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJsta
         if( !step->omit_fwd )
         {
             push_approx_2D_trans (stack, step->pj, PJ_FWD, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -433,29 +424,30 @@ PJcoroutine_code_t pipeline_forward_co(cl_local PJstack_t* stack, cl_local PJsta
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
-PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJstack_entry_t* e) {
-    PJ*                     P = e->P;
-    auto                    pipeline = static_cast<struct Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
-    struct PipelineStep*    step = nullptr;
+PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
+    __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
+    __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -470,7 +462,7 @@ PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJsta
         if( !step->omit_inv )
         {
             push_approx_2D_trans (stack, step->pj, PJ_INV, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -478,17 +470,17 @@ PJcoroutine_code_t pipeline_reverse_co(cl_local PJstack_t* stack, cl_local PJsta
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
@@ -503,6 +495,7 @@ static PJ *destructor (PJ *P, int errlev) {
         return pj_default_destructor (P, errlev);
 
     auto pipeline = static_cast<struct Pipeline*>(P->opaque);
+    auto stack = &pipeline->stack1;
 
     free (pipeline->argv);
     free (pipeline->current_argv);
@@ -515,12 +508,12 @@ static PJ *destructor (PJ *P, int errlev) {
 
     for (int i = 0; i < 4; ++i)
     {
-        PipelineStackDelete(P->host->ctx->allocator, pipeline->stack + i);
+        PipelineStackDelete(P->host->ctx->allocator, stack + i);
     }
 
     for (int i = 0; i < 4; ++i)
     {
-        P->host->ctx->allocator->svm_free(pipeline->stack[i].ptr);
+        P->host->ctx->allocator->svm_free(stack[i].ptr);
     }
 
     P->host->ctx->allocator->svm_delete(pipeline);
@@ -637,7 +630,6 @@ PJ *OPERATION(pipeline,0) {
     P->co_inv    =  PJ_MAKE_KERNEL(pipeline_reverse_co);
     P->host->destructor  =  destructor;
     P->host->reassign_context = pipeline_reassign_context;
-    P->host->map_pj = pipeline_map_svm_ptrs;
 
     /* Currently, the pipeline driver is a raw bit mover, enabling other operations */
     /* to collaborate efficiently. All prep/fin stuff is done at the step levels. */
@@ -653,6 +645,7 @@ PJ *OPERATION(pipeline,0) {
 
     argc = (int)argc_params (P->host->params);
     auto pipeline = static_cast<struct Pipeline*>(P->opaque);
+    auto stack = &pipeline->stack1;
     pipeline->argv = argv = argv_params (P->host->params, argc);
     if (nullptr==argv)
         return destructor (P, PROJ_ERR_INVALID_OP /* ENOMEM */);
@@ -840,7 +833,7 @@ PJ *OPERATION(pipeline,0) {
 
     for (i = 0; i < 4; ++i)
     {
-        PipelineStackNew(P->host->ctx->allocator, pipeline->stack + i, 128);
+        PipelineStackNew(P->host->ctx->allocator, stack + i, 128);
     }
 
     return P;
@@ -848,50 +841,52 @@ PJ *OPERATION(pipeline,0) {
 
 #endif // !PROJ_OPENCL_DEVICE
 
-PJ_COORD pipeline_push(PJ_COORD point, PJ *P) {
+PJ_COORD pipeline_push(PJ_COORD point, __global PJ *P) {
     if (P->parent == nullptr)
         return point;
 
-    auto pipeline = static_cast<struct Pipeline*>(P->parent->opaque);
-    auto pushpop = static_cast<struct PushPop*>(P->opaque);
+    __global Pipeline* pipeline = static_cast<__global Pipeline*>(P->parent->opaque);
+    __global PushPop* pushpop = static_cast<__global PushPop*>(P->opaque);
+    __global PipelineStack* stack = &pipeline->stack1;
 
     if (pushpop->v1)
-        PipelineStackPush(pipeline->stack + 0, point.v[0]);
+        PipelineStackPush(stack + 0, point.v[0]);
     if (pushpop->v2)
-        PipelineStackPush(pipeline->stack + 1, point.v[1]);
+        PipelineStackPush(stack + 1, point.v[1]);
     if (pushpop->v3)
-        PipelineStackPush(pipeline->stack + 2, point.v[2]);
+        PipelineStackPush(stack + 2, point.v[2]);
     if (pushpop->v4)
-        PipelineStackPush(pipeline->stack + 3, point.v[3]);
+        PipelineStackPush(stack + 3, point.v[3]);
 
     return point;
 }
 
-PJ_COORD pipeline_pop(PJ_COORD point, PJ *P) {
+PJ_COORD pipeline_pop(PJ_COORD point, __global PJ *P) {
     if (P->parent == nullptr)
         return point;
 
-    auto pipeline = static_cast<struct Pipeline*>(P->parent->opaque);
-    auto pushpop = static_cast<struct PushPop*>(P->opaque);
+    __global Pipeline* pipeline = static_cast<__global Pipeline*>(P->parent->opaque);
+    __global PushPop* pushpop = static_cast<__global PushPop*>(P->opaque);
+    __global PipelineStack* stack = &pipeline->stack1;
 
-    if (pushpop->v1 && !PipelineStackEmpty(pipeline->stack + 0)) {
-            point.v[0] = PipelineStackTop(pipeline->stack + 0);
-            PipelineStackPop(pipeline->stack + 0);
+    if (pushpop->v1 && !PipelineStackEmpty(stack + 0)) {
+            point.v[0] = PipelineStackTop(stack + 0);
+            PipelineStackPop(stack + 0);
     }
 
-    if (pushpop->v2 && !PipelineStackEmpty(pipeline->stack + 1)) {
-            point.v[1] = PipelineStackTop(pipeline->stack + 1);
-            PipelineStackPop(pipeline->stack + 1);
+    if (pushpop->v2 && !PipelineStackEmpty(stack + 1)) {
+            point.v[1] = PipelineStackTop(stack + 1);
+            PipelineStackPop(stack + 1);
     }
 
-    if (pushpop->v3 && !PipelineStackEmpty(pipeline->stack + 2)) {
-            point.v[2] = PipelineStackTop(pipeline->stack + 2);
-            PipelineStackPop(pipeline->stack + 2);
+    if (pushpop->v3 && !PipelineStackEmpty(stack + 2)) {
+            point.v[2] = PipelineStackTop(stack + 2);
+            PipelineStackPop(stack + 2);
     }
 
-    if (pushpop->v4 && !PipelineStackEmpty(pipeline->stack + 3)) {
-            point.v[3] = PipelineStackTop(pipeline->stack + 3);
-            PipelineStackPop(pipeline->stack + 3);
+    if (pushpop->v4 && !PipelineStackEmpty(stack + 3)) {
+            point.v[3] = PipelineStackTop(stack + 3);
+            PipelineStackPop(stack + 3);
     }
 
     return point;

@@ -28,6 +28,12 @@
 #ifndef PROJ_SHARED_H
 #define PROJ_SHARED_H
 
+#ifndef PROJ_OPENCL_DEVICE
+#   define __global
+#   define __constant
+#   define __local
+#endif
+
 /* first forward declare everything needed */
 
 /* Data type for generic geodetic 3D data plus epoch information */
@@ -198,16 +204,16 @@ typedef enum PJ_DIRECTION PJ_DIRECTION;
 
 typedef struct PJstack_entry_s
 {
-    int             coroutine_id;         // PJ_COROUTINE_ID
-
-    // State.
     PJ_COORD        coo;
-    PJ*             P;
-    int             step;
+    __global PJ*    P;
+
     union {
-        int         i;          // Pipeline.
-        int         last_errno; // pj_fwd+pj_inv.
+        int         i;              // Pipeline.
+        int         last_errno;     // pj_fwd+pj_inv.
     };
+
+    unsigned short  coroutine_id;   // PJ_COROUTINE_ID
+    unsigned short  step;
 } PJstack_entry_t;
 
 #define PJ_CO_STACK_SIZE 16
@@ -216,6 +222,8 @@ typedef struct PJstack_s
     PJstack_entry_t s[PJ_CO_STACK_SIZE];
     int             n;
 } PJstack_t;
+
+#define stack_top(stack) (stack->s + stack->n - 1)
 
 #ifdef PJ_LIB__
 

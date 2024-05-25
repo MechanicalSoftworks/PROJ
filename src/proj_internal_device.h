@@ -31,6 +31,8 @@
 
 #include "proj_internal_shared.h"
 
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
 #define proj_log_error(P, fmt, ...)
 
 PJ_COORD proj_coord_error(void);
@@ -51,6 +53,6 @@ static inline int pj_streq(const char* a, __constant char* b)
 	return 1;
 }
 
-PJ_COORD proj_trans(cl_local PJstack_t* stack, PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+PJ_COORD proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
 #endif // !PROJ_INTERNAL_DEVICE_H

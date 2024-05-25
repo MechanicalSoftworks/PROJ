@@ -115,7 +115,7 @@ static double qsc_shift_lon_origin(double lon, double offset) {
 }
 
 
-PJ_XY qsc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+PJ_XY qsc_e_forward (PJ_LP lp, __global PJ *P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     struct pj_opaque *Q = (struct pj_opaque*)P->opaque;
     double lat, lon;
@@ -231,7 +231,7 @@ PJ_XY qsc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
 }
 
 
-PJ_LP qsc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PJ_LP qsc_e_inverse (PJ_XY xy, __global PJ *P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     struct pj_opaque *Q = (struct pj_opaque*)P->opaque;
     double mu, nu, cosmu, tannu;
