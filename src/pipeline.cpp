@@ -207,14 +207,15 @@ static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
 
 #endif
 
-PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    __global PJ*            P = e->P;
+PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
     __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -228,7 +229,7 @@ PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local PJs
         if( !step->omit_fwd )
         {
             push_proj_trans (stack, step->pj, PJ_FWD, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -236,29 +237,30 @@ PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local PJs
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
-PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    __global PJ*            P = e->P;
+PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
     __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -272,7 +274,7 @@ PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local PJst
         if( !step->omit_inv )
         {
             push_proj_trans (stack, step->pj, PJ_INV, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -280,31 +282,32 @@ PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local PJst
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
 
 
-PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    __global PJ*            P = e->P;
+PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
     __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -319,7 +322,7 @@ PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local PJst
         if( !step->omit_fwd )
         {
             push_approx_3D_trans (stack, step->pj, PJ_FWD, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -327,29 +330,30 @@ PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local PJst
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
-PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    __global PJ*            P = e->P;
+PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
     __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -364,7 +368,7 @@ PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local PJst
         if( !step->omit_inv )
         {
             push_proj_trans (stack, step->pj, PJ_INV, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -372,31 +376,32 @@ PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local PJst
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
 
 
-PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    __global PJ*            P = e->P;
+PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
     __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
     case 0: break;
     case 1: goto p1;
     default: goto ABORT;
@@ -411,7 +416,7 @@ PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local PJstack
         if( !step->omit_fwd )
         {
             push_approx_2D_trans (stack, step->pj, PJ_FWD, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -419,29 +424,30 @@ PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local PJstack
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 
 
-PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local PJstack_entry_t* e) {
-    __global PJ*            P = e->P;
+PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local void*) {
+    auto                    top = stack_top(stack);
+    __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
-    PJ_COORD                point = e->coo;
-    size_t                  i = e->i;
+    PJ_COORD                point = top->coo;
+    size_t                  i = top->i;
     __global PipelineStep*  step = nullptr;
 
-    switch (e->step) {
+    switch (top->step) {
         case 0: break;
         case 1: goto p1;
         default: goto ABORT;
@@ -456,7 +462,7 @@ PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local PJstack
         if( !step->omit_inv )
         {
             push_approx_2D_trans (stack, step->pj, PJ_INV, point);
-            PJ_YIELD(e, 1);
+            PJ_YIELD(top, 1);
             if( point.xyzt.x == HUGE_VAL ) {
                 break;
             }
@@ -464,17 +470,17 @@ PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local PJstack
     }
 
 //DONE:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
-    e->coo = point;
-    e->i = (int)i;
+    top->coo = point;
+    top->i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
-    e->coo = proj_coord_error();
+    top->coo = proj_coord_error();
     return PJ_CO_ERROR;
 }
 

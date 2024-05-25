@@ -293,7 +293,7 @@ PJ_COORD stack_exec(__local PJstack_t* stack)
     {
         __local PJstack_entry_t* top = stack->s + stack->n - 1;
 
-        switch (proj_dispatch_coroutine(static_cast<PJ_COROUTINE_ID>(top->coroutine_id), stack, top))
+        switch (proj_dispatch_coroutine(static_cast<PJ_COROUTINE_ID>(top->coroutine_id), stack))
         {
             case PJ_CO_YIELD:
             {
@@ -331,7 +331,7 @@ PJ_COORD stack_exec(__local PJstack_t* stack)
 
 void stack_push(__local PJstack_t* stack, PJ_COROUTINE_ID fn, __global PJ* P, PJ_COORD coo)
 {
-    __local PJstack_entry_t* e = stack->s + stack->n;
+    __local PJstack_entry_t* next = stack->s + stack->n;
     
     if (stack->n == PJ_CO_STACK_SIZE)
     {
@@ -339,13 +339,14 @@ void stack_push(__local PJstack_t* stack, PJ_COROUTINE_ID fn, __global PJ* P, PJ
         return;
     }
 
-    e->coroutine_id = fn;
-    e->coo = coo;
-    e->P = P;
+    static_assert(PJ_COROUTINE_COUNT  < USHRT_MAX);
+    next->coroutine_id = (unsigned short)fn;
+    next->coo = coo;
+    next->P = P;
 
-    e->step = 0;
-    e->i = 0;
-    e->last_errno = 0;
+    next->step = 0;
+    next->i = 0;
+    next->last_errno = 0;
 
     ++stack->n;
 }

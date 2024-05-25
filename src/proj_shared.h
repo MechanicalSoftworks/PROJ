@@ -223,6 +223,8 @@ typedef struct PJstack_s
     int             n;
 } PJstack_t;
 
+#define stack_top(stack) (stack->s + stack->n - 1)
+
 #ifdef PJ_LIB__
 
 #   define PROJ_HEAD(name, desc) static const char des_##name [] = desc

@@ -112,8 +112,8 @@ typedef enum
     PJ_CO_ERROR
 } PJcoroutine_code_t;
 
-#define PJ_YIELD(e, s)  \
-    e->step = s;        \
+#define PJ_YIELD(top, s)  \
+    top->step = s;        \
     goto YIELD;         \
 p##s:
 
@@ -143,7 +143,7 @@ struct PJstack_entry_s;
 #define PJ_GET_COROUTINE(P, type)    P->type
 #define PJ_FUNCTION_PTR(name)        name##_id
 
-PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, __local PJstack_t* stack, __local PJstack_entry_t* e);
+PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, __local PJstack_t* stack);
 PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP lp, __global PJ* P);
 PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY xy, __global PJ* P);
 PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ lpz, __global PJ* P);
@@ -179,7 +179,7 @@ inline auto operator==(std::nullptr_t, const PJkernel<T, InvalidValue>& k) { ret
 
 struct PJ_COROUTINE : public PJkernel<PJ_COROUTINE_ID, PJ_INVALID_COROUTINE>
 {
-    auto operator()(__local struct PJstack_s* stack, __local struct PJstack_entry_s* e) const { return proj_dispatch_coroutine(fn, stack, e); }
+    auto operator()(__local struct PJstack_s* stack) const { return proj_dispatch_coroutine(fn, stack); }
 
     using PJkernel::PJkernel;
     using PJkernel::operator=;
@@ -518,13 +518,13 @@ void push_proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION dire
 void push_approx_3D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 void push_approx_2D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
-PJcoroutine_code_t pj_fwd4d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
-PJcoroutine_code_t pj_inv4d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
+PJcoroutine_code_t pj_fwd4d_co(__local PJstack_t* stack, __local void*);
+PJcoroutine_code_t pj_inv4d_co(__local PJstack_t* stack, __local void*);
 
-PJcoroutine_code_t pj_fwd3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
-PJcoroutine_code_t pj_inv3d_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
+PJcoroutine_code_t pj_fwd3d_co(__local PJstack_t* stack, __local void*);
+PJcoroutine_code_t pj_inv3d_co(__local PJstack_t* stack, __local void*);
 
-PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
-PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local PJstack_entry_t* e);
+PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*);
+PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local void*);
 
 #endif // !PROJ_INTERNAL_SHARED_H
