@@ -509,22 +509,24 @@ void proj_context_errno_set(struct pj_ctx_shared* ctx, int err);
 struct pj_ctx_shared* pj_get_ctx_shared(const PJ*);
 
 // Coroutines.
-void stack_new(__local PJstack_t* stack);
-PJ_COORD stack_exec(__local PJstack_t* stack);
+PROJ_DLL void stack_new(__local PJstack_t* stack);
+PROJ_DLL PJ_COORD stack_exec(__local PJstack_t* stack);
 
-void stack_push(__local PJstack_t* stack, PJ_COROUTINE_ID fn, __global PJ* P, PJ_COORD coo);
+PROJ_DLL void stack_push(__local PJstack_t* stack, PJ_COROUTINE_ID fn, __global PJ* P, PJ_COORD coo);
 
-void push_proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
-void push_approx_3D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
-void push_approx_2D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+PROJ_DLL void push_proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+PROJ_DLL void push_approx_3D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+PROJ_DLL void push_approx_2D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
-PJcoroutine_code_t pj_fwd4d_co(__local PJstack_t* stack, __local void*);
-PJcoroutine_code_t pj_inv4d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PJcoroutine_code_t pj_fwd4d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PJcoroutine_code_t pj_inv4d_co(__local PJstack_t* stack, __local void*);
 
-PJcoroutine_code_t pj_fwd3d_co(__local PJstack_t* stack, __local void*);
-PJcoroutine_code_t pj_inv3d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PJcoroutine_code_t pj_fwd3d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PJcoroutine_code_t pj_inv3d_co(__local PJstack_t* stack, __local void*);
 
-PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*);
-PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local void*);
+
+PROJ_DLL PJ_COORD proj_trans_co(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
 #endif // !PROJ_INTERNAL_SHARED_H

@@ -108,15 +108,13 @@ struct pj_ctx_shared* pj_get_ctx_shared(const PJ* P)
 #endif
 }
 
-#ifdef PROJ_OPENCL_DEVICE
-
-PJ_COORD proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
+PJ_COORD proj_trans_co(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord)
 {
     push_proj_trans(stack, P, direction, coord);
     return stack_exec(stack);
 }
 
-#else
+#ifndef CL_DEVICE
 
 /**************************************************************************************/
 PJ_COORD proj_trans (PJ *P, PJ_DIRECTION direction, PJ_COORD coord) {

@@ -53,6 +53,4 @@ static inline int pj_streq(const char* a, __constant char* b)
 	return 1;
 }
 
-PJ_COORD proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
-
 #endif // !PROJ_INTERNAL_DEVICE_H
