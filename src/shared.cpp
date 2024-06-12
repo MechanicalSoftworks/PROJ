@@ -343,8 +343,8 @@ void stack_push(__local PJstack_t* stack, PJ_COROUTINE_ID fn, __global PJ* P, PJ
     next->P = P;
 
     next->step = 0;
-    next->i = 0;
-    next->last_errno = 0;
+    next->u.i = 0;
+    next->u.last_errno = 0;
 
     ++stack->n;
 }

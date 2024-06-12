@@ -60,7 +60,7 @@ set(PROJ_common_WARN_FLAGS  # common only to GNU/Clang C/C++
   -Wswitch
   -Wshadow
   -Wunused-parameter
-  -Wmissing-declarations
+#  -Wmissing-declarations
   -Wformat
   -Wformat-security
 )
