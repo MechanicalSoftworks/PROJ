@@ -210,7 +210,7 @@ typedef struct PJstack_entry_s
     union {
         int         i;              // Pipeline.
         int         last_errno;     // pj_fwd+pj_inv.
-    };
+    } u;
 
     unsigned short  coroutine_id;   // PJ_COROUTINE_ID
     unsigned short  step;

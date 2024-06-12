@@ -292,7 +292,7 @@ PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
 
 PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*) {
     auto            top = stack_top(stack);
-    int             last_errno = top->last_errno;
+    int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;
     PJ_COORD        coo = top->coo;
 
@@ -349,12 +349,12 @@ PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*) {
 
 //DONE:
     top->coo = coo;
-    top->last_errno = last_errno;
+    top->u.last_errno = last_errno;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = coo;
-    top->last_errno = last_errno;
+    top->u.last_errno = last_errno;
     return PJ_CO_YIELD;
 
 ABORT:
@@ -366,7 +366,7 @@ ABORT:
 
 PJcoroutine_code_t pj_fwd3d_co (__local PJstack_t *stack, __local void*) {
     auto            top = stack_top(stack);
-    int             last_errno = top->last_errno;
+    int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;
     PJ_COORD        coo = top->coo;
 
@@ -423,12 +423,12 @@ PJcoroutine_code_t pj_fwd3d_co (__local PJstack_t *stack, __local void*) {
 
 //DONE:
     top->coo = coo;
-    top->last_errno = last_errno;
+    top->u.last_errno = last_errno;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = coo;
-    top->last_errno = last_errno;
+    top->u.last_errno = last_errno;
     return PJ_CO_YIELD;
 
 ABORT:
@@ -438,7 +438,7 @@ ABORT:
 
 PJcoroutine_code_t pj_fwd4d_co (__local PJstack_t *stack, __local void*) {
     auto            top = stack_top(stack);
-    int             last_errno = top->last_errno;
+    int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;
     PJ_COORD        coo = top->coo;
 
@@ -494,12 +494,12 @@ PJcoroutine_code_t pj_fwd4d_co (__local PJstack_t *stack, __local void*) {
 
 //DONE:
     top->coo = coo;
-    top->last_errno = last_errno;
+    top->u.last_errno = last_errno;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = coo;
-    top->last_errno = last_errno;
+    top->u.last_errno = last_errno;
     return PJ_CO_YIELD;
 
 ABORT:

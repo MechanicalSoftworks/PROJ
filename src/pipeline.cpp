@@ -212,7 +212,7 @@ PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local voi
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = top->coo;
-    size_t                  i = top->i;
+    size_t                  i = top->u.i;
     __global PipelineStep*  step = nullptr;
 
     switch (top->step) {
@@ -238,12 +238,12 @@ PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local voi
 
 //DONE:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
@@ -257,7 +257,7 @@ PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local void
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = top->coo;
-    size_t                  i = top->i;
+    size_t                  i = top->u.i;
     __global PipelineStep*  step = nullptr;
 
     switch (top->step) {
@@ -283,12 +283,12 @@ PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local void
 
 //DONE:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
@@ -304,7 +304,7 @@ PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local void
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = top->coo;
-    size_t                  i = top->i;
+    size_t                  i = top->u.i;
     __global PipelineStep*  step = nullptr;
 
     switch (top->step) {
@@ -331,12 +331,12 @@ PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local void
 
 //DONE:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
@@ -350,7 +350,7 @@ PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local void
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = top->coo;
-    size_t                  i = top->i;
+    size_t                  i = top->u.i;
     __global PipelineStep*  step = nullptr;
 
     switch (top->step) {
@@ -377,12 +377,12 @@ PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local void
 
 //DONE:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
@@ -398,7 +398,7 @@ PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local void*) 
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = top->coo;
-    size_t                  i = top->i;
+    size_t                  i = top->u.i;
     __global PipelineStep*  step = nullptr;
 
     switch (top->step) {
@@ -425,12 +425,12 @@ PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local void*) 
 
 //DONE:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
@@ -444,7 +444,7 @@ PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local void*) 
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
     PJ_COORD                point = top->coo;
-    size_t                  i = top->i;
+    size_t                  i = top->u.i;
     __global PipelineStep*  step = nullptr;
 
     switch (top->step) {
@@ -471,12 +471,12 @@ PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local void*) 
 
 //DONE:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_DONE;
 
 YIELD:
     top->coo = point;
-    top->i = (int)i;
+    top->u.i = (int)i;
     return PJ_CO_YIELD;
 
 ABORT:
