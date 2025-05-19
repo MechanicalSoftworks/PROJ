@@ -300,7 +300,7 @@ static double tconvert_out(int i, double d)
 
 
 /***********************************************************************/
-PJ_XY unitconvert_forward_2d(PJ_LP lp, __global PJ *P) {
+PROJ_NOINLINE PJ_XY unitconvert_forward_2d(PJ_LP lp, __global PJ *P) {
 /************************************************************************
     Forward unit conversions in the plane
 ************************************************************************/
@@ -316,7 +316,7 @@ PJ_XY unitconvert_forward_2d(PJ_LP lp, __global PJ *P) {
 
 
 /***********************************************************************/
-PJ_LP unitconvert_reverse_2d(PJ_XY xy, __global PJ *P) {
+PROJ_NOINLINE PJ_LP unitconvert_reverse_2d(PJ_XY xy, __global PJ *P) {
 /************************************************************************
     Reverse unit conversions in the plane
 ************************************************************************/
@@ -332,7 +332,7 @@ PJ_LP unitconvert_reverse_2d(PJ_XY xy, __global PJ *P) {
 
 
 /***********************************************************************/
-PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, __global PJ *P) {
+PROJ_NOINLINE PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, __global PJ *P) {
 /************************************************************************
     Forward unit conversions the vertical component
 ************************************************************************/
@@ -350,7 +350,7 @@ PJ_XYZ unitconvert_forward_3d(PJ_LPZ lpz, __global PJ *P) {
 }
 
 /***********************************************************************/
-PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, __global PJ *P) {
+PROJ_NOINLINE PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, __global PJ *P) {
 /************************************************************************
     Reverse unit conversions the vertical component
 ************************************************************************/
@@ -369,7 +369,7 @@ PJ_LPZ unitconvert_reverse_3d(PJ_XYZ xyz, __global PJ *P) {
 
 
 /***********************************************************************/
-PJ_COORD unitconvert_forward_4d(PJ_COORD obs, __global PJ *P) {
+PROJ_NOINLINE PJ_COORD unitconvert_forward_4d(PJ_COORD obs, __global PJ *P) {
 /************************************************************************
     Forward conversion of time units
 ************************************************************************/
@@ -389,7 +389,7 @@ PJ_COORD unitconvert_forward_4d(PJ_COORD obs, __global PJ *P) {
 
 
 /***********************************************************************/
-PJ_COORD unitconvert_reverse_4d(PJ_COORD obs, __global PJ *P) {
+PROJ_NOINLINE PJ_COORD unitconvert_reverse_4d(PJ_COORD obs, __global PJ *P) {
 /************************************************************************
     Reverse conversion of time units
 ************************************************************************/

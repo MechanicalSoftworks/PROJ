@@ -501,6 +501,12 @@ struct PJconsts {
 #endif
 };
 
+#ifdef CLU_NO_INLINE
+#	define PROJ_NOINLINE	__attribute__((noinline))
+#else
+#	define PROJ_NOINLINE
+#endif
+
 /* Geographical to geocentric latitude - another of the "simple, but useful" */
 PJ_COORD pj_geocentric_latitude(const PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
@@ -518,14 +524,14 @@ PROJ_DLL void push_proj_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIREC
 PROJ_DLL void push_approx_3D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 PROJ_DLL void push_approx_2D_trans(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
-PROJ_DLL PJcoroutine_code_t pj_fwd4d_co(__local PJstack_t* stack, __local void*);
-PROJ_DLL PJcoroutine_code_t pj_inv4d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PROJ_NOINLINE PJcoroutine_code_t pj_fwd4d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PROJ_NOINLINE PJcoroutine_code_t pj_inv4d_co(__local PJstack_t* stack, __local void*);
 
-PROJ_DLL PJcoroutine_code_t pj_fwd3d_co(__local PJstack_t* stack, __local void*);
-PROJ_DLL PJcoroutine_code_t pj_inv3d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PROJ_NOINLINE PJcoroutine_code_t pj_fwd3d_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PROJ_NOINLINE PJcoroutine_code_t pj_inv3d_co(__local PJstack_t* stack, __local void*);
 
-PROJ_DLL PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*);
-PROJ_DLL PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PROJ_NOINLINE PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*);
+PROJ_DLL PROJ_NOINLINE PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local void*);
 
 PROJ_DLL PJ_COORD proj_trans_co(__local PJstack_t* stack, __global PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 

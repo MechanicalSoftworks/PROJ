@@ -33,7 +33,7 @@
 #define INPUT_UNITS  P->right
 #define OUTPUT_UNITS P->left
 
-PJcoroutine_code_t inv_prepare_co (__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t inv_prepare_co (__local PJstack_t* stack, __local void*) {
     auto        top = stack_top(stack);
     PJ*         P = top->P;
     PJ_COORD    coo = top->coo;
@@ -114,7 +114,7 @@ ABORT:
 
 
 
-PJcoroutine_code_t inv_finalize_co (__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t inv_finalize_co (__local PJstack_t* stack, __local void*) {
     auto        top = stack_top(stack);
     PJ*         P = top->P;
     PJ_COORD    coo = top->coo;
@@ -245,7 +245,7 @@ static PJ_COORD push_inv(__local PJstack_t* stack, __global PJ* P, PJ_COORD coo)
     return r;
 }
 
-PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pj_inv_co(__local PJstack_t* stack, __local void*) {
     auto            top = stack_top(stack);
     int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;
@@ -319,7 +319,7 @@ ABORT:
 
 
 
-PJcoroutine_code_t pj_inv3d_co (__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pj_inv3d_co (__local PJstack_t* stack, __local void*) {
     auto            top = stack_top(stack);
     int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;
@@ -393,7 +393,7 @@ ABORT:
 
 
 
-PJcoroutine_code_t pj_inv4d_co (__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pj_inv4d_co (__local PJstack_t* stack, __local void*) {
     auto            top = stack_top(stack);
     int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;

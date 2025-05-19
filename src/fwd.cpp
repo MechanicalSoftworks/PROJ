@@ -34,7 +34,7 @@
 #define OUTPUT_UNITS P->right
 
 
-PJcoroutine_code_t fwd_prepare_co (__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t fwd_prepare_co (__local PJstack_t* stack, __local void*) {
     auto        top = stack_top(stack);
     PJ*         P = top->P;
     PJ_COORD    coo = top->coo;
@@ -146,7 +146,7 @@ ABORT:
 }
 
 
-PJcoroutine_code_t fwd_finalize_co (__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t fwd_finalize_co (__local PJstack_t* stack, __local void*) {
     auto        top = stack_top(stack);
     PJ*         P = top->P;
     PJ_COORD    coo = top->coo;
@@ -290,7 +290,7 @@ PJ_COORD error_or_coord(PJ *P, PJ_COORD coord, int last_errno) {
     return coord;
 }
 
-PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pj_fwd_co(__local PJstack_t* stack, __local void*) {
     auto            top = stack_top(stack);
     int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;
@@ -364,7 +364,7 @@ ABORT:
 
 
 
-PJcoroutine_code_t pj_fwd3d_co (__local PJstack_t *stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pj_fwd3d_co (__local PJstack_t *stack, __local void*) {
     auto            top = stack_top(stack);
     int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;
@@ -436,7 +436,7 @@ ABORT:
     return PJ_CO_ERROR;
 }
 
-PJcoroutine_code_t pj_fwd4d_co (__local PJstack_t *stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pj_fwd4d_co (__local PJstack_t *stack, __local void*) {
     auto            top = stack_top(stack);
     int             last_errno = top->u.last_errno;
     __global PJ*    P = top->P;

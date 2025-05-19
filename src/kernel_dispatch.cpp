@@ -25,11 +25,7 @@
 #include "proj_internal_shared.h"
 #include "proj_kernel.h"
 
-#if defined(PROJ_OPENCL_DEVICE)
-#   pragma OPENCL EXTENSION __cl_clang_function_pointers : enable
-#endif
-
-#define CASE(name)   case name##_id: x = &name; break
+#define CASE(name)   case name##_id: return name (a, b);
 
 /******************************************************************************
 * Sanity checks.
@@ -45,12 +41,12 @@ static_assert(alignof(PJstack_entry_t) == 8);
 /******************************************************************************
  * Externs.
  *****************************************************************************/
-#define PROJ_COROUTINE(name) extern PJcoroutine_code_t name(__local PJstack_t* stack, __local void*);
-#define PROJ_FWD_2D(name)    extern PJ_XY name(PJ_LP lp, __global PJ *P);
-#define PROJ_INV_2D(name)    extern PJ_LP name(PJ_XY xy, __global PJ *P);
-#define PROJ_FWD_3D(name)    extern PJ_XYZ name(PJ_LPZ lp, __global PJ *P);
-#define PROJ_INV_3D(name)    extern PJ_LPZ name(PJ_XYZ xy, __global PJ *P);
-#define PROJ_OPERATOR(name)  extern PJ_COORD name(PJ_COORD lp, __global PJ *P);
+#define PROJ_COROUTINE(name) extern PROJ_NOINLINE PJcoroutine_code_t name(__local PJstack_t* stack, __local void*);
+#define PROJ_FWD_2D(name)    extern PROJ_NOINLINE PJ_XY name(PJ_LP lp, __global PJ *P);
+#define PROJ_INV_2D(name)    extern PROJ_NOINLINE PJ_LP name(PJ_XY xy, __global PJ *P);
+#define PROJ_FWD_3D(name)    extern PROJ_NOINLINE PJ_XYZ name(PJ_LPZ lp, __global PJ *P);
+#define PROJ_INV_3D(name)    extern PROJ_NOINLINE PJ_LPZ name(PJ_XYZ xy, __global PJ *P);
+#define PROJ_OPERATOR(name)  extern PROJ_NOINLINE PJ_COORD name(PJ_COORD lp, __global PJ *P);
 
 #include "pj_function_list_shared.h"
 #ifndef PROJ_OPENCL_DEVICE
@@ -75,7 +71,8 @@ static_assert(alignof(PJstack_entry_t) == 8);
 #define PROJ_OPERATOR(name)
 PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, __local PJstack_t* stack)
 {
-    PJcoroutine_code_t (*x)(__local PJstack_t*, __local void*);
+    __local PJstack_t* a = stack;
+    __local void* b = nullptr;
 
     switch (fn)
     {
@@ -86,18 +83,6 @@ PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, __local PJstack_t
 #	    include "pj_function_list_host.h"
 #   endif
     }
-
-    // Originally we'd pass the stack and stack top pointers through here.
-    // But there were some cases where that would produce inexplicable null pointers on the UHD 630.
-    // Near as I could figure: when compiling SPIRV64 local pointers are 4 bytes
-    // and global pointers are 8 bytes. That confused the function pointer implementation
-    // on the UHD 630. Sometimes the stack pointer would be sent as an 8 byte value
-    // through the function pointer which would corrupt the stack top parameter.
-    // So the workaround was to derive the stack top pointer within every coroutine and
-    // just send a nullptr in the second parameter as padding.
-    // This workaround only works with two arguments.
-    // Remove it when we drop support for the UHD 630!
-    return (*x)(stack, nullptr);
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -117,8 +102,6 @@ PJcoroutine_code_t proj_dispatch_coroutine(PJ_COROUTINE_ID fn, __local PJstack_t
 #define PROJ_OPERATOR(name)
 PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP a, __global PJ *b)
 {
-    PJ_XY (*x)(PJ_LP lp, __global PJ *P);
-
     switch (fn)
     {
         default: return proj_coord_error().xy;
@@ -128,8 +111,6 @@ PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP a, __global PJ *b)
 #	    include "pj_function_list_host.h"
 #   endif
     }
-
-    return (*x)(a, b);
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -149,8 +130,6 @@ PJ_XY proj_dispatch_fwd(PJ_FWD_2D_ID fn, PJ_LP a, __global PJ *b)
 #define PROJ_OPERATOR(name)
 PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY a, __global PJ *b)
 {
-    PJ_LP (*x)(PJ_XY xy, __global PJ *P);
-
     switch (fn)
     {
         default: return proj_coord_error().lp;
@@ -160,8 +139,6 @@ PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY a, __global PJ *b)
 #	    include "pj_function_list_host.h"
 #   endif
     }
-
-    return (*x)(a, b);
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -181,8 +158,6 @@ PJ_LP proj_dispatch_inv(PJ_INV_2D_ID fn, PJ_XY a, __global PJ *b)
 #define PROJ_OPERATOR(name)
 PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ a, __global PJ *b)
 {
-    PJ_XYZ (*x)(PJ_LPZ lpz, __global PJ *P);
-
     switch (fn)
     {
         default: return proj_coord_error().xyz;
@@ -192,8 +167,6 @@ PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ a, __global PJ *b)
 #	    include "pj_function_list_host.h"
 #   endif
     }
-
-    return (*x)(a, b);
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -213,8 +186,6 @@ PJ_XYZ proj_dispatch_fwd3d(PJ_FWD_3D_ID fn, PJ_LPZ a, __global PJ *b)
 #define PROJ_OPERATOR(name)
 PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ a, __global PJ *b)
 {
-    PJ_LPZ (*x)(PJ_XYZ xyz, __global PJ *P);
-
     switch (fn)
     {
         default: return proj_coord_error().lpz;
@@ -224,8 +195,6 @@ PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ a, __global PJ *b)
 #	    include "pj_function_list_host.h"
 #   endif
     }
-
-    return (*x)(a, b);
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D
@@ -245,8 +214,6 @@ PJ_LPZ proj_dispatch_inv3d(PJ_INV_3D_ID fn, PJ_XYZ a, __global PJ *b)
 #define PROJ_OPERATOR(name)       CASE(name);
 PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD a, __global PJ *b)
 {
-    PJ_COORD (*x)(PJ_COORD lp, __global PJ *P);
-
     switch (fn)
     {
         default: return proj_coord_error();
@@ -256,8 +223,6 @@ PJ_COORD proj_dispatch_operator(PJ_OPERATOR_ID fn, PJ_COORD a, __global PJ *b)
 #	    include "pj_function_list_host.h"
 #   endif
     }
-
-    return (*x)(a, b);
 }
 #undef PROJ_COROUTINE
 #undef PROJ_FWD_2D

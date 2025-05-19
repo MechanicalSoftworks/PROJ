@@ -207,7 +207,7 @@ static void pipeline_reassign_context( PJ* P, PJ_CONTEXT* ctx )
 
 #endif
 
-PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pipeline_forward_4d_co (__local PJstack_t* stack, __local void*) {
     auto                    top = stack_top(stack);
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
@@ -252,7 +252,7 @@ ABORT:
 }
 
 
-PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pipeline_reverse_4d_co(__local PJstack_t* stack, __local void*) {
     auto                    top = stack_top(stack);
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
@@ -299,7 +299,7 @@ ABORT:
 
 
 
-PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pipeline_forward_3d_co(__local PJstack_t* stack, __local void*) {
     auto                    top = stack_top(stack);
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
@@ -345,7 +345,7 @@ ABORT:
 }
 
 
-PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pipeline_reverse_3d_co(__local PJstack_t* stack, __local void*) {
     auto                    top = stack_top(stack);
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
@@ -393,7 +393,7 @@ ABORT:
 
 
 
-PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pipeline_forward_co(__local PJstack_t* stack, __local void*) {
     auto                    top = stack_top(stack);
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
@@ -439,7 +439,7 @@ ABORT:
 }
 
 
-PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local void*) {
+PROJ_NOINLINE PJcoroutine_code_t pipeline_reverse_co(__local PJstack_t* stack, __local void*) {
     auto                    top = stack_top(stack);
     __global PJ*            P = top->P;
     __global Pipeline*      pipeline = static_cast<__global Pipeline*>(P->opaque);
@@ -841,7 +841,7 @@ PJ *OPERATION(pipeline,0) {
 
 #endif // !PROJ_OPENCL_DEVICE
 
-PJ_COORD pipeline_push(PJ_COORD point, __global PJ *P) {
+PROJ_NOINLINE PJ_COORD pipeline_push(PJ_COORD point, __global PJ *P) {
     if (P->parent == nullptr)
         return point;
 
@@ -861,7 +861,7 @@ PJ_COORD pipeline_push(PJ_COORD point, __global PJ *P) {
     return point;
 }
 
-PJ_COORD pipeline_pop(PJ_COORD point, __global PJ *P) {
+PROJ_NOINLINE PJ_COORD pipeline_pop(PJ_COORD point, __global PJ *P) {
     if (P->parent == nullptr)
         return point;
 
