@@ -29,8 +29,6 @@
 #ifndef PROJ_INTERNAL_DEVICE_H
 #define PROJ_INTERNAL_DEVICE_H
 
-#include "proj_internal_shared.h"
-
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #define proj_log_error(P, fmt, ...)

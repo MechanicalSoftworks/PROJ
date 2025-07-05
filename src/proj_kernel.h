@@ -32,10 +32,6 @@
 #include "proj_shared.h"
 
 // The constructors need access to the real header.
-#ifdef PROJ_OPENCL_DEVICE
-#	include "proj_internal_device.h"
-#else
-#   include "proj_internal.h"
-#endif
+#include "proj_internal_shared.h"
 
 #endif // !PROJ_KERNEL_H

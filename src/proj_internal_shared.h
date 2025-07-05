@@ -35,6 +35,8 @@
 // The constructors need access to the real header.
 #ifndef PROJ_OPENCL_DEVICE
 #   include "proj_internal.h"
+#else
+#   include "proj_internal_device.h"
 #endif
 
 struct PJconsts;
