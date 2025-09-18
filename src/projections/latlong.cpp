@@ -29,7 +29,7 @@
 
 /* very loosely based upon DMA code by Bradford W. Drew */
 #define PJ_LIB__
-#include "proj_internal.h"
+#include "../proj_kernel.h"
 
 PROJ_HEAD(lonlat, "Lat/long (Geodetic)")  "\n\t";
 PROJ_HEAD(latlon, "Lat/long (Geodetic alias)")  "\n\t";
@@ -37,7 +37,7 @@ PROJ_HEAD(latlong, "Lat/long (Geodetic alias)")  "\n\t";
 PROJ_HEAD(longlat, "Lat/long (Geodetic alias)")  "\n\t";
 
 
- PJ_XY latlong_forward(PJ_LP lp, PJ *P) {
+PROJ_NOINLINE PJ_XY latlong_forward(PJ_LP lp, __global PJ*P) {
     PJ_XY xy = {0.0,0.0};
     (void) P;
     xy.x = lp.lam;
@@ -46,7 +46,7 @@ PROJ_HEAD(longlat, "Lat/long (Geodetic alias)")  "\n\t";
 }
 
 
-PJ_LP latlong_inverse(PJ_XY xy, PJ *P) {
+PROJ_NOINLINE PJ_LP latlong_inverse(PJ_XY xy, __global PJ*P) {
     PJ_LP lp = {0.0,0.0};
     (void) P;
     lp.phi = xy.y;
@@ -55,7 +55,7 @@ PJ_LP latlong_inverse(PJ_XY xy, PJ *P) {
 }
 
 
- PJ_XYZ latlong_forward_3d (PJ_LPZ lpz, PJ *P) {
+PROJ_NOINLINE PJ_XYZ latlong_forward_3d (PJ_LPZ lpz, __global PJ*P) {
     PJ_XYZ xyz = {0,0,0};
     (void) P;
     xyz.x = lpz.lam;
@@ -65,7 +65,7 @@ PJ_LP latlong_inverse(PJ_XY xy, PJ *P) {
 }
 
 
-PJ_LPZ latlong_inverse_3d (PJ_XYZ xyz, PJ *P) {
+PROJ_NOINLINE PJ_LPZ latlong_inverse_3d (PJ_XYZ xyz, __global PJ*P) {
     PJ_LPZ lpz = {0,0,0};
     (void) P;
     lpz.lam = xyz.x;
@@ -74,18 +74,20 @@ PJ_LPZ latlong_inverse_3d (PJ_XYZ xyz, PJ *P) {
     return lpz;
 }
 
-PJ_COORD latlong_forward_4d (PJ_COORD obs, PJ *P) {
+PROJ_NOINLINE PJ_COORD latlong_forward_4d (PJ_COORD obs, __global PJ*P) {
     (void) P;
     return obs;
 }
 
 
-PJ_COORD latlong_inverse_4d (PJ_COORD obs, PJ *P) {
+PROJ_NOINLINE PJ_COORD latlong_inverse_4d (PJ_COORD obs, __global PJ*P) {
     (void) P;
     return obs;
 }
 
 
+
+#ifndef PROJ_OPENCL_DEVICE
 
 static PJ *latlong_setup (PJ *P) {
     P->is_latlong = 1;
@@ -121,3 +123,4 @@ PJ *PROJECTION(lonlat) {
     return latlong_setup (P);
 }
 
+#endif /* !PROJ_OPENCL_DEVICE */

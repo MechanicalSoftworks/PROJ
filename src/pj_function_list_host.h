@@ -216,13 +216,6 @@ PROJ_FWD_2D(larr_s_forward)
 
 PROJ_FWD_2D(lask_s_forward)
 
-PROJ_OPERATOR(latlong_forward_4d)
-PROJ_OPERATOR(latlong_inverse_4d)
-PROJ_FWD_3D(latlong_forward_3d)
-PROJ_INV_3D(latlong_inverse_3d)
-PROJ_FWD_2D(latlong_forward)
-PROJ_INV_2D(latlong_inverse)
-
 PROJ_FWD_2D(lcc_e_forward)
 PROJ_INV_2D(lcc_e_inverse)
 
