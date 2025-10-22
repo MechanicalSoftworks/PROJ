@@ -13,7 +13,7 @@ PJ_COORD proj_coord_error(void) {
 }
 
 /*************************************************************************************/
-PJ_COORD pj_geocentric_latitude (const PJ *P, PJ_DIRECTION direction, PJ_COORD coord) {
+PJ_COORD pj_geocentric_latitude (__global const PJ *P, PJ_DIRECTION direction, PJ_COORD coord) {
 /**************************************************************************************
     Convert geographical latitude to geocentric (or the other way round if
     direction = PJ_INV)
@@ -41,7 +41,7 @@ PJ_COORD pj_geocentric_latitude (const PJ *P, PJ_DIRECTION direction, PJ_COORD c
 }
 
 /*****************************************************************************/
-int proj_errno_set (const PJ *P, int err) {
+int proj_errno_set (__global const PJ *P, int err) {
 /******************************************************************************
     Set context-errno, bubble it up to the thread local errno, return err
 ******************************************************************************/
@@ -59,7 +59,7 @@ int proj_errno_set (const PJ *P, int err) {
 }
 
 /*****************************************************************************/
-void proj_context_errno_set (struct pj_ctx_shared *ctx, int err) {
+void proj_context_errno_set (__global struct pj_ctx_shared *ctx, int err) {
 /******************************************************************************
 Raise an error directly on a context, without going through a PJ belonging
 to that context.
@@ -99,7 +99,7 @@ PJ_DIRECTION opposite_direction(PJ_DIRECTION dir) {
     return (PJ_DIRECTION)(-dir);
 }
 
-struct pj_ctx_shared* pj_get_ctx_shared(const PJ* P)
+__global struct pj_ctx_shared* pj_get_ctx_shared(__global const PJ* P)
 {
 #ifdef PROJ_OPENCL_DEVICE
     return P->shared_ctx;

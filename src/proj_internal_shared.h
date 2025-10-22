@@ -510,11 +510,11 @@ struct PJconsts {
 #endif
 
 /* Geographical to geocentric latitude - another of the "simple, but useful" */
-PJ_COORD pj_geocentric_latitude(const PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
+PJ_COORD pj_geocentric_latitude(__global const PJ* P, PJ_DIRECTION direction, PJ_COORD coord);
 
 double PROJ_DLL adjlon(double);
-void proj_context_errno_set(struct pj_ctx_shared* ctx, int err);
-struct pj_ctx_shared* pj_get_ctx_shared(const PJ*);
+void proj_context_errno_set(__global struct pj_ctx_shared* ctx, int err);
+__global struct pj_ctx_shared* pj_get_ctx_shared(__global const PJ*);
 
 // Coroutines.
 PROJ_DLL void stack_new(__local PJstack_t* stack);

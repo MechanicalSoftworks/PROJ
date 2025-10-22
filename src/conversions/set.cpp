@@ -1,7 +1,5 @@
 #define PJ_LIB__
-
-#include "proj_internal.h"
-#include <errno.h>
+#include "../proj_kernel.h"
 
 PROJ_HEAD(set, "Set coordinate value");
 
@@ -19,7 +17,7 @@ struct Set {
 };
 } // anonymous namespace
 
-PJ_COORD set_fwd_inv(PJ_COORD point, PJ *P) {
+PROJ_NOINLINE PJ_COORD set_fwd_inv(PJ_COORD point, __global PJ *P) {
 
     struct Set *set = static_cast<struct Set*>(P->opaque);
 
@@ -34,6 +32,8 @@ PJ_COORD set_fwd_inv(PJ_COORD point, PJ *P) {
 
     return point;
 }
+
+#ifndef PROJ_OPENCL_DEVICE
 
 PJ *OPERATION(set, 0) {
     P->inv4d = PJ_MAKE_KERNEL(set_fwd_inv);
@@ -73,3 +73,5 @@ PJ *OPERATION(set, 0) {
 
     return P;
 }
+
+#endif /* !PROJ_OPENCL_DEVICE */

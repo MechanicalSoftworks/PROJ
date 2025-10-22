@@ -1,16 +1,17 @@
 #define PJ_LIB__
+#include "../proj_kernel.h"
 
+#ifndef PROJ_OPENCL_DEVICE
 #include <float.h>
 #include <math.h>
-
-#include "proj.h"
-#include "proj_internal.h"
-#include <math.h>
+#endif
 
 PROJ_HEAD(merc, "Mercator") "\n\tCyl, Sph&Ell\n\tlat_ts=";
 PROJ_HEAD(webmerc, "Web Mercator / Pseudo Mercator") "\n\tCyl, Ell\n\t";
 
-PJ_XY merc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
+extern double pj_sinhpsi2tanphi(__global pj_ctx_shared* ctx, const double taup, const double e);
+
+PROJ_NOINLINE PJ_XY merc_e_forward (PJ_LP lp, __global PJ*P) {          /* Ellipsoidal, forward */
     PJ_XY xy = {0.0,0.0};
     xy.x = P->k0 * lp.lam;
     // Instead of calling tan and sin, call sin and cos which the compiler
@@ -22,7 +23,7 @@ PJ_XY merc_e_forward (PJ_LP lp, PJ *P) {          /* Ellipsoidal, forward */
 }
 
 
-PJ_XY merc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
+PROJ_NOINLINE PJ_XY merc_s_forward (PJ_LP lp, __global PJ*P) {           /* Spheroidal, forward */
     PJ_XY xy = {0.0,0.0};
     xy.x = P->k0 * lp.lam;
     xy.y = P->k0 * asinh(tan(lp.phi));
@@ -30,7 +31,7 @@ PJ_XY merc_s_forward (PJ_LP lp, PJ *P) {           /* Spheroidal, forward */
 }
 
 
-PJ_LP merc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
+PROJ_NOINLINE PJ_LP merc_e_inverse (PJ_XY xy, __global PJ*P) {          /* Ellipsoidal, inverse */
     PJ_LP lp = {0.0,0.0};
     lp.phi = atan(pj_sinhpsi2tanphi(P->shared_ctx, sinh(xy.y / P->k0), P->e));
     lp.lam = xy.x / P->k0;
@@ -38,13 +39,15 @@ PJ_LP merc_e_inverse (PJ_XY xy, PJ *P) {          /* Ellipsoidal, inverse */
 }
 
 
-PJ_LP merc_s_inverse (PJ_XY xy, PJ *P) {           /* Spheroidal, inverse */
+PROJ_NOINLINE PJ_LP merc_s_inverse (PJ_XY xy, __global PJ*P) {           /* Spheroidal, inverse */
     PJ_LP lp = {0.0,0.0};
     lp.phi = atan(sinh(xy.y / P->k0));
     lp.lam = xy.x / P->k0;
     return lp;
 }
 
+
+#ifndef PROJ_OPENCL_DEVICE
 
 PJ *PROJECTION(merc) {
     double phits=0.0;
@@ -85,3 +88,5 @@ PJ *PROJECTION(webmerc) {
     P->fwd = PJ_MAKE_KERNEL(merc_s_forward);
     return P;
 }
+
+#endif /* !PROJ_OPENCL_DEVICE */

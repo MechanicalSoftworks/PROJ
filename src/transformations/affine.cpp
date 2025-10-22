@@ -21,12 +21,12 @@
 *
 ***********************************************************************/
 #define PJ_LIB__
+#include "../proj_kernel.h"
 
+#ifndef PROJ_OPENCL_DEVICE
 #include <errno.h>
 #include <math.h>
-
-#include "proj.h"
-#include "proj_internal.h"
+#endif
 
 PROJ_HEAD(affine, "Affine transformation");
 PROJ_HEAD(geogoffset, "Geographic Offset");
@@ -58,7 +58,7 @@ struct pj_opaque_affine {
 } // anonymous namespace
 
 
-PJ_COORD affine_forward_4d(PJ_COORD obs, PJ *P) {
+PROJ_NOINLINE PJ_COORD affine_forward_4d(PJ_COORD obs, __global PJ *P) {
     PJ_COORD newObs;
     const struct pj_opaque_affine *Q = (const struct pj_opaque_affine *) P->opaque;
     const struct pj_affine_coeffs *C = &(Q->forward);
@@ -69,21 +69,21 @@ PJ_COORD affine_forward_4d(PJ_COORD obs, PJ *P) {
     return newObs;
 }
 
-PJ_XYZ affine_forward_3d(PJ_LPZ lpz, PJ *P) {
+PROJ_NOINLINE PJ_XYZ affine_forward_3d(PJ_LPZ lpz, __global PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.lpz = lpz;
     return affine_forward_4d(point, P).xyz;
 }
 
 
-PJ_XY affine_forward_2d(PJ_LP lp, PJ *P) {
+PROJ_NOINLINE PJ_XY affine_forward_2d(PJ_LP lp, __global PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.lp = lp;
     return affine_forward_4d(point, P).xy;
 }
 
 
-PJ_COORD affine_reverse_4d(PJ_COORD obs, PJ *P) {
+PROJ_NOINLINE PJ_COORD affine_reverse_4d(PJ_COORD obs, __global PJ *P) {
     PJ_COORD newObs;
     const struct pj_opaque_affine *Q = (const struct pj_opaque_affine *) P->opaque;
     const struct pj_affine_coeffs *C = &(Q->reverse);
@@ -97,17 +97,19 @@ PJ_COORD affine_reverse_4d(PJ_COORD obs, PJ *P) {
     return newObs;
 }
 
-PJ_LPZ affine_reverse_3d(PJ_XYZ xyz, PJ *P) {
+PROJ_NOINLINE PJ_LPZ affine_reverse_3d(PJ_XYZ xyz, __global PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.xyz = xyz;
     return affine_reverse_4d(point, P).lpz;
 }
 
-PJ_LP affine_reverse_2d(PJ_XY xy, PJ *P) {
+PROJ_NOINLINE PJ_LP affine_reverse_2d(PJ_XY xy, __global PJ *P) {
     PJ_COORD point = {{0,0,0,0}};
     point.xy = xy;
     return affine_reverse_4d(point, P).lp;
 }
+
+#ifndef PROJ_OPENCL_DEVICE
 
 static struct pj_opaque_affine * initQ(PJ_CONTEXT *ctx) {
     struct pj_opaque_affine *Q = static_cast<struct pj_opaque_affine *>(ctx->allocator->svm_calloc(1, sizeof(struct pj_opaque_affine)));
@@ -247,3 +249,5 @@ PJ *TRANSFORMATION(geogoffset,0 /* no need for ellipsoid */) {
 
     return P;
 }
+
+#endif /* !PROJ_OPENCL_DEVICE */

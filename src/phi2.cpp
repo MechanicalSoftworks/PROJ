@@ -1,13 +1,16 @@
 /* Determine latitude angle phi-2. */
+#include "proj_kernel.h"
 
+#ifndef PROJ_OPENCL_DEVICE
 #include <math.h>
 #include <limits>
 #include <algorithm>
 
-#include "proj.h"
-#include "proj_internal.h"
+using namespace std;
+#endif
 
-double pj_sinhpsi2tanphi(pj_ctx_shared *ctx, const double taup, const double e) {
+
+double pj_sinhpsi2tanphi(__global pj_ctx_shared *ctx, const double taup, const double e) {
   /****************************************************************************
   * Convert tau' = sinh(psi) = tan(chi) to tau = tan(phi).  The code is taken
   * from GeographicLib::Math::tauf(taup, e).
@@ -80,11 +83,11 @@ double pj_sinhpsi2tanphi(pj_ctx_shared *ctx, const double taup, const double e) 
 
   constexpr int numit = 5;
   // min iterations = 1, max iterations = 2; mean = 1.954
-  static const double rooteps = sqrt(std::numeric_limits<double>::epsilon());
+  static const double rooteps = sqrt(DBL_EPSILON);
   static const double tol = rooteps / 10; // the criterion for Newton's method
   static const double tmax = 2 / rooteps; // threshold for large arg limit exact
   const double e2m = 1 - e * e;
-  const double stol = tol * std::max(1.0, fabs(taup));
+  const double stol = tol * max(1.0, fabs(taup));
   // The initial guess.  70 corresponds to chi = 89.18 deg (see above)
   double tau = fabs(taup) > 70 ? taup * exp(e * atanh(e)) : taup / e2m;
   if (!(fabs(tau) < tmax))      // handles +/-inf and nan and e = 1
@@ -108,7 +111,7 @@ double pj_sinhpsi2tanphi(pj_ctx_shared *ctx, const double taup, const double e) 
 }
 
 /*****************************************************************************/
-double pj_phi2(pj_ctx_shared *ctx, const double ts0, const double e) {
+double pj_phi2(__global pj_ctx_shared *ctx, const double ts0, const double e) {
   /****************************************************************************
    * Determine latitude angle phi-2.
    * Inputs:

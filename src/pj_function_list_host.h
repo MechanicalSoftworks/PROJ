@@ -12,26 +12,12 @@ PROJ_INV_2D(aeqd_e_guam_inv)
 PROJ_FWD_2D(aeqd_e_forward)
 PROJ_INV_2D(aeqd_e_inverse)
 
-PROJ_OPERATOR(affine_forward_4d)
-PROJ_OPERATOR(affine_reverse_4d)
-PROJ_FWD_3D(affine_forward_3d)
-PROJ_INV_3D(affine_reverse_3d)
-PROJ_FWD_2D(affine_forward_2d)
-PROJ_INV_2D(affine_reverse_2d)
-
 PROJ_FWD_2D(airy_s_forward)
 
 PROJ_FWD_2D(aitoff_s_forward)
 PROJ_INV_2D(aitoff_s_inverse)
 
 PROJ_FWD_2D(august_s_forward)
-
-PROJ_OPERATOR(axisswap_forward_4d)
-PROJ_OPERATOR(axisswap_reverse_4d)
-PROJ_FWD_3D(axisswap_forward_3d)
-PROJ_INV_3D(axisswap_reverse_3d)
-PROJ_FWD_2D(axisswap_forward_2d)
-PROJ_INV_2D(axisswap_reverse_2d)
 
 PROJ_FWD_2D(bacon_s_forward)
 
@@ -237,11 +223,6 @@ PROJ_INV_2D(mbtfpp_s_inverse)
 PROJ_FWD_2D(mbtfpq_s_forward)
 PROJ_INV_2D(mbtfpq_s_inverse)
 
-PROJ_FWD_2D(merc_e_forward)
-PROJ_INV_2D(merc_e_inverse)
-PROJ_FWD_2D(merc_s_forward)
-PROJ_INV_2D(merc_s_inverse)
-
 PROJ_FWD_2D(mill_s_forward)
 PROJ_INV_2D(mill_s_inverse)
 
@@ -274,8 +255,6 @@ PROJ_FWD_2D(nell_h_s_forward)
 PROJ_INV_2D(nell_h_s_inverse)
 
 PROJ_FWD_2D(nicol_s_forward)
-
-PROJ_OPERATOR(noop_operator)
 
 PROJ_FWD_2D(nsper_s_forward)
 PROJ_INV_2D(nsper_s_inverse)
@@ -341,8 +320,6 @@ PROJ_INV_3D(sch_inverse3d)
 
 PROJ_FWD_2D(sconics_s_forward)
 PROJ_INV_2D(sconics_s_inverse)
-
-PROJ_OPERATOR(set_fwd_inv)
 
 PROJ_FWD_2D(somerc_e_forward)
 PROJ_INV_2D(somerc_e_inverse)

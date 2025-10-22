@@ -53,12 +53,13 @@ operation:
 ***********************************************************************/
 
 #define PJ_LIB__
+#include "../proj_kernel.h"
+
+#ifndef PROJ_OPENCL_DEVICE
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "proj.h"
-#include "proj_internal.h"
+#endif
 
 PROJ_HEAD(axisswap, "Axis ordering");
 
@@ -73,7 +74,7 @@ static int sign(int x) {
     return (x > 0) - (x < 0);
 }
 
-PJ_XY axisswap_forward_2d(PJ_LP lp, PJ *P) {
+PROJ_NOINLINE PJ_XY axisswap_forward_2d(PJ_LP lp, __global PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out, in;
@@ -89,7 +90,7 @@ PJ_XY axisswap_forward_2d(PJ_LP lp, PJ *P) {
 }
 
 
-PJ_LP axisswap_reverse_2d(PJ_XY xy, PJ *P) {
+PROJ_NOINLINE PJ_LP axisswap_reverse_2d(PJ_XY xy, __global PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out, in;
@@ -105,7 +106,7 @@ PJ_LP axisswap_reverse_2d(PJ_XY xy, PJ *P) {
 }
 
 
-PJ_XYZ axisswap_forward_3d(PJ_LPZ lpz, PJ *P) {
+PROJ_NOINLINE PJ_XYZ axisswap_forward_3d(PJ_LPZ lpz, __global PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out, in;
@@ -121,7 +122,7 @@ PJ_XYZ axisswap_forward_3d(PJ_LPZ lpz, PJ *P) {
     return out.xyz;
 }
 
-PJ_LPZ axisswap_reverse_3d(PJ_XYZ xyz, PJ *P) {
+PROJ_NOINLINE PJ_LPZ axisswap_reverse_3d(PJ_XYZ xyz, __global PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD in, out;
@@ -138,7 +139,7 @@ PJ_LPZ axisswap_reverse_3d(PJ_XYZ xyz, PJ *P) {
 }
 
 
-PJ_COORD axisswap_forward_4d(PJ_COORD coo, PJ *P) {
+PROJ_NOINLINE PJ_COORD axisswap_forward_4d(PJ_COORD coo, __global PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out;
@@ -152,7 +153,7 @@ PJ_COORD axisswap_forward_4d(PJ_COORD coo, PJ *P) {
 }
 
 
-PJ_COORD axisswap_reverse_4d(PJ_COORD coo, PJ *P) {
+PROJ_NOINLINE PJ_COORD axisswap_reverse_4d(PJ_COORD coo, __global PJ *P) {
     struct pj_opaque *Q = (struct pj_opaque *) P->opaque;
     unsigned int i;
     PJ_COORD out;
@@ -165,6 +166,7 @@ PJ_COORD axisswap_reverse_4d(PJ_COORD coo, PJ *P) {
     return out;
 }
 
+#ifndef PROJ_OPENCL_DEVICE
 
 /***********************************************************************/
 PJ *CONVERSION(axisswap,0) {
@@ -309,3 +311,5 @@ PJ *CONVERSION(axisswap,0) {
 
     return P;
 }
+
+#endif /* !PROJ_OPENCL_DEVICE */

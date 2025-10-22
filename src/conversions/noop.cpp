@@ -1,13 +1,14 @@
 #define PJ_LIB__
-
-#include "proj_internal.h"
+#include "../proj_kernel.h"
 
 PROJ_HEAD(noop,    "No operation");
 
-PJ_COORD noop_operator(PJ_COORD coord, PJ *P) {
+PROJ_NOINLINE PJ_COORD noop_operator(PJ_COORD coord, __global PJ *P) {
     (void) P;
     return coord;
 }
+
+#ifndef PROJ_OPENCL_DEVICE
 
 PJ *CONVERSION(noop, 0) {
     P->fwd4d = PJ_MAKE_KERNEL(noop_operator);
@@ -17,3 +18,4 @@ PJ *CONVERSION(noop, 0) {
     return P;
 }
 
+#endif /* !PROJ_OPENCL_DEVICE */
