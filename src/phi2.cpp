@@ -5,6 +5,7 @@
 #include <math.h>
 #include <limits>
 #include <algorithm>
+#include <cfloat>
 
 using namespace std;
 #endif
