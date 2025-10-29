@@ -84,9 +84,9 @@ double pj_sinhpsi2tanphi(__global pj_ctx_shared *ctx, const double taup, const d
 
   constexpr int numit = 5;
   // min iterations = 1, max iterations = 2; mean = 1.954
-  static const double rooteps = sqrt(DBL_EPSILON);
-  static const double tol = rooteps / 10; // the criterion for Newton's method
-  static const double tmax = 2 / rooteps; // threshold for large arg limit exact
+  constexpr double rooteps = 0.00000001490116119384765631426592; // sqrt(DBL_EPSILON);
+  constexpr double tol = rooteps / 10; // the criterion for Newton's method
+  constexpr double tmax = 2 / rooteps; // threshold for large arg limit exact
   const double e2m = 1 - e * e;
   const double stol = tol * max(1.0, fabs(taup));
   // The initial guess.  70 corresponds to chi = 89.18 deg (see above)
